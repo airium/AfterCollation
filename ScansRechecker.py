@@ -26,32 +26,9 @@ def main(root):
         logging.shutdown()
         return
 
-    try:
-        temp_dir : Path|None = None
-        root_dev = root.stat().st_dev # root is the input as root, not the device root
-        match platform.system():
-            case 'Windows':
-                # NOTE Windows also has relative mount point
-                (path := Path(root.anchor).joinpath(TEMP_DIR_HARDLINK)).mkdir(parents=True, exist_ok=True)
-                if path.stat().st_dev == root_dev:
-                    temp_dir = path
-            case 'Linux':
-                # TODO finding better temp_dir under linux/osx
-                (path := Path('/tmp').joinpath(TEMP_DIR_HARDLINK)).mkdir(parents=True, exist_ok=True)
-                if path.stat().st_dev == root_dev:
-                    temp_dir = path
-            case 'Darwin':
-                (path := Path('/tmp').joinpath(TEMP_DIR_HARDLINK)).mkdir(parents=True, exist_ok=True)
-                if path.stat().st_dev == root_dev:
-                    temp_dir = path
-        if temp_dir and tstHardlinkInDir(temp_dir):
-            logger.info(f'Enabled harlink mode and using a temporary dir "{temp_dir}".')
-        else:
-            raise Exception
-    except Exception:
-        if 'path' in locals() and path.is_dir() and not list(path.iterdir()): path.rmdir()
-        logger.info(f'Cannot use hardlink mode. `cwebp` will fail on rare characters in path.')
-        temp_dir = None # this is to avoid `possibly unbound` warning below
+    temp_dir = getTempDir4Hardlink(root)
+    if temp_dir: logger.info(f'Enabled hardlink mode and using a temporary dir "{temp_dir}".')
+    else: logger.info(f'Cannot use hardlink mode. `cwebp` will fail on rare characters in path.')
 
     bks_roots = [d for d in listDir(root) if d.name.lower() == STD_BKS_DIRNAME.lower()]
     if not bks_roots:

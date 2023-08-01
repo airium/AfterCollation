@@ -3,11 +3,11 @@ import re
 import csv
 import json
 import random
+import platform
 import itertools
 
 from pathlib import Path
-
-from configs.regex import VOLUME_NAME_PATTERN, BASIC_CRC32_PATTERN
+from configs import *
 
 import yaml
 
@@ -24,6 +24,7 @@ __all__ = ['listFile',
            'listM2TS2CSV',
            'listM2TS2YAML',
            'listM2TS2JSON',
+           'getTempDir4Hardlink'
            ]
 
 
@@ -85,58 +86,10 @@ def tstFileEncoding(path:Path, encoding:str='utf-8-sig') -> bool:
 
 
 
-def tstHardlinkInDir(dir_path:str|Path) -> bool:
-
-    dir_path = Path(dir_path)
-    # NOTE this is because we are lazy to check at which level the input's parent exists
-    # i.e. if we makedir(parents=True), we also need to later rmdir() all the tree we created
-    if not dir_path.is_dir():
-        raise NotADirectoryError
-
-    f1 : Path|None = None
-    f2 : Path|None = None
-    try:
-        for _ in range(10): # do 10 attempts, seems enough?
-            k1, k2 = random.sample(range(999999), 2)
-            f1 = dir_path.joinpath(f'{k1:6d}')
-            f2 = dir_path.joinpath(f'{k2:6d}')
-            if f1.exists() or f2.exists():
-                continue
-            else:
-                f1.touch()
-                f2.hardlink_to(f1)
-                f2.unlink()
-                f1.unlink()
-                return True
-        return False
-    except Exception:
-        try:
-            if f1 and f1.exists(): f1.unlink(missing_ok=True)
-            if f2 and f2.exists(): f2.unlink(missing_ok=True)
-        except Exception:
-            pass
-        return False
 
 
 
 
-def tstHardlink(old:Path, new:Path) -> bool:
-    '''Test if we can new.hardlink_to(old) successfully. Frequently used as a pilot test.'''
-
-    if not (old := Path(old)).is_file():
-        raise FileNotFoundError
-    if (new := Path(new)).exists():
-        raise FileExistsError
-    try:
-        new.hardlink_to(old)
-        new.unlink()
-        return True
-    except Exception:
-        try:
-            new.unlink(missing_ok=True)
-        except Exception:
-            pass
-        return False
 
 
 
@@ -264,3 +217,119 @@ def listM2TS2JSON(out_file, output_list) -> bool:
         return True
     except:
         return False
+
+
+
+
+def tstHardlink(old:Path, new:Path) -> bool:
+    '''
+    Test if we can new.hardlink_to(old) successfully.
+    if new is a dir, it will try hardlink to a randomly created file in the dir.
+    '''
+
+    if not (old := Path(old)).is_file():
+        # NOTE raise Error instead of returning False
+        # input not a file means the user is unconscious, warn it
+        raise FileNotFoundError
+
+    if (new := Path(new)).is_file():
+        return False
+
+    try:
+        if new.is_dir():
+            # randomly sample a un-suffixed number as the filename
+            # hopefully there is no such file in the dir
+            for _ in range(10):
+                new = new.joinpath(str(random.sample(range(999999), 1)[0]))
+                if not new.exists():
+                    new.hardlink_to(old)
+                    new.unlink()
+                    return True
+            return False
+        else:
+            new.hardlink_to(old)
+            new.unlink()
+            return True
+    except:
+        # since we already return False if the file exists
+        # this means the file is created by us
+        if new.is_file(): new.unlink(missing_ok=True)
+        return False
+
+
+
+
+def tstHardlinkInDir(dir_path:str|Path) -> bool:
+    '''
+    This function is used to test if the hardlink functionality is usable inside it.
+    '''
+
+    dir_path = Path(dir_path)
+    # NOTE this is because we are lazy to check at which level the input's parent exists
+    # i.e. if we makedir(parents=True), we also need to later rmdir() all the tree we created
+    if not dir_path.is_dir():
+        raise NotADirectoryError
+
+    f1 : Path|None = None
+    f2 : Path|None = None
+    try:
+        for _ in range(10): # do 10 attempts, seems enough?
+            k1, k2 = random.sample(range(999999), 2)
+            f1 = dir_path.joinpath(f'{k1:6d}')
+            f2 = dir_path.joinpath(f'{k2:6d}')
+            if f1.exists() or f2.exists():
+                continue
+            else:
+                f1.touch()
+                f2.hardlink_to(f1)
+                f2.unlink()
+                f1.unlink()
+                return True
+        return False
+    except Exception:
+        if f1 and f1.exists(): f1.unlink(missing_ok=True)
+        if f2 and f2.exists(): f2.unlink(missing_ok=True)
+        return False
+
+
+
+
+def getTempDir4Hardlink(input_path:Path|None=None) -> Path|None:
+    '''
+    Return a default config dir which *should* be usable to hardlink from files in `input_path`.
+    Note that the function will create the dir if success.
+    Return None if failed.
+
+    If you propose to use a specific dir, use `tstHardlink` to test it.
+    '''
+
+    if not input_path: return None
+    input_path = input_path.resolve()
+
+    proposed : Path|None = None
+    try:
+        match platform.system():
+            case 'Windows':
+                # NOTE Windows also has relative mount point
+                proposed = Path(input_path.anchor).joinpath(TEMP_DIR_HARDLINK)
+                proposed.mkdir(parents=True, exist_ok=True)
+                if proposed.stat().st_dev != input_path.stat().st_dev:
+                    proposed = None
+            case 'Linux':
+                # TODO finding better temp_dir under linux/osx
+                proposed = Path('/tmp').joinpath(TEMP_DIR_HARDLINK)
+                proposed.mkdir(parents=True, exist_ok=True)
+                if proposed.stat().st_dev != input_path.stat().st_dev:
+                    proposed = None
+            case 'Darwin':
+                proposed = Path('/tmp').joinpath(TEMP_DIR_HARDLINK)
+                proposed.mkdir(parents=True, exist_ok=True)
+                if proposed.stat().st_dev != input_path.stat().st_dev:
+                    proposed = None
+        if proposed and tstHardlinkInDir(proposed):
+            return proposed
+    except:
+        if proposed and proposed.is_dir() and not list(proposed.iterdir()):
+            try: proposed.rmdir()
+            except: pass
+    return None
