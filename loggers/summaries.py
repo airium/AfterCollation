@@ -37,7 +37,7 @@ def logScansSummary(root:Path, files:list[Path], logger):
         non_ascii = len(path) - ascii
         txt = f'{path}' + (' ' * (max_path_len - ascii - 2*non_ascii)) + ' :'
         for t, n in count.items():
-            txt += f' {t.upper()}×{n}'
+            txt += f' {t.upper()}x{n}'
         logger.info(txt)
     logger.info('↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑')
 

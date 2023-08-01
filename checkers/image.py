@@ -1,31 +1,105 @@
+import re
 import logging
 import itertools
+from pathlib import Path
 
 from utils.fileinfo import FI
 from utils.ffmpegutils import *
+from utils.webputils import *
 from configs import *
 
 
-__all__ = ['chkImage', 'cmpImageContent']
+__all__ = ['chkImage', 'chkScansImage', 'cmpImageContent']
 
 
 
 
-def chkImage(input:FI, logger:logging.Logger, decode:bool=True):
+def chkImage(fi:FI, logger:logging.Logger, decode:bool=True) -> bool:
 
-    if input.ext not in COMMON_IMAGE_EXTS:
+    if fi.ext not in COMMON_IMAGE_EXTS:
         logger.info('The input file is not an image file.')
-        return
+        return False
 
-    expected_format = EXTS2FORMATS.get(input.ext)
+    #* check filesize ******************************************************************************
+
+    filesize = fi.path.stat().st_size
+    if filesize == 0:
+        logger.error(f'Empty file "{fi.path}".')
+        return False # NOTE return on empty file
+    elif filesize < SMALL_IMAGE_FILE_SIZE:
+        logger.warning(f'Very small image "{fi.path}".')
+
+    #* check format/extension consistency **********************************************************
+
+    expected_format = EXTS2FORMATS.get(fi.ext)
     if not expected_format:
-        logger.error(f'Unhandled image file extension "{input.ext}".')
-    if expected_format != input.gtr.format:
-        logger.error(f'The actual media format "{input.gtr.format}" mismatched file extension "{input.ext}".')
+        logger.error(f'Unhandled image file extension "{fi.ext}".')
+    if expected_format != fi.gtr.format:
+        logger.error(f'The actual media format "{fi.gtr.format}" mismatched file extension "{fi.ext}".')
+        return False
 
-    if decode:
-        if not tryFFMPEGDecode(input.path):
-            logger.error(f'FFmpeg cannot decode the image file.')
+    #* check decoding ******************************************************************************
+    if decode and not tryFFMPEGDecode(fi.path):
+        logger.error(f'Failed to decode the image file "{fi.path}".')
+        return False
+
+    return True
+
+
+
+
+def chkScansImage(fi:FI, temp_dir:Path|None, logger:logging.Logger, decode:bool=True):
+
+    if not chkImage(fi, logger, decode=decode): return
+
+    iinfo = fi.image_tracks[0]
+
+    w, h, mode = 0, 0, ''
+    if temp_dir: (work_file := temp_dir.joinpath(f'{time.time_ns()}-{fi.path.name}')).hardlink_to(fi.path)
+    else: work_file = fi.path
+
+    match fi.ext:
+        #* webp ********************************************************************************************************
+        case 'webp':
+            ret = tstDwebp(f'{work_file.as_posix()}')
+            # NOTE don't decode the raw ret['stderr'], it may contain unknown encoding difficult to determine
+            # and actually our regex only need the ASCII part
+            if m := re.search(DWEBP_STDERR_PARSE_PATTERN, ret['stderr']):
+                w, h, mode, alpha = m['width'], m['height'], m['mode'], m['alpha']
+                q = getWebpQuality(f'{work_file.as_posix()}')
+                if q and not ((ENFORCED_WEBP_QUALITY - 3) < q < (ENFORCED_WEBP_QUALITY + 3)):
+                    logger.warning(f'The WEBP file "{fi.path}" may have improper quality '
+                                f'(got {q} but expect {ENFORCED_WEBP_QUALITY}).')
+                if alpha:
+                    logger.info(f'Note an alpha WEBP file "{fi.path}".')
+            else:
+                if b'cannot open input file' in ret['stderr']:
+                    logger.error(f'Libwebp cannot parse the path "{fi.path}". Consider using hardlink mode.')
+                else:
+                    logger.error(f'Failed to parse "{fi.path}".')
+
+        #* jpeg ********************************************************************************************************
+        case 'jpg'|'jpeg':
+            w, h, mode = iinfo.width, iinfo.height, iinfo.compression_mode
+            if not any((w, h, mode)):
+                logger.error(f'Failed to parse necessary metadata from "{fi.path}".')
+            if iinfo.chroma_subsampling and iinfo.chroma_subsampling == '4:4:4':
+                # rarely, yuv444 is abnormal, give an info record
+                logger.info(f'Note a YUV444 JPEG file "{fi.path}".')
+        #* other *******************************************************************************************************
+        case _:
+            raise ValueError(f'Got "{fi.ext}" but "{ALL_EXTS_IN_SCANS=}"')
+
+    if temp_dir: work_file.unlink()
+
+    #* general info ****************************************************************************************************
+
+    w, h, mode = w if w else 0, h if h else 0, mode if mode else ''
+    # general check applies to all formats
+    if int(w) >= LARGE_SCANS_THRESHOLD or int(h) >= LARGE_SCANS_THRESHOLD:
+        logger.info(f'"{fi.path}" ({int(w)}x{int(h)}) may be 1200dpi or higher. Consider downsampling it.')
+    if mode.lower() == 'lossless':
+        logger.error(f'Detected lossless image "{fi.path}". This is disallowed.')
 
 
 

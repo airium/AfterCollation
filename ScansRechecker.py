@@ -30,13 +30,13 @@ def main(root):
     for scans_dir in getScansDirs(root, logger=logger):
         logger.info(f'================================================================================================')
         logger.info(f'Checking "{scans_dir}".')
-        logger.info(f'Checking file types ............................................................................')
+        logger.info(f'Checking file types ...')
         files = getScansFiles(scans_dir, logger=logger)
-        logger.info(f'Checking file names ............................................................................')
+        logger.info(f'Checking file names ...')
         chkScansNaming(scans_dir, logger=logger)
-        logger.info(f'Checking file formats/metadata/content .........................................................')
+        logger.info(f'Checking file formats/metadata/content ...')
         chkScansFiles(files, temp_dir, logger=logger)
-        logger.info(f'Printing scans layout summary ..................................................................')
+        logger.info(f'Printing scans layout summary ...')
         logScansSummary(scans_dir, files, logger=logger)
 
     logger.info('Scans checking completed.')

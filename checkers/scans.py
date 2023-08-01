@@ -9,8 +9,13 @@ from multiprocessing import Pool
 from utils import *
 from helpers import *
 from configs import *
+from .image import *
 
 import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
+
+
+__all__ = ['chkScansNaming', 'chkScansFiles']
 
 
 
@@ -111,7 +116,7 @@ def chkScansNaming(scans_dir:Path, logger:logging.Logger):
             mc_name = os.path.commonprefix(lower_names) if len(lower_names) > 1 else ''
 
             if mc_name:
-                logger.info(f'Note a common dirname prefix "{img_dir}{os.sep}[{mc_name}]*".')
+                logger.info(f'Note a common dirname prefix "{img_dir}{os.sep}{mc_name}*".')
 
                 n = len(mc_name)
                 cased_mc_names = [lower_dirnames_map[lc_name][:n] for lc_name in lower_names]
@@ -148,179 +153,13 @@ def chkScansNaming(scans_dir:Path, logger:logging.Logger):
 
 
 
-def chkScansFiles(files:list[Path], temp_dir:Path|None, logger:logging.Logger) -> bool:
+def chkScansFiles(files:list[Path], temp_dir:Path|None, logger:logging.Logger):
 
-    if DEBUG:
+    if DEBUG: assert all(file.is_file() for file in files)
+
+    with logging_redirect_tqdm([logger]):
+        pbar = tqdm.tqdm(total=len(files), desc='Checking', unit='file', unit_scale=False, ascii=True, dynamic_ncols=True)
         for file in files:
-            assert file.is_file()
-
-    ok = True
-
-    #* check filesize ******************************************************************************
-
-    for file in files:
-        filesize = file.stat().st_size
-        if filesize == 0:
-            logger.error(f'Found empty file "{file}".')
-            ok = False
-        elif filesize < SMALL_IMAGE_FILE_SIZE:
-            logger.warning(f'Found very small file "{file}".')
-
-    if not ok:
-        return False
-
-    #* check format/extension consistency *********************************************************
-
-    for file in files:
-
-        minfo : MI = getMediaInfo(file)
-        ginfo = minfo.general_tracks[0]
-        ext = (ext.lower() if (ext := ginfo.file_extension) else '')
-
-        if DEBUG: assert ext
-
-        # extension vs container
-        match ext:
-            case 'webp':
-                # NOTE libmediainfo can only detect it's WebP but cannot show any info
-                expected_format = 'WebP'
-            case 'jpg'|'jpeg':
-                expected_format = 'JPEG'
-            case _:
-                raise ValueError(f'Got {ext} but {ALL_EXTS_IN_SCANS=}')
-
-        if expected_format != ginfo.format:
-            logger.error(f'The actual media format {ginfo.format} ≠ file ext {expected_format} for "{file}".')
-            ok = False
-
-    if not ok:
-        return False
-
-    #* check basic mediainfo **********************************************************************#
-    pbar = tqdm.tqdm(total=len(files), desc='Format&Metadata', unit='', unit_scale=False, ascii=True, dynamic_ncols=True)
-    for file in files:
-
-        minfo : MI = getMediaInfo(file)
-        ginfo = minfo.general_tracks[0]
-        iinfo = minfo.image_tracks[0]
-        ext = (ext.lower() if (ext := ginfo.file_extension) else '')
-        if DEBUG: assert ext
-
-        w, h, mode = 0, 0, ''
-        if temp_dir:
-            (work_file := temp_dir.joinpath(f'{time.time_ns()}-{file.name}')).hardlink_to(file)
-        else:
-            work_file = file
-        match ext:
-            case 'webp':
-                ret = tstDwebp(f'{work_file.as_posix()}')
-                # NOTE don't decode the raw ret['stderr'], it may contain unknown encoding difficult to determine
-                # and actually our regex only need the ASCII part
-                if m := re.search(DWEBP_STDERR_PARSE_PATTERN, ret['stderr']):
-                    w, h, mode, alpha = m['width'], m['height'], m['mode'], m['alpha']
-                    q = getWebpQuality(f'{work_file.as_posix()}')
-                    if q and not ((ENFORCED_WEBP_QUALITY - 3) < q < (ENFORCED_WEBP_QUALITY + 3)):
-                        logger.warning(f'The WEBP file "{file}" may have improper quality '
-                                    f'(got {q} but expect {ENFORCED_WEBP_QUALITY}).')
-                    if alpha:
-                        logger.info(f'Note an alpha WEBP file "{file}".')
-                else:
-                    if b'cannot open input file' in ret['stderr']:
-                        logger.error(f'Libwebp cannot parse the path "{file}". Consider using hardlink mode.')
-                    else:
-                        logger.error(f'Failed to parse "{file}".')
-                    ok = False
-            case 'jpg'|'jpeg':
-                w, h, mode = iinfo.width, iinfo.height, iinfo.compression_mode
-                if not any((w, h, mode)):
-                    logger.error(f'Failed to parse necessary metadata from "{file}".')
-                    ok = False
-                if iinfo.chroma_subsampling and iinfo.chroma_subsampling == '4:4:4':
-                    # rarely, yuv444 is abnormal, give an info record
-                    logger.info(f'Note a YUV444 JPEG file "{file}".')
-            case _:
-                raise ValueError(f'Got {ext} but {ALL_EXTS_IN_SCANS=}')
-
-        if temp_dir: work_file.unlink()
-
-        w, h, mode = w if w else 0, h if h else 0, mode if mode else ''
-        # general check applies to all formats
-        if int(w) >= LARGE_SCANS_THRESHOLD or int(h) >= LARGE_SCANS_THRESHOLD:
-            logger.info(f'"{file}" ({int(w)}x{int(h)}) may be 1200dpi or higher. Consider downsampling it.')
-        if mode.lower() == 'lossless':
-            logger.error(f'Detected lossless image "{file}". This is disallowed.')
-
-        pbar.update(1)
-    pbar.close()
-    if not ok:
-        return False
-
-    #* full decoding test *************************************************************************#
-    logger.info('Starting multi-processed file decoding test. This can take a while .............')
-
-    p = Pool()
-    results = []
-    hardlink_files = []
-    for file in files:
-
-
-        if temp_dir:
-            # randomly sleep 0-100ms to make the filename different
-            # this is because multiprocessing dispatches all together (at the same ns)
-            time.sleep(random.random()*0.01)
-            (work_file := temp_dir.joinpath(f'{time.time_ns()}-{file.name}')).hardlink_to(file)
-            hardlink_files.append(work_file)
-        else:
-            work_file = file
-
-        ext = file.suffix.lower()
-        match ext:
-            case '.webp':
-                kwds = {'func':dwebp,
-                        'input_path': f'{work_file.as_posix()}',
-                        'output_path':'-',
-                        'option':'-mt',
-                        'logging':''}
-                # results.append(decode(**kwds))
-                results.append(p.apply_async(decode, kwds=kwds))
-            case '.jpg'|'.jpeg':
-                kwds = {'func':cwebp,
-                        'input_path': f'{work_file.as_posix()}',
-                        'output_path':'-',
-                        'option':'-m 0 -mt -crop 0 0 16 16',
-                        'logging':''}
-                # results.append(decode(**kwds))
-                results.append(p.apply_async(decode, kwds=kwds))
-            case _:
-                raise ValueError(f'Got {ext} but {ALL_EXTS_IN_SCANS=}')
-
-    n_completed = 0
-    pbar = tqdm.tqdm(total=len(files), desc='Decoding', unit='', unit_scale=False, ascii=True, dynamic_ncols=True)
-    while n_completed < len(files):
-        n_ready = sum(r.ready() for r in results)
-        if n_new := (n_ready - n_completed):
-            pbar.update(n_new)
-        n_completed = n_ready
-        time.sleep(0.5)
-
-    pbar.close()
-
-    p.close()
-    p.join()
-
-    for hardlink_file in hardlink_files: hardlink_file.unlink()
-
-    results = [r.get() for r in results]
-    for result in results:
-        if result['retcode'] != 0:
-            if b'cannot open input file' in result['stderr']:
-                logger.error(f"Libwebp cannot parse the path \"{result['input_path']}\". "
-                              'Consider using hardlink mode.')
-            else:
-                logger.error(f"Failed to decode \"{result['input_path']}\".")
-            ok = False
-
-    if not ok:
-        return False
-
-    return True
+            chkScansImage(FI(file), temp_dir, logger=logger, decode=True)
+            pbar.update(1)
+        pbar.close()

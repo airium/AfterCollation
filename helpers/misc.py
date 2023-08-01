@@ -7,14 +7,7 @@ from utils.fileutils import *
 from configs.specification import STD_BKS_DIRNAME, STD_CDS_DIRNAME
 
 
-__all__ = ['decode', 'toEnabledList', 'cmpCRC32FI', 'printCliNotice', 'filterOutCDsScans']
-
-
-
-
-def decode(func, input_path:str, **kwargs) -> dict:
-    ret: dict = func(input_path=input_path, **kwargs)
-    return dict(retcode=ret['exit_code'], stdout=ret['stdout'], stderr=ret['stderr'], input_path=input_path)
+__all__ = ['toEnabledList', 'cmpCRC32FI', 'printCliNotice', 'filterOutCDsScans']
 
 
 
