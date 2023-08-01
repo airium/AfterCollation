@@ -80,7 +80,7 @@ def main(root):
             for diff in diffs:
                 logger.error(f'Found disallowed file "{diff}".')
 
-        logger.info(f'Checking filenames .............................................................')
+        logger.info(f'Checking file names ............................................................')
         chkScansNaming(listDir(bks_root), logger=logger)
         logger.info(f'Checking file formats/metadata/content .........................................')
         chkScansFiles(bks_files, temp_dir, logger=logger)
