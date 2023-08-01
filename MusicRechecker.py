@@ -22,25 +22,23 @@ def main(root):
     logger.info(f'The user input is "{root}".')
 
     cds_roots = [d for d in listDir(root) if d.name.lower() == STD_CDS_DIRNAME.lower()]
-
     if not cds_roots:
-        logger.info(f'No "{STD_CDS_DIRNAME}" folder is found.')
-        logging.shutdown()
-        return
+        logger.warning(f'No "{STD_CDS_DIRNAME}" is found. '
+                       f'MR will consider the input "{root}" as a "{STD_CDS_DIRNAME}" folder.')
+        cds_roots = [root]
 
     for cds_root in cds_roots:
 
         # avoid duplicated processing
         if root != cds_root and \
-            any(p.lower() == STD_BKS_DIRNAME for p in cds_root.parent.relative_to(root).as_posix().split('/')):
+            any(p.lower() == STD_BKS_DIRNAME.lower() for p in cds_root.parent.relative_to(root).as_posix().split('/')):
             continue
 
         logger.info(f'=' * 100) #***************************************************************************************
         logger.info(f'Started in "{cds_root}" ...')
 
-        if DEBUG: assert cds_root.name.lower() == STD_CDS_DIRNAME.lower()
         if cds_root.name != STD_CDS_DIRNAME:
-            logger.warning(f'{STD_CDS_DIRNAME} root dirname has incorrect capitalization (got "{cds_root.name}").')
+            logger.warning(f'The dirname "{cds_root.name}" is not "{STD_CDS_DIRNAME}".')
 
         logger.info(f'Checking file types ............................................................................')
         all_paths = listFile(cds_root)

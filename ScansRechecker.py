@@ -27,39 +27,38 @@ def main(root):
     else:
         temp_dir = None
 
-    bks_roots = [d for d in listDir(root) if d.name.lower() == STD_BKS_DIRNAME.lower()]
-    if not bks_roots:
-        logger.info(f'No "{STD_BKS_DIRNAME}" folder is found.')
-        logging.shutdown()
-        return
+    scans_dirs = [d for d in listDir(root) if d.name.lower() == STD_BKS_DIRNAME.lower()]
+    if not scans_dirs:
+        logger.warning(f'No "{STD_BKS_DIRNAME}" is found. '
+                       f'SR will consider the input "{root}" as a "{STD_BKS_DIRNAME}" folder.')
+        scans_dirs = [root]
 
-    for bks_root in bks_roots:
+    for scans_dir in scans_dirs:
 
         # avoid duplicated processing
-        if root != bks_root and \
-            any(p.lower() == STD_BKS_DIRNAME for p in bks_root.parent.relative_to(root).as_posix().split('/')):
+        if root != scans_dir and any(
+            p.lower() == STD_BKS_DIRNAME.lower() for p in scans_dir.parent.relative_to(root).as_posix().split('/')):
             continue
 
         logger.info(f'================================================================================')
-        logger.info(f'Checking "{bks_root}".')
+        logger.info(f'Checking "{scans_dir}".')
 
-        if bks_root.name != STD_BKS_DIRNAME:
-            logger.error(f'The capitalization is incorrect '
-                           f'(got "{bks_root.name}" but expect "{STD_BKS_DIRNAME}").')
+        if scans_dir.name != STD_BKS_DIRNAME:
+            logger.error(f'The dirname "{scans_dir.name}" is not "{STD_BKS_DIRNAME}".')
 
         logger.info(f'Checking file types ............................................................')
-        all_files = listFile(bks_root)
+        all_files = listFile(scans_dir)
         bks_files = listFile(*all_files, ext=ALL_EXTS_IN_SCANS)
         if (diffs := set(all_files).difference(set(bks_files))):
             for diff in diffs:
                 logger.error(f'Found disallowed file "{diff}".')
 
         logger.info(f'Checking file names ............................................................')
-        chkScansNaming(listDir(bks_root), logger=logger)
+        chkScansNaming(listDir(scans_dir), logger=logger)
         logger.info(f'Checking file formats/metadata/content .........................................')
         chkScansFiles(bks_files, temp_dir, logger=logger)
         logger.info(f'Printing scans layout summary ..................................................')
-        logScansSummary(bks_root, bks_files, logger=logger)
+        logScansSummary(scans_dir, bks_files, logger=logger)
 
     logger.info('Scans checking completed.')
     logger.info('')
