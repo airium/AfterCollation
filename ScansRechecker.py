@@ -20,15 +20,12 @@ def main(root):
     logger.info(f'Using ScansRechecker (SR) of AfterCollation {AC_VERSION}')
     logger.info(f'The user input is "{root}".')
 
-    bks_roots = [d for d in listDir(root) if d.name.lower() == STD_BKS_DIRNAME.lower()]
-    if not bks_roots:
-        logger.info(f'No "{STD_BKS_DIRNAME}" folder is found.')
-        logging.shutdown()
-        return
-
-    temp_dir = getTempDir4Hardlink(root)
-    if temp_dir: logger.info(f'Enabled hardlink mode and using a temporary dir "{temp_dir}".')
-    else: logger.info(f'Cannot use hardlink mode. `cwebp` will fail on rare characters in path.')
+    if platform.system() == 'Windows':
+        temp_dir = getTempDir4Hardlink(root)
+        if temp_dir: logger.info(f'Enabled hardlink mode and using a temporary dir "{temp_dir}".')
+        else: logger.info(f'Cannot use hardlink mode. `cwebp` will fail if non-windows-1252 character exists in filepath.')
+    else:
+        temp_dir = None
 
     bks_roots = [d for d in listDir(root) if d.name.lower() == STD_BKS_DIRNAME.lower()]
     if not bks_roots:
