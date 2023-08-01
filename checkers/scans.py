@@ -15,15 +15,21 @@ import tqdm
 
 
 
-def chkScansNaming(input_dirs:list[Path], logger:logging.Logger):
+def chkScansNaming(scans_dir:Path, logger:logging.Logger):
+    '''
+    Check the naming of the scans folder.
 
-    for input_dir in input_dirs:
+    The input dir is considered as a standard "Scans" folder.
+    The checking is done in each subdirs of the input dir.
+    '''
 
-        if DEBUG: assert input_dir.is_dir()
+    if scans_dir.name != STD_BKS_DIRNAME:
+        logger.error(f'The dirname "{scans_dir.name}" is not "{STD_BKS_DIRNAME}".')
 
+    for img_dir in listDir(scans_dir):
 
         # **************************************************************************************************************
-        files = listFile(input_dir, ext=ALL_EXTS_IN_SCANS, rglob=False)
+        files = listFile(img_dir, ext=ALL_EXTS_IN_SCANS, rglob=False)
 
         ext_upper_cased_files = [f for f in files if any((c in string.ascii_uppercase) for c in f.suffix)]
         for f in ext_upper_cased_files:
@@ -38,7 +44,7 @@ def chkScansNaming(input_dirs:list[Path], logger:logging.Logger):
                 file_groups_by_ext[key] = [f]
 
         if len(set(f.stem.lower() for f in files)) != len(files):
-            logger.warning(f'Found different file types have the same filename under "{input_dir}". '
+            logger.warning(f'Found different file types have the same filename under "{img_dir}". '
                             'This should be avoided.')
 
         for k, v in file_groups_by_ext.items():
@@ -58,7 +64,7 @@ def chkScansNaming(input_dirs:list[Path], logger:logging.Logger):
             else:
                 # give this notice when the filenames are not purely number
                 if not all(stem.isdigit() for stem in lower_stems):
-                    logger.info(f'Note non-number named files: "{input_dir}/[{"|".join(stems)}]{k}".')
+                    logger.info(f'Note non-number named files: "{img_dir}/[{"|".join(stems)}]{k}".')
 
             # TODO: is there any other situation in each group to check?
             # however, there are too many possible naming style for files so we can hardly do a 100% trusty check
@@ -71,7 +77,7 @@ def chkScansNaming(input_dirs:list[Path], logger:logging.Logger):
 
 
         #***************************************************************************************************************
-        dirs = listDir(input_dir, rglob=False)
+        dirs = listDir(img_dir, rglob=False)
 
         lower_dirnames_map : dict[str, str] = {}
         lower_dirnames : list[str] = []
@@ -98,42 +104,42 @@ def chkScansNaming(input_dirs:list[Path], logger:logging.Logger):
                 assert not g1.intersection(g2)
 
         if len(groups) >= 2:
-            logger.info(f'Note that the dirs have multiple ({len(groups)}) naming styles under "{input_dir}".')
+            logger.info(f'Note that the dirs have multiple ({len(groups)}) naming styles under "{img_dir}".')
 
         for group in groups:
             lower_names = sorted(name for name in group)
             mc_name = os.path.commonprefix(lower_names) if len(lower_names) > 1 else ''
 
             if mc_name:
-                logger.info(f'Note a common dirname prefix "{input_dir}{os.sep}[{mc_name}]*".')
+                logger.info(f'Note a common dirname prefix "{img_dir}{os.sep}[{mc_name}]*".')
 
                 n = len(mc_name)
                 cased_mc_names = [lower_dirnames_map[lc_name][:n] for lc_name in lower_names]
                 cased_diff_names = [lower_dirnames_map[lc_name][n:] for lc_name in lower_names]
 
                 if any(m1 != m2 for m1, m2 in itertools.combinations(cased_mc_names, 2)):
-                    logger.warning(f'Inconsistent dirname capitalization under "{input_dir}".')
+                    logger.warning(f'Inconsistent dirname capitalization under "{img_dir}".')
 
                 if all(n.isdigit() for n in cased_diff_names):
                     ints = sorted(int(n) for n in cased_diff_names)
                     if len(set(ints)) != len(ints):
-                        logger.error(f'Duplicated dirname index: "{input_dir}{os.sep}{mc_name}*".')
+                        logger.error(f'Duplicated dirname index: "{img_dir}{os.sep}{mc_name}*".')
                     if min(ints) != 1:
-                        logger.warning(f'Dirname is indexed from {min(ints)}: "{input_dir}{os.sep}{mc_name}*".')
+                        logger.warning(f'Dirname is indexed from {min(ints)}: "{img_dir}{os.sep}{mc_name}*".')
                     if ints != list(range(min(ints), max(ints)+1)):
-                        logger.warning(f'Improperly incremented index: "{input_dir}{os.sep}{mc_name}*".')
+                        logger.warning(f'Improperly incremented index: "{img_dir}{os.sep}{mc_name}*".')
                 else:
-                    logger.warning(f'Inconsistent dirname suffix part: "{input_dir}{os.sep}{mc_name}[{"|".join(cased_diff_names)}]".')
+                    logger.warning(f'Inconsistent dirname suffix part: "{img_dir}{os.sep}{mc_name}[{"|".join(cased_diff_names)}]".')
 
 
         #***************************************************************************************************************
         match len(dirs) and len(files):
             case 0, 0: # empty folder doesn't matter in torrent making, so just give a notice
-                logger.info(f'Note an empty dir: "{input_dir}".')
+                logger.info(f'Note an empty dir: "{img_dir}".')
             case 0, 1:
-                logger.info(f'Note a 1-file dir: "{input_dir}".')
+                logger.info(f'Note a 1-file dir: "{img_dir}".')
             case 1, 0:
-                logger.warning(f'Possibly unnecessary dir with only 1 subdir and 0 subfile: "{input_dir}".')
+                logger.warning(f'Possibly unnecessary dir with only 1 subdir and 0 subfile: "{dirs[0]}".')
             case _:
                 pass
 

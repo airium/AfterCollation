@@ -3,6 +3,8 @@ from .vnx import *
 from .naming import *
 from .misc import *
 
+from .scans import *
+
 
 # NOTICE
 # This module is used to hold functions that is:
