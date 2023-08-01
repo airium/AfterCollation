@@ -1,0 +1,7 @@
+﻿This is a modified VGMDB page parser from `https://github.com/hufman/vgmdb`.
+The original license is unknown as the author didn't specify it.
+
+List of changes:
+1. bump Python frmo 2 to 3 (3.10 used as the time of converting)
+2. bugfix that makes vgmdb single-search-result redirection re-works
+3. other necessary fix that make the vgmdb API works as expect

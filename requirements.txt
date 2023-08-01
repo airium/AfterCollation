@@ -1,0 +1,17 @@
+ass-parser
+ass-tag-parser
+beautifulsoup4
+ffmpeg-python
+fonttools
+langdetect
+numpy
+py7zr
+pymediainfo
+PySocks
+PyYAML
+rarfile
+requests
+scipy
+ssd-checker
+tqdm
+webptools
