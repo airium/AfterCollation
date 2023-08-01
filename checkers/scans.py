@@ -49,7 +49,7 @@ def chkScansNaming(input_dirs:list[Path], logger:logging.Logger):
             if lower_common_stem:
 
                 if not lower_common_stem.isdigit():
-                    logger.warning(f'Possibly unnecessary prefix "{lower_common_stem}" for "{v[0].parent}/{lower_common_stem}*{k}".')
+                    logger.warning(f'Possibly unnecessary prefix "{lower_common_stem}" for "{v[0].parent}{os.sep}{lower_common_stem}*{k}".')
                 else:
                     # TODO: can we use a more accurate common prefix warning?
                     # current implementation can rarely raise a false detection
@@ -105,7 +105,7 @@ def chkScansNaming(input_dirs:list[Path], logger:logging.Logger):
             mc_name = os.path.commonprefix(lower_names) if len(lower_names) > 1 else ''
 
             if mc_name:
-                logger.info(f'Note a common dirname prefix "{input_dir}/{mc_name}*".')
+                logger.info(f'Note a common dirname prefix "{input_dir}{os.sep}[{mc_name}]*".')
 
                 n = len(mc_name)
                 cased_mc_names = [lower_dirnames_map[lc_name][:n] for lc_name in lower_names]
@@ -117,13 +117,13 @@ def chkScansNaming(input_dirs:list[Path], logger:logging.Logger):
                 if all(n.isdigit() for n in cased_diff_names):
                     ints = sorted(int(n) for n in cased_diff_names)
                     if len(set(ints)) != len(ints):
-                        logger.error(f'Duplicated dirname index: "{input_dir}/{mc_name}*".')
+                        logger.error(f'Duplicated dirname index: "{input_dir}{os.sep}{mc_name}*".')
                     if min(ints) != 1:
-                        logger.warning(f'Dirname is indexed from {min(ints)}: "{input_dir}/{mc_name}*".')
+                        logger.warning(f'Dirname is indexed from {min(ints)}: "{input_dir}{os.sep}{mc_name}*".')
                     if ints != list(range(min(ints), max(ints)+1)):
-                        logger.warning(f'Improperly incremented index: "{input_dir}/{mc_name}*".')
+                        logger.warning(f'Improperly incremented index: "{input_dir}{os.sep}{mc_name}*".')
                 else:
-                    logger.warning(f'Inconsistent dirname suffix part: "{input_dir}/{mc_name}[{"|".join(cased_diff_names)}]".')
+                    logger.warning(f'Inconsistent dirname suffix part: "{input_dir}{os.sep}{mc_name}[{"|".join(cased_diff_names)}]".')
 
 
         #***************************************************************************************************************
