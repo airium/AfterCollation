@@ -19,7 +19,6 @@ __all__ = ['listFile',
            'tstHardlink',
            'writeCSV',
            'readCSV',
-           'guessVolNumByPath',
            'findCommonParentDir',
            'listM2TS2CSV',
            'listM2TS2YAML',
@@ -122,36 +121,6 @@ def readCSV(csv_path:Path, encoding:str='utf-8-sig', newline:str=os.linesep) -> 
     except:
         return False, []
     return True, data
-
-
-
-
-def guessVolNumByPath(paths:list[Path]) -> list[int|str]:
-
-    fullnames = [path.as_posix() for path in paths]
-    common_parent = Path(os.path.commonprefix(fullnames))
-
-    if not common_parent.exists() or common_parent.is_file():
-        common_parent = common_parent.parent
-    assert common_parent.is_dir()
-
-    rel_paths_strs = [path.parent.relative_to(common_parent).as_posix() for path in paths]
-    rel_paths_parts = [rel_path_str.split('/') for rel_path_str in rel_paths_strs]
-    rel_paths_depths = [len(rel_path_parts) for rel_path_parts in rel_paths_parts]
-
-    processed_bools = [False] * len(paths)
-    assumed_vols : list[int|str] = [''] * len(paths)
-
-    for filenames in itertools.zip_longest(*rel_paths_parts, fillvalue=''):
-        matches = [re.match(VOLUME_NAME_PATTERN, filename) for filename in filenames]
-        for i, path, match, processed_bool in zip(itertools.count(), paths, matches, processed_bools):
-            if not match or processed_bool:
-                continue
-            assumed_vols[i] = int(match.group('idx'))
-            processed_bools[i] = True
-        if all(processed_bools): break
-
-    return assumed_vols
 
 
 

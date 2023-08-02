@@ -1,5 +1,7 @@
+import os
 import json
 import logging
+import itertools
 from pathlib import Path
 
 from configs import *
@@ -9,7 +11,7 @@ import yaml
 
 
 
-__all__ = ['readConf4VNA', 'loadVNAInfo', 'fillFieldsFromVNA']
+__all__ = ['readConf4VNA', 'loadVNAInfo', 'fillFieldsFromVNA', 'guessVolNumByPath']
 
 
 
@@ -118,3 +120,45 @@ def fillFieldsFromVNA(fileinfos:list[FI], vna_configs:list[dict], logger:logging
     for vna_config_used_bool, vna_config in zip(vna_config_used_bools, vna_configs):
         if not vna_config_used_bool:
             logger.warning(f'Unused VNA config "{vna_config}".')
+
+
+
+
+def guessVolNumByPath(paths:list[Path], parent:Path|None=None) -> list[str]:
+    '''
+    If all inputs are from the same directory, it will use `parent` as the common parent instead of the most common prefix.
+    '''
+
+    fullnames = [path.as_posix() for path in paths]
+    most_common_prefix = Path(os.path.commonprefix(fullnames))
+
+    if all(path.is_relative_to(most_common_prefix) for path in paths): # itself or its parent
+        if most_common_prefix.is_file():
+            most_common_prefix = most_common_prefix.parent
+        # if the input is a list of identical inexisting files, we will fail here
+    else: # this means we get a common parent with some filename stems
+        most_common_prefix = most_common_prefix.parent
+
+    if parent and not Path(most_common_prefix).is_relative_to(parent):
+        parent = None # this means the input parent is invalid
+
+    if parent and len(set(path.parent for path in paths)) == 1:
+        most_common_prefix = parent
+
+    rel_paths_strs = [path.parent.relative_to(most_common_prefix).as_posix() for path in paths]
+    rel_paths_parts = [rel_path_str.split('/') for rel_path_str in rel_paths_strs]
+    rel_paths_depths = [len(rel_path_parts) for rel_path_parts in rel_paths_parts]
+
+    processed_bools = [False] * len(paths)
+    assumed_vols : list[str] = [''] * len(paths)
+
+    for filenames in itertools.zip_longest(*rel_paths_parts, fillvalue=''):
+        matches = [re.match(VOLUME_NAME_PATTERN, filename) for filename in filenames]
+        for i, path, match, processed_bool in zip(itertools.count(), paths, matches, processed_bools):
+            if not match or processed_bool:
+                continue
+            assumed_vols[i] = str(int(match.group('idx'))) # remove prefixed zeros
+            processed_bools[i] = True
+        if all(processed_bools): break
+
+    return assumed_vols
