@@ -13,6 +13,7 @@ try:
 
     import ssd_checker                          # pip install ssd_checker
 
+    import ass                                  # pip install ass
     import ass_parser                           # pip install ass-parser
     import ass_tag_parser                       # pip install ass-tag-parser
     import fontTools                            # pip install fonttools

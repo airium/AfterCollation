@@ -14,7 +14,7 @@ VND includes the following behaviors:
 
 
 
-def season(input_dir:Path, vna_file:Path|None=None):
+def main(input_dir:Path, vna_file:Path|None=None):
 
     logger = initLogger(log_path := input_dir.parent.joinpath(f'VND-{TIMESTAMP}.log'))
     logger.info(f'Using VideoNamingDrafter (VND) of AfterCollation {AC_VERSION}')
@@ -43,30 +43,28 @@ def season(input_dir:Path, vna_file:Path|None=None):
     logger.info(f'Loading files with CRC32 checking (this can be slow) ...')
     fis = []
     for vnd_file in tqdm.tqdm(vnd_files, desc='Loading', unit='file', leave=False, ascii=True, dynamic_ncols=True):
-        fis.append(FI(vnd_file, init_crc32=False))
-    # cmpCRC32FI(fis, findCRC32InFilenames(vnd_files), logger)
+        fis.append(FI(vnd_file, init_crc32=True))
+    cmpCRC32FI(fis, findCRC32InFilenames(vnd_files), logger)
     if ENABLE_FILE_CHECKING_IN_VNA:
         chkFiles(fis, logger)
 
+    # NOTE first fill each FI from VNA
+    # this is because audio samples will not appear in files_naming_dicts to be sent to VNE
+    # so we cannot use files_naming_dicts for fillNamingFieldsFromVNA()
     if vna_base or vna_configs:
         logger.info(f'Matching files to VNA instruction ...')
-        # first fill each FI from VNA
-        # this is because audio samples will not appear in naming_dicts
-        # so we cannot send naming_dicts to fillFieldsFromVNA() in which it needs the audio samples
         fillNamingFieldsFromVNA(fis, vna_configs, logger)
-    # now we can get each file's naming dict, also the default
-    naming_dicts = pickInfo4NamingDraft(fis, logger)
-    default_dict = dict(zip(naming_dicts[0].keys(), itertools.repeat(BASE_LINE_LABEL)))
-    for k in VNX_BASE_LINE_EDITABLE_DICT.keys():
-        default_dict[k] = '' # make useful fields empty to notify the user that they can fill it
+    files_naming_dicts = pickInfo4NamingDraft(fis, logger)
+
     # don't forget to update the default dict from VNA, which is not updated in fillFieldsFromVNA()
+    # NOTE leave useful fields as '' to notify the user that they can fill it
+    default_naming_dict = dict(zip(files_naming_dicts[0].keys(), itertools.repeat(BASE_LINE_LABEL)))
     for k, v in VNA_BASE_LINE_EDITABLE_DICT.items():
-        default_dict[k] = vna_base.get(v, '')
+        default_naming_dict[k] = vna_base.get(v, '')
 
     logger.info(f'Preparing to generate the naming proposal ...')
-    # looks good, now start writing the csv
     csv_path = input_dir.parent.joinpath(f'VND-{TIMESTAMP}.csv')
-    csv_dicts = quotEntries4CSV([default_dict] + naming_dicts)
+    csv_dicts = quotEntries4CSV([default_naming_dict] + files_naming_dicts)
     if not writeCSV(csv_path, csv_dicts):
         logger.error(f'Failed to save the naming proposal to "{csv_path}".')
     else:
@@ -81,11 +79,11 @@ def _cli(*paths:Path):
 
     n = len(paths)
     if (n == 1) and (path := paths[0]).is_dir():
-        season(path)
+        main(path)
     elif n == 2 and paths[0].is_dir() and paths[1].is_file() and re.match(VNA_CONFS_FILENAME_PATTERN, paths[1].name):
-        season(paths[0], paths[1])
+        main(paths[0], paths[1])
     elif n == 2 and paths[1].is_dir() and paths[0].is_file() and re.match(VNA_CONFS_FILENAME_PATTERN, paths[0].name):
-        season(paths[1], paths[0])
+        main(paths[1], paths[0])
     else:
         printCliNotice(VND_USAGE, paths)
 
