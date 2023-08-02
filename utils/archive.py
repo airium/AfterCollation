@@ -13,7 +13,7 @@ import rarfile
 addPath()
 
 
-__all__ = [ 'decompressArchives', 'tstDecompressArchives']
+__all__ = [ 'decompressArchives', 'tstDecompressArchive', 'getArchiveFilelist']
 
 
 
@@ -59,15 +59,43 @@ def decompressArchives(*paths:Path, out:Path|None=TEMP_DIR_DECOMPRESS) -> Path|N
 
 
 
-def tstDecompressArchives(*paths:Path, out:Path|None=TEMP_DIR_DECOMPRESS) -> bool:
-
-    ret = decompressArchives(*paths, out=out)
-    if ret is None:
+def tstDecompressArchive(path:Path) -> bool:
+    '''Decompress the files one by one to memory without temporarily saving to disk.'''
+    if not path.is_file(): return False
+    try:
+        match path.suffix.lower():
+            case '.7z':
+                with py7zr.SevenZipFile(path, 'r') as archive:
+                    if archive.testzip():
+                        return False
+            case '.rar':
+                with rarfile.RarFile(path, 'r') as archive:
+                    archive.testrar()
+            case '.zip':
+                with zipfile.ZipFile(path, 'r') as archive:
+                    if archive.testzip():
+                        return False
+            case _:
+                return False
+    except: # rarfile.BadRarFile
         return False
-    else:
-        try:
-            time.sleep(1)
-            shutil.rmtree(ret)
-        except:
-            pass
-        return True
+    return True
+
+
+
+
+def getArchiveFilelist(path:Path) -> list[str]:
+    '''Return the file list inside the given archive file.'''
+    if not path.is_file(): return []
+    match path.suffix.lower():
+        case '.7z':
+            with py7zr.SevenZipFile(path, 'r') as archive:
+                return archive.getnames()
+        case '.rar':
+            with rarfile.RarFile(path, 'r') as archive:
+                return archive.namelist()
+        case '.zip':
+            with zipfile.ZipFile(path, 'r') as archive:
+                return archive.namelist()
+        case _:
+            return []

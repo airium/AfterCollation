@@ -1,72 +1,97 @@
+import shutil
 import logging
-from utils.archive import *
-from utils.fileinfo import FI
-from utils.fileutils import listFile
-from utils.fontutils import getValidFontPaths
-from configs import *
+from pathlib import Path
 
+from configs import *
+from utils import *
 from .image import chkImage
 
 
-__all__ = ['chkFontArcFile', 'chkImageArcFile']
+__all__ = ['chkArcFile', 'chkFontArcDir', 'chkImageArcDir']
 
 
 
 
-def _chkArcFile(fi:FI, logger:logging.Logger, decode:bool=True) -> bool:
+def chkArcFile(fi:FI, logger:logging.Logger, decompress:bool=True) -> bool:
 
     if fi.ext not in COMMON_ARCHIVE_EXTS:
-        logger.error('The file is not an archive file.')
+        logger.error('The file is not a known archive file.')
         return False
-
     if fi.ext not in VNx_ARC_EXTS:
         logger.warning(f'The archive checker is not designed to check the file type "{fi.ext}".')
         return False
-
-    if not tstDecompressArchives(fi.path):
+    if not tstDecompressArchive(fi.path):
         logger.error('The archive file cannot be decompressed.')
         return False
 
-    return True
+    filelist = getArchiveFilelist(fi.path)
+
+    has_png, has_font = False, False
+    for filename in filelist:
+        if filename.lower().endswith(VNx_IMG_EXTS): has_png = True
+        if filename.lower().endswith(COMMON_FONT_EXTS): has_font = True
+        if has_png and has_font: break
+
+    ok = True
+
+    if has_png and has_font:
+        logger.error('The file contains both PNG and FONT files.')
+        ok = False
+    if not has_png and not has_font:
+        logger.error('The file contains neither PNG nor FONT files.')
+        ok = False
+
+    if decompress and (has_png or has_font):
+        path = decompressArchives(fi.path)
+        if not path:
+            logger.error('Failed to decompress the archive file to test the content.')
+            return False
+        if has_png:
+            ok = ok if chkImageArcDir(path, logger) else False
+        if has_font:
+            ok = ok if chkFontArcDir(path, logger) else False
+        shutil.rmtree(path, ignore_errors=True)
+
+    return ok
 
 
 
-def chkFontArcFile(fi:FI, logger:logging.Logger):
 
-    if not _chkArcFile(fi, logger):
-        return
+def chkFontArcDir(path:Path, logger:logging.Logger) -> bool:
 
-    if not (path := decompressArchives(fi.path)):
-        # NOTE this should be never reached as we checked it in _chkArcFile()
-        logger.error('Failed to decompress the archive file.')
-        return
+    if not path.is_dir():
+        return False
 
+    ok = True
     all_files = listFile(path)
     all_font_files = listFile(path, ext=COMMON_FONT_EXTS)
+    valid_font_files = getValidFontPaths(*all_font_files)
+
     if len(all_files) != len(all_font_files):
         logger.error('The archive file contains non-FONT files.')
-
-    valid_font_files = getValidFontPaths(*all_font_files)
+        ok = False
     if len(all_font_files) != len(valid_font_files):
         logger.error('Some font files in the archive are NOT valid.')
+        ok = False
+
+    return ok
 
 
 
 
-def chkImageArcFile(fi:FI, logger:logging.Logger):
+def chkImageArcDir(path:Path, logger:logging.Logger) -> bool:
 
-    if not _chkArcFile(fi, logger):
-        return
+    if not path.is_dir():
+        return False
 
-    if not (path := decompressArchives(fi.path)):
-        # NOTE this should be never reached as we checked it in _chkArcFile()
-        logger.error('Failed to decompress the archive file.')
-        return
-
+    ok = True
     all_files = listFile(path)
     all_image_files = listFile(path, ext=VNx_IMG_EXTS)
+
     if len(all_files) != len(all_image_files):
         logger.error('The archive file contains non-PNG files.')
-
+        ok = False
     for image_file in all_image_files:
-        chkImage(FI(image_file), logger)
+        ok = ok if chkImage(FI(image_file), logger) else False
+
+    return ok

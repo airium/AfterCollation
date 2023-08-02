@@ -46,8 +46,7 @@ def chkFile(fi:FI, logger:logging.Logger):
         case 'ass':
             chkAssFile(fi, logger)
         case '7z'|'zip'|'rar':
-            chkImageArcFile(fi, logger)
-            chkFontArcFile(fi, logger)
+            chkArcFile(fi, logger)
         case _:
             logger.error(f'Got "{fi.ext}" but {VNx_ALL_EXTS=}.')
 
