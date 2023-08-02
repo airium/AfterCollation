@@ -54,6 +54,8 @@ def cmpCRC32FI(fileinfos:FI|list[FI], expected_crc32s:str|list[str], logger:logg
                 logger.error(f'CRC32 mismatches, actual 0x{fi.crc32} ≠ 0x{expected_crc32} for "{fi.path}".')
 
 
+
+
 def printCliNotice(usage_txt:str, paths:list|tuple):
         print(usage_txt)
         print()

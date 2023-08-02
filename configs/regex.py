@@ -1,3 +1,4 @@
+import re
 from re import compile as rc
 
 
@@ -29,7 +30,7 @@ ASS_SUFFIX_PATTERN = rc(r'\.(?P<lang>.*)')
 VID_SUFFIX_PATTERN = rc(r'\[(?P<lang>.*)\]')
 ASS_INLINE_FONTNAME_BASE_PATTERN = rc(r'\\fn([^\\}]+)')
 ASS_INLINE_STYLENAME_BASE_PATTERN = rc(r'\\r([^\\}]+)')
-
+ASS_FILENAME_EARLY_PATTERN = rc(r'^(?P<name>.*)(?P<idx>[0-9]{1,3}(\.[0-9])?)[.-]?(?P<lang>(chs|cht|sc|tc)(&(jp|jap|jpn))?)?\.ass', re.IGNORECASE)
 
 # NOTE this is a bytes regex instead of str, since we don't need to decode stderr
 DWEBP_STDERR_PARSE_PATTERN = rc(rb'can be decoded \(dimensions: (?P<width>[0-9]{1,5}) x (?P<height>[0-9]{1,5}) (?P<alpha> \(with alpha\))?. Format: (?P<mode>lossy|lossless)\).')
@@ -72,4 +73,4 @@ ALBUM_DIR_FULL_PATTERN = rc(
     r"\)$")
 
 # don't leak the group name
-del rc
+del re, rc

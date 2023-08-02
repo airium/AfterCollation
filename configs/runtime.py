@@ -141,7 +141,7 @@ VNA_BASE_LINE_EDITABLE_DICT = {
 }
 
 
-#TODO add relation assert here to ensure vnx/a dicts are consistent
+#TODO add relation assert here to ensure vnx dicts are consistent
 
 # NOTE DONT change the order of these keys in the dict
 # if change, also change the order in `read/writeCSV4VNR()`
@@ -276,3 +276,13 @@ ENABLED_FONT_NAME_IDS = (
 )
 
 FONT_SUBFAMILY_NAME_IDS = (2, 17)
+
+LANG_NORMALIZE_DICT = {
+    'chs': 'chs',
+    'sc': 'chs',
+    'cht': 'cht',
+    'tc': 'cht',
+    'jpn': 'jpn',
+    'jp': 'jpn',
+    'jap': 'jpn'
+}

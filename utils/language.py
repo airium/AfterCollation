@@ -1,6 +1,9 @@
 import langdetect
 
 
+__all__ = ['chkLang']
+
+
 
 
 def chkLang(chars:str, n:int=5) -> str:

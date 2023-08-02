@@ -51,7 +51,6 @@ def cleanName(chars:str) -> str:
 
 
 
-
 def cleanPath(path:str) -> str:
     # as_posix() converts '\' to '/' and removes redundant '/'s
     path = str(Path(path.strip()).as_posix())

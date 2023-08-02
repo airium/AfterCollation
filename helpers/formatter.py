@@ -1,80 +1,13 @@
 import logging
-import itertools
 from pathlib import Path
+
 
 from configs import *
 from utils import *
 from .misc import *
 
-__all__ = ['pickInfo4NamingDraft', 'loadNamingDraftCSV',
-           'fmtQualityLabel', 'fmtTrackLabel']
 
-
-
-
-def pickInfo4NamingDraft(fis:list[FI], logger:logging.Logger) -> list[dict[str, str]]:
-    ret = []
-
-    for fi in fis:
-        d : dict[str, str] = dict()
-
-        for k, v in VNX_ALL_FIELDS_DICT.items():
-            d[k] = ''
-
-        d[FULLPATH_CN] = fi.path.resolve().as_posix()
-        d[CRC32_CN] = fi.crc32
-
-        for k, v in VNX_USER_FIELDS_NAMING_DICT.items():  # user fields
-            # these keys may be already filled from VNA
-            d[k] = getattr(fi, v, '')
-
-        # the following keys are just for presenting mediainfo
-        # they have no usage in later stages
-        d[DURATION_CN] = fi.fmtGeneralDuration()
-        d[FILESIZE_CN] = fi.fmtFileSize()
-        d[EXTENSION_CN] = fi.ext
-        d[CONTAINER_CN] = fi.format
-        d[TRACKCOMP_CN] = fi.fmtTrackTypeCountsWithOrder()
-        d[TR_VIDEO_CN] = '／'.join(fi.digestVideoTracksInfo())
-        d[TR_AUDIO_CN] = '／'.join(fi.digestAudioTracksInfo())
-        d[TR_TEXT_CN] = '／'.join(fi.digestTextTracksInfo())
-        d[TR_MENU_CN] = '／'.join(fi.digestMenuTracksInfo())
-
-        ret.append(d)
-
-    return ret
-
-
-
-
-def loadNamingDraftCSV(path:Path, logger:logging.Logger) -> tuple[dict[str, str], list[dict[str, str]]]:
-
-    succ, lines = readCSV(path)
-    if not succ:
-        logger.error(f'Error in loading CSV "{path}".')
-        return {}, []
-    lines = unquotEntries4CSV(lines)
-
-    try:
-        infos = []
-        for info in lines:
-            d : dict[str, str] = {}
-            for k, v in VNX_CSV_PERSISTENT_KEY_DICT.items():
-                d[v] = info[k]
-            for k, v in VNX_USER_FIELDS_NAMING_DICT.items():
-                d[v] = info[k]
-            infos.append(d)
-        # TODO update the logic to find the base line by BASE_LINE_LABEL, not the first line
-        default_info, infos = infos[0], infos[1:]
-        enabled = toEnabledList([info[ENABLE_VAR] for info in infos])
-        enabled_infos = list(itertools.compress(infos, enabled))
-        if len(infos) != len(enabled_infos):
-            logger.info(f'Enabled {len(enabled_infos)} out of {len(infos)} files in the naming plan.')
-    except KeyError as e:
-        logger.error(f'Error in the finding required key in csv data ({e}).')
-        return {}, []
-
-    return default_info, enabled_infos
+__all__ = ['fmtQualityLabel', 'fmtTrackLabel']
 
 
 

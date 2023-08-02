@@ -52,7 +52,7 @@ def main(input_dir:Path, vna_file:Path|None=None):
     # so the naming instruction in VNA will not be overwritten
     # also, audio samples will not appear in files_naming_dicts to be sent to VNE
     # so we cannot use files_naming_dicts for fillNamingFieldsFromVNA()
-    guessNamingFromUnnamed(fis, logger)
+    guessNamingFieldsEarly(fis, logger)
     if vna_base or vna_configs:
         logger.info(f'Matching files to VNA instruction ...')
         fillNamingFieldsFromVNA(fis, vna_configs, logger)

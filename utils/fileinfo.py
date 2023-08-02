@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import re
 from typing import Any
 from pathlib import Path
@@ -6,7 +7,6 @@ from pathlib import Path
 from .crc32 import getCRC32
 from .mediainfo import getMediaInfo
 from .mediautils import pickAudioSamples
-
 from configs import *
 
 
@@ -15,7 +15,6 @@ from multiprocessing import Pool
 
 
 __all__ = ['FileInfo', 'FI', 'getFileInfo', 'getFileInfoList']
-
 
 
 

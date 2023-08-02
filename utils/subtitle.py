@@ -45,17 +45,19 @@ def filterValidASSFiles(*path:Path, encoding:str='utf-8-sig') -> list[Path]:
 
 
 
-def toAssFileObj(path:Path, encoding:str='utf-8-sig') -> AssFile:
-    '''Use `tstAssFile()` if necessary.'''
-    return read_ass(path.read_text(encoding=encoding))
+def toAssFileObj(path:Path, encoding:str='utf-8-sig', test:bool=False) -> AssFile|None:
+    if test:
+        return read_ass(path.read_text(encoding=encoding)) if tstAssFile(path) else None
+    else:
+        return read_ass(path.read_text(encoding=encoding))
 
 
 
 
-def toAssFileObjs(paths:list[Path], encoding:str|list[str]='utf-8-sig') -> list[AssFile]:
+def toAssFileObjs(paths:list[Path], encoding:str|list[str]='utf-8-sig', test:bool=False) -> list[AssFile|None]:
     encodings = [encoding] * len(paths) if isinstance(encoding, str) else encoding
     assert len(paths) == len(encodings)
-    return [read_ass(path.read_text(encoding=encoding)) for path, encoding in zip(paths, encodings)]
+    return [toAssFileObj(path, encoding=encoding, test=test) for path, encoding in zip(paths, encodings)]
 
 
 
