@@ -10,8 +10,8 @@ from utils import *
 import yaml
 
 
-
-__all__ = ['readConf4VNA', 'loadVNAInfo', 'fillNamingFieldsFromVNA', 'guessVolNumByPath']
+__all__ = ['readConf4VNA', 'loadVNAInfo', 'fillNamingFieldsFromVNA',
+           'guessVolNumByPath', 'guessNamingFromUnnamed']
 
 
 
@@ -162,3 +162,20 @@ def guessVolNumByPath(paths:list[Path], parent:Path|None=None) -> list[str]:
         if all(processed_bools): break
 
     return assumed_vols
+
+
+
+def guessNamingFromUnnamed(fis:list[FI], logger:logging.Logger):
+    '''We can actually guess very few fields at VND, but try it.'''
+
+    for i, fi in enumerate(fis):
+
+        match fi.ext:
+            case 'ass':
+                pass # TODO
+            case '7z'|'zip'|'rar':
+                pass # TODO
+            case 'mka':
+                pass # TODO
+            case 'flac':
+                pass # TODO
