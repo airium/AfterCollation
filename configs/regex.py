@@ -27,7 +27,8 @@ BDMV_M2TS_NAME_PATTERN = rc(r'^[0-9]{5}\.(m2ts|M2TS)$')
 UNAMED_OKE_STEM_PATTERN = rc(r'^(?P<stem>.+)(\[(?P<crc32>[0-9a-fA-F]{8})\])$')
 ASS_SUFFIX_PATTERN = rc(r'\.(?P<lang>.*)')
 VID_SUFFIX_PATTERN = rc(r'\[(?P<lang>.*)\]')
-ASS_FONT_BASE_PATTERN = rc(r'\\fn([^\\]+)')
+ASS_INLINE_FONTNAME_BASE_PATTERN = rc(r'\\fn([^\\}]+)')
+ASS_INLINE_STYLENAME_BASE_PATTERN = rc(r'\\r([^\\}]+)')
 
 
 # NOTE this is a bytes regex instead of str, since we don't need to decode stderr
