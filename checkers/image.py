@@ -9,7 +9,7 @@ from utils.webputils import *
 from configs import *
 
 
-__all__ = ['chkImage', 'chkScansImage', 'cmpImageContent']
+__all__ = ['chkImage', 'chkScansImage', 'chkImageTracks', 'cmpImageContent']
 
 
 
@@ -24,10 +24,10 @@ def chkImage(fi:FI, logger:logging.Logger, decode:bool=True) -> bool:
 
     filesize = fi.path.stat().st_size
     if filesize == 0:
-        logger.error(f'Empty file "{fi.path}".')
+        logger.error(f'The file is empty.')
         return False # NOTE return on empty file
     elif filesize < SMALL_IMAGE_FILE_SIZE:
-        logger.warning(f'Very small image "{fi.path}".')
+        logger.warning('The image file is very small.')
 
     #* check format/extension consistency **********************************************************
 
@@ -40,7 +40,7 @@ def chkImage(fi:FI, logger:logging.Logger, decode:bool=True) -> bool:
 
     #* check decoding ******************************************************************************
     if decode and not tryFFMPEGDecode(fi.path):
-        logger.error(f'Failed to decode the image file "{fi.path}".')
+        logger.error(f'Failed to decode the image file.')
         return False
 
     return True
@@ -100,6 +100,23 @@ def chkScansImage(fi:FI, temp_dir:Path|None, logger:logging.Logger, decode:bool=
         logger.info(f'"{fi.path}" ({int(w)}x{int(h)}) may be 1200dpi or higher. Consider downsampling it.')
     if mode.lower() == 'lossless':
         logger.error(f'Detected lossless image "{fi.path}". This is disallowed.')
+
+
+
+
+def chkImageTracks(fi:FI, logger:logging.Logger, decode:bool=True):
+
+    if fi.ext not in COMMON_IMAGE_EXTS:
+        logger.error(f'The file is not a known file type with image.')
+        return
+    if fi.ext not in VNx_IMG_EXTS:
+        logger.warning(f'The image checker is not designed to check the file type "{fi.ext}".')
+        return
+    if not fi.has_image:
+        logger.error(f'The file has no image track.')
+        return
+
+    chkImage(fi, logger, decode=decode)
 
 
 

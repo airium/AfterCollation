@@ -11,7 +11,7 @@ import yaml
 
 
 
-__all__ = ['readConf4VNA', 'loadVNAInfo', 'fillFieldsFromVNA', 'guessVolNumByPath']
+__all__ = ['readConf4VNA', 'loadVNAInfo', 'fillNamingFieldsFromVNA', 'guessVolNumByPath']
 
 
 
@@ -92,7 +92,7 @@ def loadVNAInfo(vna_file:Path|None, logger:logging.Logger) -> tuple[dict, list[d
 
 
 
-def fillFieldsFromVNA(fileinfos:list[FI], vna_configs:list[dict], logger:logging.Logger):
+def fillNamingFieldsFromVNA(fileinfos:list[FI], vna_configs:list[dict], logger:logging.Logger):
 
     if not vna_configs: return
 

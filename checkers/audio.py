@@ -6,24 +6,18 @@ from configs import *
 
 import numpy as np
 
-__all__ = ['chkAudioFI', 'cmpAudioContent']
+__all__ = ['chkAudioTracks', 'cmpAudioContent']
 
 
-def chkAudioFI(fi:FI, logger:logging.Logger, decode:bool=True):
+def chkAudioTracks(fi:FI, logger:logging.Logger, decode:bool=True):
 
-    if fi.ext not in COMMON_AUDIO_EXTS:
-        logger.error(f'The input file type {fi.ext} is not an audio file.')
+    if fi.ext not in COMMON_VIDEO_EXTS + COMMON_AUDIO_EXTS:
+        logger.error(f'The file is not a known file type with audio.')
         return
-
-    expected_format = EXTS2FORMATS.get(fi.ext)
-    if not expected_format:
-        logger.warning(f'Unhandled audio file extension "{fi.ext}".')
-    if expected_format != fi.gtr.format:
-        logger.error(f'The actual media format "{fi.gtr.format}" mismatched file ext "{fi.ext}".')
-        return
-
     if fi.ext not in VNx_WITH_AUD_EXTS:
-        logger.warning(f'The checker is not designed to check the file type "{fi.ext}". Stopping audio check.')
+        logger.warning(f'The audio checker is not designed to check the file type "{fi.ext}".')
+        return
+    if not fi.has_audio:
         return
 
     #* ---------------------------------------------------------------------------------------------
@@ -55,19 +49,20 @@ def chkAudioFI(fi:FI, logger:logging.Logger, decode:bool=True):
                     logger.warning(f'The MKV audio track #{i} is >2ch, which should placed in MKA.')
                 if not atr.language:
                     logger.warning(f'The MKV audio track #{i} is missing language tag.')
-                if atr.language not in COMMON_AUDIO_LANGS:
+                elif atr.language not in COMMON_AUDIO_LANGS:
                     logger.warning(f'The MKV audio track #{i} has uncommon language label "{atr.language}".')
             # TODO how can we detect and warn the user that IV should use AAC?
             # implementation here
 
         case 'mka':
-            mka_stem = m.group('stem').lower() if (m := re.match(UNAMED_OKE_STEM_PATTERN, fi.path.stem)) else ''
-            if mka_stem:
-                mkv_files = listFile(fi.path.parent, rglob=False)
-                mkv_stems = [m.group('stem').lower() for m in [re.match(UNAMED_OKE_STEM_PATTERN, mkv.stem) for mkv in mkv_files] if m]
-                if mka_stem in mkv_stems:
-                    logger.warning('Cannot find the counterpart MKV of the same filename.')
-            else: logger.warning('The filename of MKA disallows the checker to find the counterpart MKV.')
+            if not fi.path.with_suffix('.mkv').is_file():
+                mka_stem = m.group('stem').lower() if (m := re.match(UNAMED_OKE_STEM_PATTERN, fi.path.stem)) else ''
+                if mka_stem:
+                    mkv_files = listFile(fi.path.parent, rglob=False)
+                    mkv_stems = [m.group('stem').lower() for m in [re.match(UNAMED_OKE_STEM_PATTERN, mkv.stem) for mkv in mkv_files] if m]
+                    if mka_stem in mkv_stems:
+                        logger.warning('Cannot find the counterpart MKV of the same filename.')
+                else: logger.warning('Cannot find the counterpart MKV (filename too complicated).')
 
             for i, atr in enumerate(fi.audio_tracks):
                 if i == 0 and atr.compression_mode != 'Lossless':
@@ -122,7 +117,7 @@ def chkAudioFI(fi:FI, logger:logging.Logger, decode:bool=True):
             pass # TODO seems difficult to check something meaningful here (AAC has no such tag)
         if not atr.duration:
             logger.error(f'The audio track #{i} has no duration.')
-        elif not matchTime(atr.duration, fi.duration, MAX_TRACK_DURATION_DIFF_MS):
+        elif not matchTime(int(float(atr.duration)), fi.duration, MAX_TRACK_DURATION_DIFF_MS):
                 logger.warning(f'The audio track #{i} has a different duration.')
         if atr.delay:
             logger.warning(f'The audio track #{i} has delay ({atr.delay}).')

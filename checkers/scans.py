@@ -31,6 +31,8 @@ def chkScansNaming(scans_dir:Path, logger:logging.Logger):
     if scans_dir.name != STD_BKS_DIRNAME:
         logger.error(f'The dirname "{scans_dir.name}" is not "{STD_BKS_DIRNAME}".')
 
+    # TODO add a depth check
+
     for img_dir in listDir(scans_dir):
 
         # **************************************************************************************************************

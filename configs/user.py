@@ -13,6 +13,10 @@ ENABLE_VGMDB : bool = True
 ENABLE_MUSICBREAINZ : bool = False
 ENABLE_FREEDB : bool = False
 
+# you can optionally turn off VNA's file checking
+# this will make VNA much faster to generate the naming proposal (VND.csv)
+ENABLE_FILE_CHECKING_IN_VNA : bool = True
+
 # the temporary directory name for ScansRechecker's hardlink functionality
 # it is better a dirname, don't use an absolute path
 TEMP_DIRNAME_HARDLINK : str = '@AC-Temp'
@@ -20,7 +24,7 @@ TEMP_DIRNAME_HARDLINK : str = '@AC-Temp'
 # this is the default temp decompress dir to check the fonts archive
 # it can be a relative path or absolute path
 # if will be placed
-TEMP_DIRPATH_DECOMPRESS : str = '@AC-Temp'
+TEMP_DIRPATH_DECOMPRESS : str = '$TEMP'
 
 # you can add necessary paths here so making AC able to locate executables
 USER_PATHS : list[str] = [

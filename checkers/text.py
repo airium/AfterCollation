@@ -4,29 +4,38 @@ from configs import *
 from utils import *
 
 
+__all__ = ['chkTextTracks', 'chkPGS', 'chkAssFile', 'cmpTextContent']
 
 
-def chkTextFI(input:FI, logger:logging.Logger):
 
-    if not input.has_text:
+
+def chkTextTracks(fi:FI, logger:logging.Logger):
+
+    if fi.ext not in COMMON_VIDEO_EXTS:
+        logger.error(f'The file is not a known file type with text.')
+        return
+    if fi.ext not in VNx_VID_EXTS:
+        logger.warning(f'The text checker is not designed to check the file type "{fi.ext}".')
+        return
+    if not fi.has_text:
         return
 
-    text_tracks = input.text_tracks
+    text_tracks = fi.text_tracks
     if len(text_tracks) > 1:
         logger.info(f'The file has multiple ({len(text_tracks)}) text tracks.')
 
     for text_track in text_tracks:
         match text_track.format:
             case 'PGS':
-                chkPGS(input, logger)
+                chkPGS(fi, logger)
             case 'ASS':
-                chkPGS(input, logger)
+                chkPGS(fi, logger)
             case _:
                 logger.warning(f'Unhandled text track format "{text_track.format}".')
 
-    if (input.ext in VNx_EXT_AUD_EXTS) and input.text_tracks:
+    if (fi.ext in VNx_EXT_AUD_EXTS) and fi.text_tracks:
         logger.warning('External audio track should not have subtitle track.')
-    for i, text_track in enumerate(input.text_tracks, start=1):
+    for i, text_track in enumerate(fi.text_tracks, start=1):
         # TODO: confirm PGS should be default or not
         if i == 1:
             if text_track.default != 'Yes':
@@ -44,7 +53,7 @@ def chkTextFI(input:FI, logger:logging.Logger):
 
 
 
-def chkPGS(input:FI, logger:logging.Logger):
+def chkPGS(fi:FI, logger:logging.Logger):
     logger.info('PGS checking inside a video file is not supported yet.')
 
 
@@ -59,5 +68,5 @@ def chkAssFile(fi:FI, logger:logging.Logger):
 
 
 
-def cmpTextContent(input1:FI|list[FI], input2:FI|list[FI], logger:logging.Logger):
+def cmpTextContent(fi1:FI|list[FI], fi2:FI|list[FI], logger:logging.Logger):
     logger.info('Text content comparison inside media files is not supported yet.')

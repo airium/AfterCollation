@@ -70,21 +70,21 @@ def cmpMenuContent(input1:FI|list[FI], input2:FI|list[FI], logger:logging.Logger
 
 
 
-def chkMenu(input:FI, logger:logging.Logger):
+def chkMenuTracks(fi:FI, logger:logging.Logger):
 
-    if not input.has_menu:
+    if fi.ext not in COMMON_VIDEO_EXTS:
+        logger.error(f'The file is not a known file type with menu.')
+        return
+    if fi.ext not in VNx_VID_EXTS:
+        logger.warning(f'The menu checker is not designed to check the file type "{fi.ext}".')
+        return
+    if not fi.has_menu:
         return
 
-    if input.ext not in COMMON_VIDEO_EXTS:
-        return
-
-    if not input.has_menu:
-        logger.info(f'"{input.path}" has no menu track.')
-        return
-    if len(input.menu_tracks) > 1:
+    if len(fi.menu_tracks) > 1:
         logger.warning('The file has >1 menus.')
 
-    for t in input.menu_tracks:
+    for t in fi.menu_tracks:
         # first
         chap_times, chap_texts = list(zip(*[(k, v) for (k, v) in t.to_data().items() if re.match(MEDIAINFO_CHAPTER_PATTERN, k)]))
         # disable sorting may preserve the original order?
@@ -117,7 +117,7 @@ def chkMenu(input:FI, logger:logging.Logger):
         if m := re.match(MEDIAINFO_CHAPTER_PATTERN, last_chap_time):
             hour, minute, milisecond = m.groups()
             last_chap_time = int(hour) * 3600000 + int(minute) * 60000 + int(milisecond)
-            duration = input.duration
+            duration = fi.duration
             if last_chap_time >= (duration - MAX_DISTANCE_FROM_LAST_CHAPTER_VIDEO_END):
                 logger.warning('The last chapter locates too close to the video end.')
             elif last_chap_time >= duration:
@@ -125,7 +125,7 @@ def chkMenu(input:FI, logger:logging.Logger):
             else:
                 pass # ok
         # check if the menu language label agrees with its text
-        if input.gtr.format == 'Matroska': # MP4 chap has no language label
+        if fi.gtr.format == 'Matroska': # MP4 chap has no language label
             if len(chap_langs := set(chap_langs)) != 1:
                 logger.warning('Menu language label looks malformed.')
             if chap_langs and (chap_lang := chap_langs.pop()):
@@ -133,10 +133,11 @@ def chkMenu(input:FI, logger:logging.Logger):
                     found_lang = 'en'
                 else:
                     found_langs = []
-                    chap_desp = ' '.join(chap_desps)
+                    chap_desp = ' '.join(chap_desps).lower()
                     n = 0
                     for en_text in KNOWN_MENU_EN_TEXTS:
-                        if en_text.lower() in chap_desp: n += 1
+                        if en_text.lower() in chap_desp:
+                            n += 1
                     if n >= 2:  # consider it's English if >2 matches
                         found_lang = 'en'
                     else:
@@ -144,8 +145,6 @@ def chkMenu(input:FI, logger:logging.Logger):
                 if chap_lang != found_lang:
                     logger.warning(f'Menu language detected "{found_lang}" != tagged "{chap_lang}" '
                                     '(note the detection is not accurate at the moment).')
-
-
 
     # val1 = CHAP_NAME_PATTERN.match(line1).groups()
     # val2 = CHAP_NAME_PATTERN.match(line2).groups()

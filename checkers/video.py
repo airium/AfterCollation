@@ -13,20 +13,15 @@ def cmpVideoContent(fis1:FI|list[FI], fis2:FI|list[FI], logger:logging.Logger):
 
 
 
-def chkVideoFI(fi:FI, logger:logging.Logger, decode:bool=False):
+def chkVideoTracks(fi:FI, logger:logging.Logger, decode:bool=False):
 
     if fi.ext not in COMMON_VIDEO_EXTS:
-        logger.error(f'The input file type {fi.ext} is not a video file.')
+        logger.error(f'The file is not a known file type with video.')
         return
-
-    expected_format = EXTS2FORMATS.get(fi.ext)
-    if not expected_format:
-        logger.error(f'Unhandled video file extension "{fi.ext}".')
-    if expected_format != fi.gtr.format:
-        logger.error(f'The actual media format "{fi.gtr.format}" mismatched file ext "{fi.ext}".')
-
     if fi.ext not in VNx_VID_EXTS:
-        logger.warning(f'The checker is not designed to check the file type "{fi.ext}". Stopping video check.')
+        logger.warning(f'The video checker is not designed to check the file type "{fi.ext}".')
+        return
+    if not fi.has_video:
         return
 
     #* ---------------------------------------------------------------------------------------------
@@ -72,7 +67,7 @@ def chkVideoFI(fi:FI, logger:logging.Logger, decode:bool=False):
             logger.warning(f'The video track #{i} is not using 4:2:0 ({vtr.chroma_subsampling}).')
         if not vtr.duration:
             logger.warning(f'The video is missing duration information.')
-        elif not matchTime(vtr.duration, fi.duration, MAX_TRACK_DURATION_DIFF_MS):
+        elif not matchTime(int(float(vtr.duration)), fi.duration, MAX_TRACK_DURATION_DIFF_MS):
             logger.warning(f'The video track #{i} has a different duration.')
         if vtr.language:
             logger.warning(f'The video track #{i} should not have a language tag.')

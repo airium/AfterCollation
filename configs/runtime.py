@@ -186,6 +186,8 @@ EXTS2FORMATS = {
     'zip' : 'ZIP',
     '7z'  : '7-Zip',
     'rar' : 'RAR',
+
+    'ass' : 'ass',
 }
 
 
@@ -197,6 +199,8 @@ VNx_STA_AUD_EXTS = ('flac', )            # standalone audio
 VNx_IMG_EXTS = ('png',)                  # png is only allowed as SPs
 VNx_SUB_EXTS = ('ass',)                  # subtitle
 VNx_ARC_EXTS = ('zip', '7z', 'rar')      # archives
+
+
 VNx_WITH_AUD_EXTS = VNx_VID_EXTS + VNx_EXT_AUD_EXTS + VNx_STA_AUD_EXTS # NOTE if updated, remember to update `chkAudioFI()`
 VNx_MAIN_EXTS = VNx_VID_EXTS + VNx_EXT_AUD_EXTS + VNx_STA_AUD_EXTS + VNx_IMG_EXTS
 VNx_ALL_EXTS = VNx_MAIN_EXTS + VNx_SUB_EXTS + VNx_ARC_EXTS
@@ -217,6 +221,19 @@ VGMDB_BONUS_CD_KEYWORDS : list[str] = ['bonus', 'enclosed', 'enclosure']
 
 VNA_OUTPUT_EXTS : list[str] = ['csv', 'yaml', 'json']
 
+MAXIMAL_TRACK_TYPES_IN_EXT = {
+    'mkv': ('Video', 'Audio', 'Text', 'Menu'),
+    'mp4': ('Video', 'Audio', 'Menu'),
+    'mka': ('Audio', ),
+    'png': ('Image', ),
+}
+
+MINIMAL_TRACK_TYPES_IN_EXT = {
+    'mkv': ('Video', ),
+    'mp4': ('Video', 'Audio'),
+    'mka': ('Audio', ),
+    'png': ('Image', ),
+}
 
 # this is the start point and length (both in second) used to detect the offset between two audio tracks
 # *change them accordingly if you want to detect the offset from other interval

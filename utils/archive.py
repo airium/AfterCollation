@@ -3,7 +3,7 @@ import shutil
 import zipfile
 from pathlib import Path
 
-from configs.user import TEMP_DIR_PATH
+from configs.user import TEMP_DIR_DECOMPRESS
 from configs.time import TIMESTAMP
 from utils.environment import addPath
 
@@ -18,7 +18,7 @@ __all__ = [ 'decompressArchives', 'tstDecompressArchives']
 
 
 
-def decompressArchives(*paths:Path, out:Path|None=TEMP_DIR_PATH) -> Path|None:
+def decompressArchives(*paths:Path, out:Path|None=TEMP_DIR_DECOMPRESS) -> Path|None:
     '''
     Decompresses the given archive files to the given output dir.
     Return the output dir if succeeded, otherwise None.
@@ -59,7 +59,7 @@ def decompressArchives(*paths:Path, out:Path|None=TEMP_DIR_PATH) -> Path|None:
 
 
 
-def tstDecompressArchives(*paths:Path, out:Path|None=TEMP_DIR_PATH) -> bool:
+def tstDecompressArchives(*paths:Path, out:Path|None=TEMP_DIR_DECOMPRESS) -> bool:
 
     ret = decompressArchives(*paths, out=out)
     if ret is None:
