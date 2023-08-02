@@ -48,7 +48,10 @@ def chkContainer(fi:FI, logger:logging.Logger) -> bool:
         logger.error(f'Unhandled file extension "{fi.ext}".')
         return False
 
-    if expected_format != fi.format:
+    # if the ASS file is non-bom encoding, MediaInfo can recognise it
+    if fi.ext == 'ass' and expected_format == 'ASS' and fi.format == 'ass':
+        pass
+    elif expected_format != fi.format:
         logger.error(f'The actual media format "{fi.format}" mismatched file extension "{fi.ext}".')
         return False
 

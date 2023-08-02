@@ -1,13 +1,15 @@
-from ass_parser import read_ass, AssFile
-from ass_tag_parser import parse_ass, AssTagFontName
-from pathlib import Path
-from .fileutils import tstFileEncoding
 import re
+from pathlib import Path
+
+from .fileutils import tstFileEncoding
 from configs.regex import ASS_FONT_BASE_PATTERN
 
+import ass
+from ass_parser import read_ass, AssFile
+from ass_tag_parser import parse_ass, AssTagFontName
 
 
-__all__ = ['tstAssFile', 'toAssFontObjs' , 'listFontNamesInAssFontObjs', 'filterValidASSFontFiles']
+__all__ = ['tstAssFile', 'toAssObjs' , 'listFontNamesInAssObjs', 'filterValidASSFiles']
 
 
 
@@ -16,15 +18,16 @@ def tstAssFile(inp:Path, encoding='utf-8-sig'):
     try:
         if not tstFileEncoding(inp, encoding=encoding):
             return False
-        content = inp.read_text(encoding=encoding)
-        read_ass(content)
+        read_ass(inp.read_text(encoding=encoding))
+        with inp.open('r', encoding=encoding) as fobj:
+            doc = ass.parse(fobj)
         return True
     except:
         return False
 
 
 
-def filterValidASSFontFiles(*inp:Path, encoding:str='utf-8-sig') -> list[Path]:
+def filterValidASSFiles(*inp:Path, encoding:str='utf-8-sig') -> list[Path]:
     ret = []
     for file in inp:
         if tstAssFile(file):
@@ -34,7 +37,7 @@ def filterValidASSFontFiles(*inp:Path, encoding:str='utf-8-sig') -> list[Path]:
 
 
 
-def toAssFontObjs(*inp:Path, encoding:str|list[str]='utf-8-sig') -> list[AssFile]:
+def toAssObjs(*inp:Path, encoding:str|list[str]='utf-8-sig') -> list[AssFile]:
     '''Test `tstAssFile()` if necessary.'''
     n = len(inp)
     encodings = [encoding] * n if isinstance(encoding, str) else encoding
@@ -60,7 +63,7 @@ def _getFontFromAssText(text:str) -> list[str]:
 
 
 
-def listFontNamesInAssFontObjs(*ass_file_objs:AssFile) -> tuple[bool, list[str]]:
+def listFontNamesInAssObjs(*ass_file_objs:AssFile) -> tuple[bool, list[str]]:
     fonts = []
     ok = True
 

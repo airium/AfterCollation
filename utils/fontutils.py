@@ -96,7 +96,7 @@ def chkFontSufficiency(ass_files:list[Path], font_files:list[Path], logger:loggi
     ass_files = listFile(ass_files, ext=COMMON_TEXT_SUB_EXTS, rglob=False)
     font_files = listFile(font_files, ext=COMMON_FONT_EXTS, rglob=False)
 
-    valid_ass_files = filterValidASSFontFiles(*ass_files)
+    valid_ass_files = filterValidASSFiles(*ass_files)
     valid_font_files = getValidFontPaths(*font_files)
 
     if len(ass_files) != len(valid_ass_files):
@@ -104,8 +104,8 @@ def chkFontSufficiency(ass_files:list[Path], font_files:list[Path], logger:loggi
     if len(font_files) != len(valid_font_files):
         logger.warning('Some input FONT files are invalid.')
 
-    ass_font_objs = toAssFontObjs(*valid_ass_files)
-    success, all_font_names_in_ass_files = listFontNamesInAssFontObjs(*ass_font_objs)
+    ass_font_objs = toAssObjs(*valid_ass_files)
+    success, all_font_names_in_ass_files = listFontNamesInAssObjs(*ass_font_objs)
     if not success:
         logger.warning('Some ASS files contain tags that cannot be parsed by the library. '
                        'The accuracy of font listing may be lowered a little bit.')

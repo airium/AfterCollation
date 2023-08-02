@@ -1,3 +1,4 @@
+ass
 ass-parser
 ass-tag-parser
 beautifulsoup4

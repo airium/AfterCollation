@@ -73,22 +73,20 @@ def tstFileEncoding(path:Path, encoding:str='utf-8-sig') -> bool:
     try:
         path = Path(path)
         assert path.is_file()
-        data = path.read_text(encoding=encoding)
-        if data[:3] and data[:3] == '\xef\xbb\xbf':
-            return False
+        raw_data = path.read_bytes()
+        match encoding.lower():
+            case 'utf-8-sig'|'utf_8_sig':
+                assert raw_data[:3] == b'\xef\xbb\xbf'
+            case 'utf-16-le'|'utf_16_le':
+                assert raw_data[:2] == b'\xff\xfe'
+            case 'utf-16-be'|'utf_16_be':
+                assert raw_data[:2] == b'\xfe\xff'
+        path.read_text(encoding=encoding, errors='strict')
     except AssertionError:
         return False
     except UnicodeError:
         return False
     return True
-
-
-
-
-
-
-
-
 
 
 

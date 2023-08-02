@@ -187,7 +187,7 @@ EXTS2FORMATS = {
     '7z'  : '7-Zip',
     'rar' : 'RAR',
 
-    'ass' : 'ass',
+    'ass' : 'ASS',
 }
 
 
