@@ -71,7 +71,7 @@ def loadVNAInfo(vna_file:Path|None, logger:logging.Logger) -> tuple[dict, list[d
             for k, v in data_dict.items():
                 if v == BASE_LINE_LABEL:
                     is_base_dict = True
-                    for kk, vv in VNA_BASE_LINE_EDITABLE_DICT.items():
+                    for kk, vv in VNA_BASE_LINE_USER_DICT.items():
                         base[vv] = data_dict.get(kk, '')
                     break
             if is_base_dict: continue
@@ -79,7 +79,7 @@ def loadVNAInfo(vna_file:Path|None, logger:logging.Logger) -> tuple[dict, list[d
             # NOTE we read all keys from the csv (VNA_ALL_FIELDS_DICT)
             # but later we only fill `VNA_FIELDS_DICT_FOR_VND` to FI
             # so it won't matter
-            for k, v in VNA_ALL_FIELDS_DICT.items():
+            for k, v in VNA_CSV_FIELDS_DICT.items():
                 conf[v] = data_dict.get(k, '')
             configs.append(conf)
     except:

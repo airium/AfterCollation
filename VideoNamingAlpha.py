@@ -63,7 +63,7 @@ def main(input_dir:Path):
         pbar.write(f'Added "{shown_path}".')
         output_dict = {}
         # NOTE the order of keys is defined by VNA_TITLE_DICT
-        for key in VNA_ALL_FIELDS_DICT.keys():
+        for key in VNA_CSV_FIELDS_DICT.keys():
             output_dict[key] = ''
         # then we need to fill some of them right now
         output_dict[VNA_PATH_CN] = shown_path
@@ -84,7 +84,7 @@ def main(input_dir:Path):
 
 
     base = dict(zip(output_dicts[0].keys(), itertools.repeat(BASE_LINE_LABEL)))
-    for k in VNA_BASE_LINE_EDITABLE_DICT.keys():
+    for k in VNA_BASE_LINE_USER_DICT.keys():
         base[k] = ''
     output_dicts = [base] + output_dicts
 

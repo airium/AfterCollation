@@ -96,6 +96,19 @@ VNA_DEFAULT_CONFIG = {
 }
 
 
+# this is the start point and length (both in second) used to detect the offset between two audio tracks
+# *change them accordingly if you want to detect the offset from other interval
+CHK_OFFSET_STA : int = 0
+CHK_OFFSET_LEN : int = 30
+assert CHK_OFFSET_LEN > 0
+# we know (a²+b²)/ab>=2 and ==2 only if a==b, but if <=`XCORR_RATIO` we still think a==b
+XCORR_RATIO : int = 4
+# if the average difference on samples is below this value, then we think 2 audio are the same
+# note the difference is defined in integer value of 16-bit PCM, i.e. the max/min value of audio is 32767/-32768
+# 1 for 16-bit integer PCM == 1.5e-6 for floating PCM (2**16*1.5e-5=0.98)
+MAX_DIFF_MEAN : int = 1
+
+
 
 #* don't touch below --------------------------------------------------------------------------------------------------
 

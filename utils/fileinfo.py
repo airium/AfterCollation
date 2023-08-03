@@ -35,7 +35,7 @@ class FileInfo:
         self.path = path.resolve()
         self.minfo = getMediaInfo(path)
 
-        for v in VNX_USER_FIELDS_NAMING_DICT.values():
+        for v in VND_USER_FIELDS_DICT.values():
             setattr(self, v, '')
 
         self._crc32 : str = ''
@@ -53,7 +53,7 @@ class FileInfo:
 
 
     def updateFromVNA(self, vna_config:dict[str, str]) -> None:
-        for k, v in VNA_PRESERVED_DICT_FOR_VND.items():
+        for k, v in VNA_PERSISTENT_USER_DICT.items():
             setattr(self, k, v)
 
 

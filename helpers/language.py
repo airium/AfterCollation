@@ -1,4 +1,4 @@
-from configs.runtime import LANG_NORMALIZE_DICT
+from configs.runtime import LANG_SUFFIX_UNIFORMATION_DICT
 
 
 __all__ = ['toUniformLangSuffix', 'toUniformLangSuffixes']
@@ -9,7 +9,7 @@ __all__ = ['toUniformLangSuffix', 'toUniformLangSuffixes']
 def toUniformLangSuffix(lang:str) -> str:
     '''Return empty if the input language is not accepted in the standard.'''
     lang = lang.strip().lower()
-    return LANG_NORMALIZE_DICT.get(lang, '')
+    return LANG_SUFFIX_UNIFORMATION_DICT.get(lang, '')
 
 
 

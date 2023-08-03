@@ -3,7 +3,7 @@ import itertools
 from pathlib import Path
 
 import utils.mediainfo
-from configs.runtime import *
+from configs import *
 
 
 import ffmpeg # NOTE if using ffmpeg but numpy, place the functions in ffmpegutils.py
@@ -65,7 +65,7 @@ def pickAudioSamples(path: Path) -> str:
 
 
 
-def cmpAudioSamples(sample1:str, sample2:str) -> bool:
+def cmpAudioSamples(sample1:str, sample2:str, threshold:int=4) -> bool:
 
     if not sample1 or not sample2:
         return False
@@ -88,7 +88,7 @@ def cmpAudioSamples(sample1:str, sample2:str) -> bool:
     # since we pick a point every 3s
     # we choose at least to make 15s CM possible to match
     # NOTE however, videos shorter than 12s will never get matched
-    if any(l > 4 for l in matches_lens):
+    if any(l > threshold for l in matches_lens):
         return True
 
     return False

@@ -9,6 +9,7 @@ from .formatter import *
 from .vna import *
 from .vnd import *
 from .vne import *
+from .vnr import *
 
 # NOTICE
 # This module should only contain functions that:

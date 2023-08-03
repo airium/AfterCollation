@@ -20,13 +20,13 @@ def pickInfo4NamingDraft(fis:list[FI], logger:logging.Logger) -> list[dict[str, 
     for fi in fis:
         d : dict[str, str] = dict()
 
-        for k, v in VNX_ALL_FIELDS_DICT.items():
+        for k, v in VND_CSV_FIELDS_DICT.items():
             d[k] = ''
 
         d[FULLPATH_CN] = fi.path.resolve().as_posix()
         d[CRC32_CN] = fi.crc32
 
-        for k, v in VNX_USER_FIELDS_NAMING_DICT.items():  # user fields
+        for k, v in VND_USER_FIELDS_DICT.items():  # user fields
             # these keys may be already filled from VNA
             d[k] = getattr(fi, v, '')
 
@@ -61,9 +61,9 @@ def loadNamingDraftCSV(path:Path, logger:logging.Logger) -> tuple[dict[str, str]
         infos = []
         for info in lines:
             d : dict[str, str] = {}
-            for k, v in VNX_CSV_PERSISTENT_KEY_DICT.items():
+            for k, v in VND_PERSISTENT_FIELDS_DICT.items():
                 d[v] = info[k]
-            for k, v in VNX_USER_FIELDS_NAMING_DICT.items():
+            for k, v in VND_USER_FIELDS_DICT.items():
                 d[v] = info[k]
             infos.append(d)
         # TODO update the logic to find the base line by BASE_LINE_LABEL, not the first line

@@ -61,7 +61,7 @@ def main(input_dir:Path, vna_file:Path|None=None):
     # don't forget to update the default dict from VNA, which is not updated in fillFieldsFromVNA()
     # NOTE leave useful fields as '' to notify the user that they can fill it
     default_naming_dict = dict(zip(files_naming_dicts[0].keys(), itertools.repeat(BASE_LINE_LABEL)))
-    for k, v in VNA_BASE_LINE_EDITABLE_DICT.items():
+    for k, v in VNA_BASE_LINE_USER_DICT.items():
         default_naming_dict[k] = vna_base.get(v, '')
 
     logger.info(f'Preparing to generate the naming proposal ...')
