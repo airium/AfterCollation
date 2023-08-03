@@ -5,12 +5,9 @@ from pathlib import Path
 
 from configs.user import TEMP_DIR_DECOMPRESS
 from configs.time import TIMESTAMP
-from utils.environment import addPath
 
 import py7zr
 import rarfile
-
-addPath()
 
 
 __all__ = [ 'decompressArchives', 'tstDecompressArchive', 'getArchiveFilelist']

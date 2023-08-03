@@ -4,6 +4,18 @@
 PROXY : str = ''
 # PROXY : str = 'http://127.0.0.1:7890'
 
+# you can add necessary paths here so making AC able to locate executables
+USER_PATHS : list[str] = [
+    # add you paths below
+    '%USERPROFILE%/scoop/shims',
+    'C:/Program Files/WinRAR',
+    'C:/Program Files (x86)/WinRAR',
+    'C:/Program Files/7-Zip',
+]
+
+FFMPEG_PATH : str = ''
+RAR_PATH : str = ''
+
 # whether to generate an audio digest for each input m2ts in VNA
 # this improves the accuracy of file matching in VND
 ENABLE_VNA_AUDIO_SAMPLES : bool = True
@@ -26,14 +38,7 @@ TEMP_DIRNAME_HARDLINK : str = '@AC-Temp'
 # if will be placed
 TEMP_DIRPATH_DECOMPRESS : str = '$TEMP'
 
-# you can add necessary paths here so making AC able to locate executables
-USER_PATHS : list[str] = [
-    # add you paths here
-    '%USERPROFILE%/scoop/shims',
-    'C:/Program Files/WinRAR',
-    'C:/Program Files (x86)/WinRAR',
-    'C:/Program Files/7-Zip',
-]
+
 
 
 #* advanced user config ------------------------------------------------------------------------------------------------
@@ -42,11 +47,9 @@ USER_PATHS : list[str] = [
 # here, if the actual height >= this value, we mark it as 1080p
 MIN_VID_HEIGHT_TO_STILL_LABEL_AS_1080 : int = 900
 
-
 # whether to use multi-processing when ssd checker failed
 # NOTE this is fallback value instead of overriding value
 MULTI_PROC_FALLBACK : bool = False
-
 
 # videos differ within this threshold is considered as the same
 # commonly the minimal fps is 23.976 (~42ms per frame)

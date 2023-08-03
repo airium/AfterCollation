@@ -2,7 +2,6 @@
 from .archive import *
 from .chars import *
 from .crc32 import *
-from .environment import *
 from .ffmpegutils import *
 from .fileinfo import *
 from .fileutils import *
