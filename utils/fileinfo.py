@@ -54,7 +54,7 @@ class FileInfo:
 
     def updateFromVNA(self, vna_config:dict[str, str]) -> None:
         for k, v in VNA_PERSISTENT_USER_DICT.items():
-            setattr(self, k, v)
+            setattr(self, v, vna_config.get(k, ''))
 
 
     @property
