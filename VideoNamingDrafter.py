@@ -2,13 +2,12 @@ from imports import *
 
 VND_USAGE = f'''
 VideoNamingDrafter (VND) only accepts the following input:
-1. drop/cli a single folder
-2. drop/cli a single folder and a single VNA.csv/yaml/json
+1. drop/cli a single folder (and optionally a single VNA.csv/yaml/json)
 
 VND includes the following behaviors:
 1. check the file integrity and mediainfo, and then generate a VND.log for your inspection
-2. try guessing some naming fields from the input files (also from VNA if supplied)
-3. generate a VND.csv which can be used to name the files by VNE
+2. guess some naming fields from the input files, also fill from VNA if supplied
+3. output a VND.csv that you can fill in with naming fields and send to VNE
 '''
 
 
@@ -18,42 +17,38 @@ def main(input_dir:Path, vna_file:Path|None=None):
 
     logger = initLogger(log_path := input_dir.parent.joinpath(f'VND-{TIMESTAMP}.log'))
     logger.info(f'Using VideoNamingDrafter (VND) of AfterCollation {AC_VERSION}')
-    logger.info(f'The input dir is "{input_dir}' + (f' and "{vna_file}".' if vna_file else '.'))
+    logger.info(f'The input dir is "{input_dir}' + (f' and "{vna_file}"' if vna_file else '') + '.')
 
-    vna_base, vna_configs = loadVNAInfo(vna_file, logger)
+    vna_base_naming_dict, vna_file_naming_dicts = loadVNANamingFile(vna_file, logger)
 
-    files = listVNxFilePaths(input_dir, logger)
-    cfs = toCoreFileObjs(files, logger, mp=getCRC32MultiProc(files, logger))
-    cmpCRC32VND(cfs, findCRC32InFilenames(files), logger)
+    paths = listVNxFilePaths(input_dir, logger)
+    cfs = toCoreFileObjs(paths, logger, mp=getCRC32MultiProc(paths, logger))
+    cmpCRC32VND(cfs, findCRC32InFilenames(paths), logger)
     if ENABLE_FILE_CHECKING_IN_VND: chkSeasonFiles(cfs, logger)
 
     # NOTE first guess naming and then fill each FI from VNA
     # so the naming instruction in VNA will not be overwritten
     # also, audio samples will not appear in files_naming_dicts to be sent to VNE
     # so we cannot use files_naming_dicts for fillNamingFieldsFromVNA()
-    guessNamingFieldsEarly(cfs, logger)
-    if vna_base or vna_configs:
-        logger.info(f'Matching files to VNA instruction ...')
-        fillNamingFieldsFromVNA(cfs, vna_configs, logger)
-    files_naming_dicts = pickInfo4NamingDraft(cfs, logger)
+    doEarlyNamingGuess(cfs, logger)
+    copyNamingFromVNA(cfs, vna_file_naming_dicts, logger)
+    file_naming_dicts = toVNDNamingDicts(cfs, logger)
 
     # don't forget to update the default dict from VNA, which is not updated in fillFieldsFromVNA()
     # NOTE leave useful fields as '' to notify the user that they can fill it
-    default_naming_dict = dict(zip(files_naming_dicts[0].keys(), itertools.repeat(BASE_LINE_LABEL)))
+    base_naming_dict = dict(zip(file_naming_dicts[0].keys(), itertools.repeat(BASE_LINE_LABEL)))
     for k in VND_BASE_LINE_USER_DICT.keys():
-        default_naming_dict[k] = ''
+        base_naming_dict[k] = ''
     for k, v in VNA_BASE_LINE_USER_DICT.items():
-        default_naming_dict[k] = vna_base.get(v, '')
+        base_naming_dict[k] = vna_base_naming_dict.get(v, '')
 
-    logger.info(f'Preparing to generate the naming proposal ...')
+    logger.info(f'Preparing to generate the naming proposal file ...')
     csv_path = input_dir.parent.joinpath(f'VND-{TIMESTAMP}.csv')
-    csv_dicts = quotEntries4CSV([default_naming_dict] + files_naming_dicts)
+    csv_dicts = quotFields4CSV([base_naming_dict] + file_naming_dicts)
     if not writeCSV(csv_path, csv_dicts):
         logger.error(f'Failed to save the naming proposal to "{csv_path}".')
     else:
         logger.info(f'The naming proposal is saved to "{csv_path}".')
-
-    logging.shutdown()
 
 
 

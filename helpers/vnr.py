@@ -22,7 +22,7 @@ def readCSV4VNR(input_path:Path) -> tuple[bool, dict[str, list[tuple[str, str, s
     success, vnr_csv_dicts = readCSV(input_path)
     if not success:
         return False, {}
-    vnr_csv_dicts = unquotEntries4CSV(vnr_csv_dicts)
+    vnr_csv_dicts = unquotFields4CSV(vnr_csv_dicts)
 
     grouping_dicts : dict[str, list[tuple[str, str, str]]] = {}
 
@@ -55,7 +55,7 @@ def writeCSV4VNR(ouput_path:Path, grouping_dict:dict[str, list[tuple[str, str, s
             vnr_csv_dict = dict(zip(VNR_CSV_FIELDS_DICT.keys(), (group_idx, *group)))
             vnr_csv_dicts.append(vnr_csv_dict)
 
-    return writeCSV(output_path, quotEntries4CSV(vnr_csv_dicts))
+    return writeCSV(output_path, quotFields4CSV(vnr_csv_dicts))
 
 
 

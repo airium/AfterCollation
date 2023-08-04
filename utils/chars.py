@@ -3,14 +3,25 @@ import string
 from configs.chars import FLEXIBLE_PUNCTUATIONS
 
 
-__all__ = ['unquotChars', 'quotChars', 'quotEntries4CSV', 'unquotEntries4CSV',
-           'suppressPunctuation', 'getPrintLen', 'isDecimal',
-           'formatFileSize1', 'formatFileSize2', 'formatTimeLength']
+__all__ = [
+    'quotChars',
+    'unquotChars',
+    'quotFields4CSV',
+    'unquotFields4CSV',
+    'suppressPunctuation',
+    'getPrintLen',
+    'isDecimal',
+    'formatFileSize1',
+    'formatFileSize2',
+    'formatTimeLength',
+    ]
+
 
 
 
 def isDecimal(chars:str) -> bool:
     return chars.replace('.', '', 1).isdigit()
+
 
 
 
@@ -32,7 +43,7 @@ def quotChars(chars:str, quot:str='"') -> str:
 
 
 
-def quotEntries4CSV(entries:list[dict], quot:str='"') -> list[dict]:
+def quotFields4CSV(entries:list[dict], quot:str='"') -> list[dict]:
     '''Return a copy of the input list of dict, with all chars quoted.'''
     ret = []
     for entry in entries:
@@ -51,7 +62,7 @@ def quotEntries4CSV(entries:list[dict], quot:str='"') -> list[dict]:
 
 
 
-def unquotEntries4CSV(entries:list[dict[str, str]]) -> list[dict[str, str]]:
+def unquotFields4CSV(entries:list[dict[str, str]]) -> list[dict[str, str]]:
     ret = []
     for entry in entries:
         d = {}
@@ -95,6 +106,7 @@ def getPrintLen(chars:str) -> int:
     # which maximizes the UE with fonts such as Sarasa Unispaces
     len_doublespace = (len(chars) - len_unispace) * 2
     return len_unispace + len_doublespace
+
 
 
 

@@ -92,7 +92,7 @@ def main(input_dir:Path):
         if config.get(ext, False):
             out_file = output_parent.joinpath(f'VNA-{TIMESTAMP}.{ext}')
             print(f'Generating pre-encoding instruction sheet at "{out_file}"...')
-            working_list = quotEntries4CSV(output_dicts) if ext == 'csv' else output_dicts
+            working_list = quotFields4CSV(output_dicts) if ext == 'csv' else output_dicts
             if not globals()[f'listM2TS2{ext.upper()}'](out_file, working_list):
                 print(f'! Failed to write {out_file}.')
 

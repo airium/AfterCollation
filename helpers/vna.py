@@ -13,8 +13,8 @@ import yaml
 
 __all__ = [
     'readConf4VNA',
-    'loadVNAInfo',
-    'fillNamingFieldsFromVNA',
+    'loadVNANamingFile',
+    'copyNamingFromVNA',
     'guessVolNumsFromPaths',
     ]
 
@@ -45,7 +45,7 @@ def readConf4VNA(script_path:str|Path, *paths:str|Path) -> dict:
 
 
 
-def loadVNAInfo(vna_file:Path|None, logger:logging.Logger) -> tuple[dict, list[dict]]:
+def loadVNANamingFile(vna_file:Path|None, logger:logging.Logger) -> tuple[dict, list[dict]]:
 
     if not vna_file or not vna_file.is_file():
         return {}, []
@@ -54,7 +54,7 @@ def loadVNAInfo(vna_file:Path|None, logger:logging.Logger) -> tuple[dict, list[d
         match vna_file.suffix.lower():
             case '.csv':
                 success, data_dicts = readCSV(vna_file)
-                data_dicts = unquotEntries4CSV(data_dicts)
+                data_dicts = unquotFields4CSV(data_dicts)
                 if not success: raise Exception
             case '.yaml':
                 with vna_file.open('r', encoding='utf-8-sig') as fo:
@@ -98,7 +98,11 @@ def loadVNAInfo(vna_file:Path|None, logger:logging.Logger) -> tuple[dict, list[d
 
 
 
-def fillNamingFieldsFromVNA(corefiles:list[CF], vna_configs:list[dict], logger:logging.Logger):
+def copyNamingFromVNA(corefiles:list[CF], vna_configs:list[dict], logger:logging.Logger):
+
+    if not vna_configs: return
+
+    logger.info(f'Matching files to VNA instruction ...')
 
     if not vna_configs: return
 

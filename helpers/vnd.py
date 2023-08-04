@@ -10,12 +10,16 @@ from .language import *
 from helpers.corefile import CF
 
 
-__all__ = ['pickInfo4NamingDraft', 'loadVNDNamingInfo', 'guessNamingFieldsEarly']
+__all__ = [
+    'toVNDNamingDicts',
+    'loadVNDNamingInfo',
+    'doEarlyNamingGuess',
+    ]
 
 
 
 
-def pickInfo4NamingDraft(fis:list[CF], logger:logging.Logger) -> list[dict[str, str]]:
+def toVNDNamingDicts(fis:list[CF], logger:logging.Logger) -> list[dict[str, str]]:
     ret = []
 
     for fi in fis:
@@ -61,7 +65,7 @@ def loadVNDNamingInfo(vnd_csv:Path, logger:logging.Logger) -> tuple[dict[str, st
     if not success:
         logger.error(f'Failed to read "{vnd_csv}".')
         return {}, []
-    csv_dicts = unquotEntries4CSV(csv_dicts)
+    csv_dicts = unquotFields4CSV(csv_dicts)
 
     try:
         default_dict : dict[str, str] = {}
@@ -148,7 +152,7 @@ def guessAssNamingFields(fi:CF, logger:logging.Logger):
 
 
 
-def guessNamingFieldsEarly(fis:list[CF], logger:logging.Logger):
+def doEarlyNamingGuess(fis:list[CF], logger:logging.Logger):
     '''We can actually guess very few fields at VND, but try it.'''
 
     for i, fi in enumerate(fis):
