@@ -7,6 +7,8 @@ from utils.mediautils import *
 from utils.fileutils import *
 from configs.specification import STD_BKS_DIRNAME, STD_CDS_DIRNAME
 from configs.user import ENABLED_MULTI_PROC_IF_NOT_SURE, NUM_IO_JOBS
+from configs.runtime import VNx_ALL_EXTS
+from configs.debug import DEBUG
 
 import ssd_checker
 
@@ -19,6 +21,7 @@ __all__ = [
     'filterOutCDsScans',
     'isSSD',
     'getCRC32MultiProc',
+    'listVNxFilePaths',
     ]
 
 
@@ -137,3 +140,21 @@ def getCRC32MultiProc(paths:Path|list[Path], logger:logging.Logger|None=None) ->
         return NUM_IO_JOBS
     else:
         return 1
+
+
+
+def listVNxFilePaths(path:Path, logger:logging.Logger) -> list[Path]:
+
+    logger.info(f'Locating all required media files ...')
+
+    all_files = filterOutCDsScans(listFile(path))
+    vnx_files = filterOutCDsScans(listFile(path, ext=VNx_ALL_EXTS))
+    if (diffs := set(all_files).difference(set(vnx_files))):
+        for diff in diffs:
+            logger.error(f'Disallowed file "{diff}".')
+
+    if DEBUG:
+        for file in vnx_files:
+            logger.debug(f'Got: "{file}"')
+
+    return vnx_files

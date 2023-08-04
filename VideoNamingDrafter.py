@@ -22,16 +22,10 @@ def main(input_dir:Path, vna_file:Path|None=None):
 
     vna_base, vna_configs = loadVNAInfo(vna_file, logger)
 
-    logger.info(f'Locating all media files...')
-    all_files = filterOutCDsScans(listFile(input_dir))
-    vnd_files = filterOutCDsScans(listFile(input_dir, ext=VNx_ALL_EXTS))
-    if (diffs := set(all_files).difference(set(vnd_files))):
-        for diff in diffs: logger.error(f'Disallowed file "{diff}".')
-
-    cfs = toCoreFileObjs(vnd_files, logger, mp=getCRC32MultiProc(vnd_files, logger))
-    cmpCRC32VND(cfs, findCRC32InFilenames(vnd_files), logger)
-    if ENABLE_FILE_CHECKING_IN_VND:
-        chkSeasonFiles(cfs, logger)
+    files = listVNxFilePaths(input_dir, logger)
+    cfs = toCoreFileObjs(files, logger, mp=getCRC32MultiProc(files, logger))
+    cmpCRC32VND(cfs, findCRC32InFilenames(files), logger)
+    if ENABLE_FILE_CHECKING_IN_VND: chkSeasonFiles(cfs, logger)
 
     # NOTE first guess naming and then fill each FI from VNA
     # so the naming instruction in VNA will not be overwritten
