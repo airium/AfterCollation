@@ -15,8 +15,9 @@ import yaml
 __all__ = ['listFile',
            'listDir',
            'tstFileEncoding',
-           'tstHardlinkInDir',
-           'tstHardlink',
+           'tstMkHardlink',
+           'tstMkHardlinks',
+           'tstMkHardlinkInDir',
            'writeCSV',
            'readCSV',
            'findCommonParentDir',
@@ -188,47 +189,64 @@ def listM2TS2JSON(out_file, output_list) -> bool:
 
 
 
-def tstHardlink(old:Path, new:Path) -> bool:
+def tstMkHardlink(existing:str|Path, proposed:str|Path) -> bool:
     '''
-    Test if we can new.hardlink_to(old) successfully.
-    if new is a dir, it will try hardlink to a randomly created file in the dir.
+    Test if we can proposed.hardlink_to(existing) successfully.
+    if proposed is a dir, it will try hardlink to a randomly created file under it.
     '''
 
-    if not (old := Path(old)).is_file():
+    if not (existing := Path(existing)).is_file():
         # NOTE raise Error instead of returning False
         # input not a file means the user is unconscious, warn it
         raise FileNotFoundError
 
-    if (new := Path(new)).is_file():
+    if (proposed := Path(proposed)).is_file():
         return False
 
     try:
-        if new.is_dir():
+        if proposed.is_dir():
             # randomly sample a un-suffixed number as the filename
             # hopefully there is no such file in the dir
             for _ in range(10):
-                new = new.joinpath(str(random.sample(range(999999), 1)[0]))
-                if not new.exists():
-                    new.hardlink_to(old)
-                    new.unlink()
+                proposed = proposed.joinpath(str(random.sample(range(999999), 1)[0]))
+                if not proposed.exists():
+                    proposed.hardlink_to(existing)
+                    proposed.unlink()
                     return True
             return False
         else:
-            new.hardlink_to(old)
-            new.unlink()
+            proposed.hardlink_to(existing)
+            proposed.unlink()
             return True
     except:
         # since we already return False if the file exists
         # this means the file is created by us
-        if new.is_file(): new.unlink(missing_ok=True)
+        if proposed.is_file(): proposed.unlink(missing_ok=True)
         return False
 
 
 
 
-def tstHardlinkInDir(dir_path:str|Path) -> bool:
+def tstMkHardlinks(existings:list[Path], proposed:Path, use_st_dev:bool=True) -> bool:
+    src_dev = None
+    for existing in existings:
+        if not existing.is_file():
+            raise FileNotFoundError
+        if use_st_dev and (new_src_dev := existing.stat().st_dev) != src_dev:
+            src_dev = new_src_dev
+            if not tstMkHardlink(existing, proposed):
+                return False
+        else:
+            if not tstMkHardlink(existing, proposed):
+                return False
+    return True
+
+
+
+
+def tstMkHardlinkInDir(dir_path:str|Path) -> bool:
     '''
-    This function is used to test if the hardlink functionality is usable inside it.
+    This function test if the file system supports hardlink with touching it.
     '''
 
     dir_path = Path(dir_path)
@@ -293,7 +311,7 @@ def getTempDir4Hardlink(input_path:Path|None=None) -> Path|None:
                 proposed.mkdir(parents=True, exist_ok=True)
                 if proposed.stat().st_dev != input_path.stat().st_dev:
                     proposed = None
-        if proposed and tstHardlinkInDir(proposed):
+        if proposed and tstMkHardlinkInDir(proposed):
             return proposed
     except:
         if proposed and proposed.is_dir() and not list(proposed.iterdir()):

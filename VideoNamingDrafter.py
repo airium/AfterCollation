@@ -20,18 +20,6 @@ def main(input_dir:Path, vna_file:Path|None=None):
     logger.info(f'Using VideoNamingDrafter (VND) of AfterCollation {AC_VERSION}')
     logger.info(f'The input dir is "{input_dir}' + (f' and "{vna_file}".' if vna_file else '.'))
 
-    # TODO re-enable multiprocessing in the future, which can make CRC32 much faster on NVMe SSD
-    # try:
-    #     multiproc = is_ssd(input_dir)
-    # except KeyError: # NOTE RAMDISK or other SCSI disks may have this issue
-    #     multiproc = MULTI_PROC_FALLBACK
-    #     logger.info(f'SSD checker failed to detect if the input is of SSD or not. Falling back to user config.')
-    # except Exception as e:
-    #     multiproc = MULTI_PROC_FALLBACK
-    #     logger.info(f'SSD checker ran into an unknown error {e}. Please report.')
-    # if multiproc:
-    #     logger.info('Enabled multi-process.')
-
     vna_base, vna_configs = loadVNAInfo(vna_file, logger)
 
     logger.info(f'Locating all media files...')
@@ -40,23 +28,20 @@ def main(input_dir:Path, vna_file:Path|None=None):
     if (diffs := set(all_files).difference(set(vnd_files))):
         for diff in diffs: logger.error(f'Disallowed file "{diff}".')
 
-    logger.info(f'Loading files with CRC32 checking (this can be slow) ...')
-    fis = []
-    for vnd_file in tqdm.tqdm(vnd_files, desc='Loading', unit='file', leave=True, ascii=True, dynamic_ncols=True):
-        fis.append(CF(vnd_file, init_crc32=True))
-    cmpCRC32VND(fis, findCRC32InFilenames(vnd_files), logger)
-    if ENABLE_FILE_CHECKING_IN_VNA:
-        chkSeasonFiles(fis, logger)
+    cfs = toCoreFileObjs(vnd_files, logger, mp=getCRC32MultiProc(vnd_files, logger))
+    cmpCRC32VND(cfs, findCRC32InFilenames(vnd_files), logger)
+    if ENABLE_FILE_CHECKING_IN_VND:
+        chkSeasonFiles(cfs, logger)
 
     # NOTE first guess naming and then fill each FI from VNA
     # so the naming instruction in VNA will not be overwritten
     # also, audio samples will not appear in files_naming_dicts to be sent to VNE
     # so we cannot use files_naming_dicts for fillNamingFieldsFromVNA()
-    guessNamingFieldsEarly(fis, logger)
+    guessNamingFieldsEarly(cfs, logger)
     if vna_base or vna_configs:
         logger.info(f'Matching files to VNA instruction ...')
-        fillNamingFieldsFromVNA(fis, vna_configs, logger)
-    files_naming_dicts = pickInfo4NamingDraft(fis, logger)
+        fillNamingFieldsFromVNA(cfs, vna_configs, logger)
+    files_naming_dicts = pickInfo4NamingDraft(cfs, logger)
 
     # don't forget to update the default dict from VNA, which is not updated in fillFieldsFromVNA()
     # NOTE leave useful fields as '' to notify the user that they can fill it

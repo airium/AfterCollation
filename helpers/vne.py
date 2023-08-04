@@ -22,7 +22,7 @@ __all__ = [
     # 'chkNamingDicts', #! in checkers/naming.py
     'applyNamingDicts',
     'tstIO4VNE',
-    'toCoreFilesVNE',
+    'toCoreFileObjs',
     'doNaming',
     'doAutoIndexing',
     'fmtContentName'
@@ -145,7 +145,7 @@ def applyNamingDicts(season:Season, default_dict:dict[str, str], naming_dicts:li
 
 
 
-def tstIO4VNE(src_files:list[str|Path], dst_dir:str|Path, logger:logging.Logger) -> tuple[bool, bool, bool]:
+def tstIO4VNE(src_files:list[str]|list[Path], dst_dir:str|Path, logger:logging.Logger) -> bool:
     '''This is a boring check to test if we can read/write the dst dir, and if we can hardlink from src to dst.'''
 
     logger.info(f'Testing input files and the output dir "{dst_dir}"...')
@@ -156,7 +156,7 @@ def tstIO4VNE(src_files:list[str|Path], dst_dir:str|Path, logger:logging.Logger)
     # empty src input is abnormal
     if not src:
         logger.error('No input files.')
-        return False, False, False
+        return False
 
     # test that every input file is readable
     for path in src:
@@ -166,13 +166,13 @@ def tstIO4VNE(src_files:list[str|Path], dst_dir:str|Path, logger:logging.Logger)
             fobj.close()
         except FileNotFoundError:
             logger.error(f'Failed to locate the input file "{path}".')
-            return False, False, False
+            return False
         except OSError:
             logger.error(f'Failed to test reading the input file "{path}".')
-            return False, False, False
+            return False
         except Exception as e:
             logger.error(f'Failed to test reading the input file "{path}" due to an unexpected error {e}. Please Report.')
-            return False, False, False
+            return False
     logger.debug('Read test completed.')
 
     # test dst parent exists as a dir
@@ -182,13 +182,13 @@ def tstIO4VNE(src_files:list[str|Path], dst_dir:str|Path, logger:logging.Logger)
         assert dst.is_dir()
     except OSError:
         logger.error(f'Failed to create to output parent.')
-        return False, False, False
+        return False
     except AssertionError:
         logger.error(f'Failed to verify to output parent.')
-        return False, False, False
+        return False
     except Exception as e:
         logger.error(f'Failed to test the output parent due to an unexpected error {e}. Please Report.')
-        return False, False, False
+        return False
     logger.debug('Dst is dir completed.')
 
     # test creating and delete files under the dst parent
@@ -200,87 +200,42 @@ def tstIO4VNE(src_files:list[str|Path], dst_dir:str|Path, logger:logging.Logger)
         dst_testfile.unlink()
     except OSError:
         logger.error('Failed to read/write a test file of 233 chars filename. Available path length may be inadequate.')
-        return False, False, False
+        return False
     except AssertionError:
         logger.error('Failed to verify a test file at the output parent. Your OS/Disk may be corrupted.')
-        return False, False, False
+        return False
     except Exception as e:
         logger.error(f'Failed to test r/w under the output parent due to an unexpected error {e}. Please Report.')
-        return False, False, False
+        return False
     logger.debug('Dst writing completed.')
 
-    # test if we can use multiprocesssing for the input
-    multiproc = True
-    for path in src:
-        try:
-            if not ssd_checker.is_ssd(path):
-                logger.info(f'"{path}" is not an SSD. Disabling multi-processing.')
-                multiproc = False
-                break
-        except KeyError:
-            logger.info(f'SSD checker cannot check "{path}". Falling back to user config.')
-            multiproc = ENABLED_MULTI_PROC_IF_NOT_SURE
-            break
-        except Exception as e:
-            logger.warning(f'SSD checker failed with an unexpected error {e}. Please report.')
-            multiproc = ENABLED_MULTI_PROC_IF_NOT_SURE
-            break
-    logger.debug('MP test completed.')
-
-    # test if we can use hardlink for this job
-    dst_testfile = dst.joinpath(f'vne-temp-test-file-{TIMESTAMP}')
-    src_testfile = src[0]
-    hardlink = True
-    try:
-        if dst_testfile.exists():
-            dst_testfile.unlink()
-        dst_testfile.hardlink_to(src_testfile)
-        dst_testfile.unlink()
-    except OSError as e:
-        hardlink = False
-    except Exception as e:
-        logger.error(f'Failed to test hardlink due to an unexpected error {e}. Please report.')
-        hardlink = False
-    finally:
-        dst_testfile.unlink(missing_ok=True)
-    logger.debug('Hardlink test completed.')
-
-    if multiproc:
-        logger.info('Enabled multi-processing.')
-    else:
-        logger.warning('Disabled multi-processing (slower crc32 verification).')
-    if hardlink:
-        logger.info('Enabled hardlink mode.')
-    else:
-        logger.warning('Disabled hardlink mode (much slower output creation).')
-
-    return True, multiproc, hardlink
+    return True
 
 
 
 
-def toCoreFilesVNE(naming_dicts:list[dict[str, str]], logger:logging.Logger, mp:int=1) -> list[CF]:
+def toCoreFileObjs(paths:list[str]|list[Path], logger:logging.Logger, init_crc32:bool=True, mp:int=1) -> list[CF]:
 
     logger.info(f'Loading files with {mp} workers ...')
-    paths = [Path(d[FULLPATH_VAR]) for d in naming_dicts]
+    paths = [Path(path) for path in paths]
 
-    pbar = tqdm.tqdm(total=len(naming_dicts), desc='Loading', unit='file', ascii=True, dynamic_ncols=True)
+    pbar = tqdm.tqdm(total=len(paths), desc='Loading', unit='file', ascii=True, dynamic_ncols=True)
     if mp > 1:
         ret = []
         with Pool(mp) as pool:
             for path in paths:
-                ret.append(pool.apply_async(getCoreFile, kwds={'path':path, 'init_crc32':True}, callback=lambda _: pbar.update(1)))
+                ret.append(pool.apply_async(getCoreFile, kwds={'path':path, 'init_crc32':init_crc32}, callback=lambda _: pbar.update(1)))
             pool.close()
             pool.join()
-        fis = [r.get() for r in ret]
+        cfs = [r.get() for r in ret]
     else:
-        fis = []
+        cfs = []
         for path in paths:
-            fis.append(CF(path, init_crc32=True))
+            cfs.append(CF(path, init_crc32=init_crc32))
             pbar.update(1)
     pbar.close()
 
-    return fis
+    return cfs
 
 
 

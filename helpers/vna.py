@@ -11,8 +11,12 @@ from helpers.corefile import CF
 import yaml
 
 
-__all__ = ['readConf4VNA', 'loadVNAInfo', 'fillNamingFieldsFromVNA',
-           'guessVolNumByPath']
+__all__ = [
+    'readConf4VNA',
+    'loadVNAInfo',
+    'fillNamingFieldsFromVNA',
+    'guessVolNumsFromPaths',
+    ]
 
 
 
@@ -98,7 +102,7 @@ def fillNamingFieldsFromVNA(corefiles:list[CF], vna_configs:list[dict], logger:l
 
     if not vna_configs: return
 
-    guessed_vol_nums = guessVolNumByPath([fi.path for fi in corefiles])
+    guessed_vol_nums = guessVolNumsFromPaths([fi.path for fi in corefiles])
 
     vna_config_used_bools = [False] * len(vna_configs)
     for fi, guessed_vol_num in zip(corefiles, guessed_vol_nums):
@@ -126,7 +130,7 @@ def fillNamingFieldsFromVNA(corefiles:list[CF], vna_configs:list[dict], logger:l
 
 
 
-def guessVolNumByPath(paths:list[Path], parent:Path|None=None) -> list[str]:
+def guessVolNumsFromPaths(paths:list[Path], parent:Path|None=None) -> list[str]:
     '''
     If all inputs are from the same directory, it will use `parent` as the common parent instead of the most common prefix.
     '''

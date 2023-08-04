@@ -27,7 +27,7 @@ ENABLE_FREEDB : bool = False
 
 # you can optionally turn off VNA's file checking
 # this will make VNA much faster to generate the naming proposal (VND.csv)
-ENABLE_FILE_CHECKING_IN_VNA : bool = True
+ENABLE_FILE_CHECKING_IN_VND : bool = True
 
 # the temporary directory name for ScansRechecker's hardlink functionality
 # it is better a dirname, don't use an absolute path

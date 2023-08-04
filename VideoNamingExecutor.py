@@ -26,18 +26,20 @@ def main(csv_path:Path):
     cleanNamingDicts(default_dict, naming_dicts, logger)
     if not chkNamingDicts(default_dict, naming_dicts, logger): return
 
-    dst_dir_parent = Path(p) if (p := default_dict[FULLPATH_VAR]) else csv_path.parent
-    success, mp, hl = tstIO4VNE([d[FULLPATH_VAR] for d in naming_dicts], dst_dir_parent, logger)
-    if not success: return
+    dst_parent_dir = Path(p) if (p := default_dict[FULLPATH_VAR]) else csv_path.parent
+    src_file_paths = [Path(d[FULLPATH_VAR]) for d in naming_dicts]
+    if not tstIO4VNE(src_file_paths, dst_parent_dir, logger): return
+    hl = tstMkHardlinks(src_file_paths, dst_parent_dir)
+    mp = getCRC32MultiProc(src_file_paths, logger)
 
-    season = Season(**{FULLPATH_VAR : dst_dir_parent.as_posix()})
-    season.cfs.extend(toCoreFilesVNE(naming_dicts, logger, mp=NUM_IO_JOBS if mp else 1))
+    season = Season(**{FULLPATH_VAR : dst_parent_dir.as_posix()})
+    season.cfs.extend(toCoreFileObjs(src_file_paths, logger, mp=mp))
     cmpCRC32VNE(season.cfs, [naming_info[CRC32_VAR] for naming_info in naming_dicts], logger)
     applyNamingDicts(season, default_dict, naming_dicts, logger)
     doAutoIndexing(season, logger)
     fmtContentName(season, logger)
     # if not chkSeasonNaming(season, logger): return #! disabled for now
-    if not chkNamingConflict(season, logger): return
+    if not chkFinalNamingConflict(season, logger): return
     if not doNaming(season, hl, logger): return
 
 

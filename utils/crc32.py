@@ -4,11 +4,16 @@ import zlib
 from pathlib import Path
 from functools import partial
 from multiprocessing import Pool
-
 from configs.regex import CRC32_IN_FILENAME_PATTERN
 
 
-__all__ = ['getCRC32', 'getCRC32List', 'findCRC32InFilename', 'findCRC32InFilenames']
+
+__all__ = [
+    'getCRC32',
+    'getCRC32List',
+    'findCRC32InFilename',
+    'findCRC32InFilenames',
+    ]
 
 
 

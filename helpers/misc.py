@@ -1,15 +1,25 @@
 import logging
 from pathlib import Path
+from concurrent.futures import ProcessPoolExecutor
 
 from .corefile import CF
 from utils.mediautils import *
 from utils.fileutils import *
 from configs.specification import STD_BKS_DIRNAME, STD_CDS_DIRNAME
+from configs.user import ENABLED_MULTI_PROC_IF_NOT_SURE, NUM_IO_JOBS
+
+import ssd_checker
 
 
-__all__ = ['toEnabledList',
-           'cmpCRC32VND', 'cmpCRC32VNE',
-           'printCliNotice', 'filterOutCDsScans']
+__all__ = [
+    'toEnabledList',
+    'cmpCRC32VND',
+    'cmpCRC32VNE',
+    'printCliNotice',
+    'filterOutCDsScans',
+    'isSSD',
+    'getCRC32MultiProc',
+    ]
 
 
 
@@ -77,8 +87,6 @@ def cmpCRC32VNE(fis:CF|list[CF], expected_crc32s:str|list[str], logger:logging.L
 
 
 
-
-
 def printCliNotice(usage_txt:str, paths:list|tuple):
         print(usage_txt)
         print()
@@ -97,3 +105,35 @@ def filterOutCDsScans(inp:list[Path]):
         else:
             ret.append(p)
     return ret
+
+
+
+
+def isSSD(path:Path, logger:logging.Logger|None=None) -> bool:
+    try:
+        ret = ssd_checker.is_ssd(path.resolve().as_posix())
+        if logger: logger.debug(f'Found SSD "{path}"' if ret else f'Found HDD "{path}"')
+        return ret
+    except KeyError:
+        if logger: logger.debug(f'KeyError when checking "{path}".')
+        # this happens when the input path is an SCSI device which is not listed as system physical drives
+        return ENABLED_MULTI_PROC_IF_NOT_SURE
+    except Exception as e:
+        if logger: logger.debug(f'Unknown error {e} when checking "{path}".')
+        return ENABLED_MULTI_PROC_IF_NOT_SURE
+
+
+
+
+def getCRC32MultiProc(paths:Path|list[Path], logger:logging.Logger|None=None) -> int:
+    if isinstance(paths, Path): paths = [paths]
+    futures = []
+    with ProcessPoolExecutor(NUM_IO_JOBS) as exe:
+        for path in paths:
+            futures.append(exe.submit(isSSD, path, logger=logger))
+    is_ssd_list = [f.result() for f in futures]
+    if logger: logger.debug(f'CRC32 MultiProc gets {sum(is_ssd_list)}/{len(is_ssd_list)} paths on SSDs.')
+    if all(is_ssd_list):
+        return NUM_IO_JOBS
+    else:
+        return 1

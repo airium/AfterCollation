@@ -14,8 +14,10 @@ class Season: # TODO this is currently a very early class, to be improved in the
     def __init__(self, logger:Logger|None=None, **kwargs:str):
 
         for v in VND_BASE_LINE_USER_DICT.values():
-            setattr(self, v, kwargs.get(v, ''))
+            setattr(self, v, kwargs.pop(v, ''))
+
         if logger: logger.debug('Unknown season class input: ' + ('|'.join(f'{k}={v}' for k, v in kwargs.items())))
+
         self.cfs : list[CoreFile] = []
 
 

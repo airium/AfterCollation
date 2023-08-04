@@ -17,7 +17,7 @@ __all__ = [
     'chkSeasonNaming',
     'chkSeasonPerNamingField',
     'chkSeasonNaming',
-    'chkNamingConflict',
+    'chkFinalNamingConflict',
     # 'chkCorrelatedNaming',
     # 'chkGlobalNaming'
     ]
@@ -191,7 +191,7 @@ def chkSeasonFiles(fis:list[CF], logger:logging.Logger):
 
 
 
-def chkNamingConflict(season: Season, logger:logging.Logger) -> bool:
+def chkFinalNamingConflict(season: Season, logger:logging.Logger) -> bool:
     ok = True
     names = []
     for cf in season.cfs:

@@ -39,10 +39,10 @@ def main(input_dir:Path):
         print(f'!!! M2TS files are placed at different depth under your input. '
               f'This will make volume index detection more inaccurate.')
 
-    assumed_vols = guessVolNumByPath(m2ts_paths, input_dir)
+    assumed_vols = guessVolNumsFromPaths(m2ts_paths, input_dir)
 
     output_dicts : list[dict[str, str]] = []
-    pbar = tqdm.tqdm(total=len(m2ts_paths), desc='Loading', dynamic_ncols=True, ascii=True, unit='file', leave=False)
+    pbar = tqdm.tqdm(total=len(m2ts_paths), desc='Loading', dynamic_ncols=True, ascii=True, unit='file')
     for i, m2ts_path, assumed_vol in zip(itertools.count(), m2ts_paths, assumed_vols):
 
         pbar.set_description(f'Reading {assumed_vol}-{m2ts_path.stem}')
