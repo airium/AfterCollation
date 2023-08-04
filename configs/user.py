@@ -38,6 +38,19 @@ TEMP_DIRNAME_HARDLINK : str = '@AC-Temp'
 # if will be placed
 TEMP_DIRPATH_DECOMPRESS : str = '$TEMP'
 
+# if multiprocessing is validated, then use this number of workers for IO-intensive jobs e.g. CRC32
+# the default value of 8 should be able to max out PCIe 4.0 x4 SSDs
+# it will be automatically lower to not exceed the number of CPU threads
+MAX_NUM_IO_WORKERS : int = 8
+
+# this is used to determine the number of multiprocessing-workers for CPU/RAM-intensive tasks
+# the number is calculated based on your available RAM, not the total RAM
+MIN_RAM_PER_WORKER : int = 10 # this unit is GiB
+
+# whether to still enable multi-processing when ssd checker failed
+# such case happens when you're using some RAMDISK on Windows e.g. ImDisk
+# ssd checker cannot lookup the disk type of such SCSI devices
+ENABLED_MULTI_PROC_IF_NOT_SURE : bool = False
 
 
 
@@ -47,9 +60,7 @@ TEMP_DIRPATH_DECOMPRESS : str = '$TEMP'
 # here, if the actual height >= this value, we mark it as 1080p
 MIN_VID_HEIGHT_TO_STILL_LABEL_AS_1080 : int = 900
 
-# whether to use multi-processing when ssd checker failed
-# NOTE this is fallback value instead of overriding value
-MULTI_PROC_FALLBACK : bool = False
+
 
 # videos differ within this threshold is considered as the same
 # commonly the minimal fps is 23.976 (~42ms per frame)
@@ -113,12 +124,21 @@ MAX_DIFF_MEAN : int = 1
 
 
 
+# this is the show name that will be applied when the program didn't correctly catch your mistake of forgetting filling any showname for VND. This should never appear on your hard disk - but if you see it, please fill a bug report.
+FALLBACK_SHOWNAME = '1145141919810'
+
+
 #* don't touch below --------------------------------------------------------------------------------------------------
 
 if MIN_VID_HEIGHT_TO_STILL_LABEL_AS_1080 > 1080:
     MIN_VID_HEIGHT_TO_STILL_LABEL_AS_1080 = 1080
 
 
+import psutil
+cpu, ram = psutil.cpu_count(logical=False), psutil.virtual_memory().total // (1024**3)
+NUM_IO_JOBS = min(cpu, MAX_NUM_IO_WORKERS)
+NUM_CPU_JOBS = min(cpu, max(ram // (MIN_RAM_PER_WORKER), 1))
+del psutil, cpu, ram
 
 
 if TEMP_DIRNAME_HARDLINK:
@@ -136,6 +156,7 @@ else:
     TEMP_DIR_HARDLINK = pathlib.Path('@AC-TEMP')
 del os, pathlib, TEMP_DIRNAME_HARDLINK
 
+
 import os, pathlib
 if TEMP_DIRPATH_DECOMPRESS:
     TEMP_DIR_DECOMPRESS = pathlib.Path(os.path.expandvars(TEMP_DIRPATH_DECOMPRESS))
@@ -148,6 +169,7 @@ if not LANGUAGE:
     import locale
     LANGUAGE = locale.getdefaultlocale()[LANGUAGE]
     del locale
+
 
 if PROXY:
     import os

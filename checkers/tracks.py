@@ -1,15 +1,57 @@
 import logging
-from utils.fileinfo import FI
+from helpers.corefile import CF
 from utils.ffmpegutils import *
 from configs import *
 
+from .video import *
+from .audio import *
+from .image import *
+from .text import *
+from .menu import *
+from .archive import *
+from .fonts import *
 
-__all__ = ['chkTracks', 'chkContainer']
+
+__all__ = [
+    'chkFile',
+    'chkTracks',
+    'chkContainer']
 
 
 
 
-def chkTracks(fi:FI, logger:logging.Logger) -> bool:
+def chkFile(fi:CF, logger:logging.Logger):
+
+    logger.info(f'Checking "{fi.path}" ...')
+    if not chkContainer(fi, logger):
+        return
+    match fi.ext:
+        case 'mkv'|'mp4':
+            chkTracks(fi, logger)
+            chkVideoTracks(fi, logger)
+            chkAudioTracks(fi, logger)
+            chkMenuTracks(fi, logger)
+            chkTextTracks(fi, logger)
+        case 'mka':
+            chkTracks(fi, logger)
+            chkAudioTracks(fi, logger)
+        case 'flac':
+            chkTracks(fi, logger)
+            chkAudioTracks(fi, logger)
+        case 'png':
+            chkTracks(fi, logger)
+            chkImageTracks(fi, logger)
+        case 'ass':
+            chkAssFile(fi, logger)
+        case '7z'|'zip'|'rar':
+            chkArcFile(fi, logger)
+        case _:
+            logger.error(f'Got "{fi.ext}" but {VNx_ALL_EXTS=}.')
+
+
+
+
+def chkTracks(fi:CF, logger:logging.Logger) -> bool:
 
     if not fi.tracks[1:]:
         logger.error('The file has no media tracks.')
@@ -41,7 +83,7 @@ def chkTracks(fi:FI, logger:logging.Logger) -> bool:
 
 
 
-def chkContainer(fi:FI, logger:logging.Logger) -> bool:
+def chkContainer(fi:CF, logger:logging.Logger) -> bool:
     expected_format = EXTS2FORMATS.get(fi.ext)
 
     if expected_format is None:

@@ -92,7 +92,7 @@ def chkScansNaming(scans_dir:Path, logger:logging.Logger):
             lower_dirnames.append(dir.name.lower())
             lower_dirnames_map[dir.name.lower()] = dir.name
 
-        groups : list[set] = []
+        groups : list[set[str]] = []
         for i, lower_dirname in enumerate(lower_dirnames):
             # using [i:] make the matching return a list at least containing itself
             # using a cutoff 0.5 to make matches such as '01' vs '02'
@@ -162,6 +162,6 @@ def chkScansFiles(files:list[Path], temp_dir:Path|None, logger:logging.Logger):
     with logging_redirect_tqdm([logger]):
         pbar = tqdm.tqdm(total=len(files), desc='Checking', unit='file', unit_scale=False, ascii=True, dynamic_ncols=True)
         for file in files:
-            chkScansImage(FI(file), temp_dir, logger=logger, decode=True)
+            chkScansImage(CF(file), temp_dir, logger=logger, decode=True)
             pbar.update(1)
         pbar.close()

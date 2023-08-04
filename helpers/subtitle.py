@@ -2,6 +2,7 @@ from configs.constants import UNIQUE_CHARS
 from configs.user import ASS_LANG_THRESHOLD
 
 
+__all__ = ['getAssTextLangDict']
 
 
 def getAssTextLangDict(text:str|list[str]) -> dict[str, bool]:

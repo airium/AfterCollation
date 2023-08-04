@@ -5,19 +5,19 @@ from pathlib import Path
 from configs import *
 from utils import *
 from .misc import *
-
+from helpers.corefile import CF
 
 __all__ = ['fmtQualityLabel', 'fmtTrackLabel']
 
 
 
 
-def fmtQualityLabel(fi:FI|MI, logger:logging.Logger|None=None) -> str:
+def fmtQualityLabel(cf:CF, logger:logging.Logger|None=None) -> str:
 
     # files without video track have no quality label
-    if not fi.video_tracks: return ''
+    if not cf.video_tracks: return ''
 
-    vtr = fi.video_tracks[0]
+    vtr = cf.video_tracks[0]
 
     h = int(vtr.height) if vtr.height else 0
     h = 1080 if (MIN_VID_HEIGHT_TO_STILL_LABEL_AS_1080 <= h <= 1080) else h
@@ -53,7 +53,7 @@ def fmtQualityLabel(fi:FI|MI, logger:logging.Logger|None=None) -> str:
 
 
 
-def fmtTrackLabel(fi:FI|MI, logger:logging.Logger|None=None) -> str:
+def fmtTrackLabel(fi:CF|MI, logger:logging.Logger|None=None) -> str:
 
     if not fi.video_tracks: return ''
 

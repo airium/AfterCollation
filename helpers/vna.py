@@ -6,6 +6,7 @@ from pathlib import Path
 
 from configs import *
 from utils import *
+from helpers.corefile import CF
 
 import yaml
 
@@ -48,9 +49,9 @@ def loadVNAInfo(vna_file:Path|None, logger:logging.Logger) -> tuple[dict, list[d
     try:
         match vna_file.suffix.lower():
             case '.csv':
-                succ, data_dicts = readCSV(vna_file)
+                success, data_dicts = readCSV(vna_file)
                 data_dicts = unquotEntries4CSV(data_dicts)
-                if not succ: raise Exception
+                if not success: raise Exception
             case '.yaml':
                 with vna_file.open('r', encoding='utf-8-sig') as fo:
                     data_dicts = yaml.safe_load(fo)
@@ -60,46 +61,47 @@ def loadVNAInfo(vna_file:Path|None, logger:logging.Logger) -> tuple[dict, list[d
                 raise ValueError
         assert isinstance(data_dicts, list) and all(isinstance(d, dict) for d in data_dicts)
     except:
-        logger.error(f'Failed to read the pre-encoding instruction from VNA output "{vna_file}".')
+        logger.error(f'Failed to read "{vna_file}".')
         return {}, []
 
     try:
-        base : dict[str, str]= {}
-        configs : list[dict[str, str]] = []
+        default_dict : dict[str, str] = {}
+        naming_dicts : list[dict[str, str]] = []
         for data_dict in data_dicts:
+            #* default dict ------------------------------------------
             is_base_dict = False
             for k, v in data_dict.items():
                 if v == BASE_LINE_LABEL:
-                    is_base_dict = True
                     for kk, vv in VNA_BASE_LINE_USER_DICT.items():
-                        base[vv] = data_dict.get(kk, '')
+                        default_dict[vv] = data_dict.get(kk, '')
+                    is_base_dict = True
                     break
             if is_base_dict: continue
-            conf = {}
-            # NOTE we read all keys from the csv (VNA_ALL_FIELDS_DICT)
-            # but later we only fill `VNA_FIELDS_DICT_FOR_VND` to FI
-            # so it won't matter
-            for k, v in VNA_CSV_FIELDS_DICT.items():
-                conf[v] = data_dict.get(k, '')
-            configs.append(conf)
+            #* per file dict -----------------------------------------
+            naming_dict : dict[str, str] = {}
+            for k, v in VNA_PERSISTENT_FIELDS_DICT.items():
+                naming_dict[v] = data_dict.get(k, '')
+            for k, v in VNA_USER_FIELDS_DICT.items():
+                naming_dict[v] = data_dict.get(k, '')
+            naming_dicts.append(naming_dict)
     except:
-        logger.error(f'Failed to pick data from the pre-encoding instruction from VNA output "{vna_file}".')
+        logger.error(f'Failed to load data from "{vna_file}".')
         return {}, []
 
-    logger.info(f'Successfully read the pre-encoding instruction from VNA output "{vna_file}".')
-    return base, configs
+    logger.info(f'Loaded data from "{vna_file}".')
+    return default_dict, naming_dicts
 
 
 
 
-def fillNamingFieldsFromVNA(fileinfos:list[FI], vna_configs:list[dict], logger:logging.Logger):
+def fillNamingFieldsFromVNA(corefiles:list[CF], vna_configs:list[dict], logger:logging.Logger):
 
     if not vna_configs: return
 
-    guessed_vol_nums = guessVolNumByPath([fi.path for fi in fileinfos])
+    guessed_vol_nums = guessVolNumByPath([fi.path for fi in corefiles])
 
     vna_config_used_bools = [False] * len(vna_configs)
-    for fi, guessed_vol_num in zip(fileinfos, guessed_vol_nums):
+    for fi, guessed_vol_num in zip(corefiles, guessed_vol_nums):
         audio_samples_matched = False
         if ENABLE_VNA_AUDIO_SAMPLES:
             for i, vna_config in enumerate(vna_configs):

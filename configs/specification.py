@@ -1,6 +1,9 @@
 # the use this as the default webp quality
 ENFORCED_WEBP_QUALITY : int = 90
 
+OLD_GRP_NAME : str = 'VCB-S'
+STD_GRP_NAME : str = 'VCB-Studio'
+STD_SPS_DIRNAME : str = 'SPs'
 STD_BKS_DIRNAME : str = 'Scans'   # standard BK root dirname
 STD_CDS_DIRNAME : str = 'CDs'     # standard CD roor diranme
 STD_COVER_FILENAME : str = 'Cover.jpg'

@@ -4,22 +4,19 @@ import re
 from typing import Any
 from pathlib import Path
 
-from .crc32 import getCRC32
-from .mediainfo import getMediaInfo
-from .mediautils import pickAudioSamples
+from utils import *
 from configs import *
-
 
 from pymediainfo import Track
 from multiprocessing import Pool
 
 
-__all__ = ['FileInfo', 'FI', 'getFileInfo', 'getFileInfoList']
+__all__ = ['CoreFile', 'CF', 'getCoreFile', 'getCoreFileList']
 
 
 
 
-class FileInfo:
+class CoreFile:
     '''
     FileInfo is a wrapper over MediaInfo.
     It provdes easier interface to some mediainfo.
@@ -27,14 +24,17 @@ class FileInfo:
     '''
 
     def __init__(self,
-                 path:Path,
+                 path:Path|str,
                  init_crc32:bool=False,
                  init_audio_digest:bool=False) -> None:
 
         path = Path(path)
         self.path = path.resolve()
         self.minfo = getMediaInfo(path)
+        self.dst = ''
 
+        for v in VNA_USER_FIELDS_DICT.values():
+            setattr(self, v, '')
         for v in VND_USER_FIELDS_DICT.values():
             setattr(self, v, '')
 
@@ -49,13 +49,103 @@ class FileInfo:
 
 
     def __getattr__(self, __name: str) -> Any:
-        return getattr(self.minfo, __name)
+        return getattr(self.minfo, __name, '')
+
+
+    def __getstate__(self) -> dict:
+        return self.__dict__
+
+
+    def __setstate__(self, state: dict) -> None:
+        self.__dict__.update(state)
 
 
     def updateFromVNA(self, vna_config:dict[str, str]) -> None:
-        for k, v in VNA_PERSISTENT_USER_DICT.items():
-            setattr(self, v, vna_config.get(k, ''))
+        for k, v in VNA_USER_FIELDS_DICT.items():
+            setattr(self, v, vna_config.get(v, ''))
 
+
+    def updateFromVND(self, vnd_config:dict[str, str]) -> None:
+        for k, v in VND_USER_FIELDS_DICT.items():
+            setattr(self, v, vnd_config.get(v, ''))
+
+
+    def copyNaming(self, cf:CF):
+        self.l = cf.l
+        self.t = cf.t
+        self.i1 = cf.i1
+        self.i2 = cf.i2
+        self.n = cf.n
+        self.c = cf.c
+
+    @property
+    def crc(self) -> str:
+        return self.crc32
+
+    # faster access to naming fields
+    @property # NOTE no setter for read-only path
+    def src(self) -> str:
+        return self.path.resolve().as_posix()
+    # @property
+    # def dst(self) -> str:
+    #     return getattr(self, DSTPATH_VAR, '')
+    @property
+    def g(self) -> str:
+        return getattr(self, GRPTAG_VAR, '')
+    @g.setter
+    def g(self, v:str) -> None:
+        setattr(self, GRPTAG_VAR, v)
+    @property
+    def s(self) -> str:
+        return getattr(self, SHOWNAME_VAR, '')
+    @s.setter
+    def s(self, v:str) -> None:
+        setattr(self, SHOWNAME_VAR, v)
+    @property
+    def l(self) -> str:
+        return getattr(self, LOCATION_VAR, '')
+    @l.setter
+    def l(self, v:str) -> None:
+        setattr(self, LOCATION_VAR, v)
+    @property
+    def t(self) -> str:
+        return getattr(self, TYPENAME_VAR, '')
+    @t.setter
+    def t(self, v:str) -> None:
+        setattr(self, TYPENAME_VAR, v)
+    @property
+    def i1(self) -> str:
+        return getattr(self, IDX1_VAR, '')
+    @i1.setter
+    def i1(self, v:str) -> None:
+        setattr(self, IDX1_VAR, v)
+    @property
+    def i2(self) -> str:
+        return getattr(self, IDX2_VAR, '')
+    @i2.setter
+    def i2(self, v:str) -> None:
+        setattr(self, IDX2_VAR, v)
+    @property
+    def n(self) -> str:
+        return getattr(self, NOTE_VAR, '')
+    @n.setter
+    def n(self, v:str) -> None:
+        setattr(self, NOTE_VAR, v)
+    @property
+    def c(self) -> str:
+        return getattr(self, CUSTOM_VAR, '')
+    @c.setter
+    def c(self, v:str) -> None:
+        setattr(self, CUSTOM_VAR, v)
+    @property
+    def x(self) -> str:
+        return getattr(self, SUFFIX_VAR, '')
+    @x.setter
+    def x(self, v:str) -> None:
+        setattr(self, SUFFIX_VAR, v)
+    @property # NOTE no setter for read-only extension
+    def e(self) -> str:
+        return self.ext
 
     @property
     def has_duration(self) -> bool:
@@ -79,38 +169,24 @@ class FileInfo:
     @property
     def has_other(self) -> bool:
         return bool(self.other_tracks)
-
-
-
     @property
     def num_audio(self) -> int:
         return len(self.audio_tracks)
-
-
-
     @property
     def gtr(self) -> Track:
         return self.general_tracks[0]
-
     @property
     def duration(self) -> int:
         if not self.has_duration: return 0
         '''The unit is millisecond.'''
         return int(float(self.general_tracks[0].duration))
-
-
-
     @property
     def file_size(self) -> int:
         return int(self.general_tracks[0].file_size)
-
-
     @property
     def ext(self) -> str:
         ret = self.suffix
         return ret[1:] if ret.startswith('.') else ret
-
-
     @property
     def suffix(self) -> str:
         return self.path.suffix.lower()
@@ -122,8 +198,6 @@ class FileInfo:
             return ret
         else:
             return self.ext
-
-
     @property
     def crc32(self) -> str:
         if not self._crc32: self._crc32 = getCRC32(self.path, prefix='')
@@ -302,18 +376,18 @@ class FileInfo:
 
 
 
-FI = FileInfo
+CF = CoreFile
 
 
 
 
-def getFileInfo(path:Path, kwargs:dict={}) -> FileInfo:
-    return FileInfo(path, **kwargs)
+def getCoreFile(path:Path, **kwargs:Any) -> CoreFile:
+    return CoreFile(path, **kwargs)
 
 
 
 
-def getFileInfoList(paths:list[Path], kwargs:dict|list[dict]={}, mp:int=4) -> list[FileInfo]:
+def getCoreFileList(paths:list[Path], kwargs:dict|list[dict]={}, mp:int=4) -> list[CoreFile]:
 
     if isinstance(kwargs, dict):
         kwargs = [kwargs] * len(paths)
@@ -322,13 +396,13 @@ def getFileInfoList(paths:list[Path], kwargs:dict|list[dict]={}, mp:int=4) -> li
         ret = []
         pool = Pool(mp)
         for path, kwarg in zip(paths, kwargs):
-            ret.append(pool.apply_async(FileInfo, (path,), kwarg))
+            ret.append(pool.apply_async(CoreFile, (path,), kwarg))
         pool.close()
         pool.join()
         ret = [r.get() for r in ret]
     else:
         ret = []
         for path, kwarg in zip(paths, kwargs):
-            ret.append(FileInfo(path, **kwarg))
+            ret.append(CoreFile(path, **kwarg))
 
     return ret

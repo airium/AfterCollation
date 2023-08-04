@@ -2,6 +2,7 @@ import logging
 
 from configs import *
 from utils import *
+from helpers.corefile import CF
 
 
 __all__ = ['chkTextTracks', 'chkPGS', 'chkAssFile', 'cmpTextContent']
@@ -9,7 +10,7 @@ __all__ = ['chkTextTracks', 'chkPGS', 'chkAssFile', 'cmpTextContent']
 
 
 
-def chkTextTracks(fi:FI, logger:logging.Logger):
+def chkTextTracks(fi:CF, logger:logging.Logger):
 
     if fi.ext not in COMMON_VIDEO_EXTS:
         logger.error(f'The file is not a known file type with text.')
@@ -53,13 +54,13 @@ def chkTextTracks(fi:FI, logger:logging.Logger):
 
 
 
-def chkPGS(fi:FI, logger:logging.Logger):
+def chkPGS(fi:CF, logger:logging.Logger):
     logger.info('PGS checking inside a video file is not supported yet.')
 
 
 
 
-def chkAssFile(fi:FI, logger:logging.Logger):
+def chkAssFile(fi:CF, logger:logging.Logger):
     if not tstAssFile(fi.path):
         logger.error('The ASS file is invalid or of non-standard encoding.')
         return
@@ -73,5 +74,5 @@ def chkAssFile(fi:FI, logger:logging.Logger):
 
 
 
-def cmpTextContent(fi1:FI|list[FI], fi2:FI|list[FI], logger:logging.Logger):
+def cmpTextContent(fi1:CF|list[CF], fi2:CF|list[CF], logger:logging.Logger):
     logger.info('Text content comparison inside media files is not supported yet.')

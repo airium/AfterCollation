@@ -7,14 +7,15 @@ from utils import *
 from .misc import *
 from .subtitle import getAssTextLangDict
 from .language import *
+from helpers.corefile import CF
 
 
-__all__ = ['pickInfo4NamingDraft', 'loadNamingDraftCSV', 'guessNamingFieldsEarly']
+__all__ = ['pickInfo4NamingDraft', 'loadVNDNamingInfo', 'guessNamingFieldsEarly']
 
 
 
 
-def pickInfo4NamingDraft(fis:list[FI], logger:logging.Logger) -> list[dict[str, str]]:
+def pickInfo4NamingDraft(fis:list[CF], logger:logging.Logger) -> list[dict[str, str]]:
     ret = []
 
     for fi in fis:
@@ -49,38 +50,54 @@ def pickInfo4NamingDraft(fis:list[FI], logger:logging.Logger) -> list[dict[str, 
 
 
 
-def loadNamingDraftCSV(path:Path, logger:logging.Logger) -> tuple[dict[str, str], list[dict[str, str]]]:
+def loadVNDNamingInfo(vnd_csv:Path, logger:logging.Logger) -> tuple[dict[str, str], list[dict[str, str]]]:
 
-    succ, lines = readCSV(path)
-    if not succ:
-        logger.error(f'Error in loading CSV "{path}".')
+    logger.info(f'Loading "{vnd_csv}" ...')
+
+    if not vnd_csv or not vnd_csv.is_file():
         return {}, []
-    lines = unquotEntries4CSV(lines)
+
+    success, csv_dicts = readCSV(vnd_csv)
+    if not success:
+        logger.error(f'Failed to read "{vnd_csv}".')
+        return {}, []
+    csv_dicts = unquotEntries4CSV(csv_dicts)
 
     try:
-        infos = []
-        for info in lines:
-            d : dict[str, str] = {}
+        default_dict : dict[str, str] = {}
+        naming_dicts : list[dict[str, str]] = []
+        for csv_dict in csv_dicts:
+            #* default dict ------------------------------------------
+            is_base_dict = False
+            for k, v in csv_dict.items():
+                if v == BASE_LINE_LABEL:
+                    for kk, vv in VND_BASE_LINE_USER_DICT.items():
+                        default_dict[vv] = csv_dict.get(kk, '')
+                    is_base_dict = True
+                    break
+            if is_base_dict: continue
+            #* per file dict -----------------------------------------
+            naming_dict : dict[str, str] = {}
             for k, v in VND_PERSISTENT_FIELDS_DICT.items():
-                d[v] = info[k]
+                naming_dict[v] = csv_dict.get(k, '')
             for k, v in VND_USER_FIELDS_DICT.items():
-                d[v] = info[k]
-            infos.append(d)
-        # TODO update the logic to find the base line by BASE_LINE_LABEL, not the first line
-        default_info, infos = infos[0], infos[1:]
-        enabled = toEnabledList([info[ENABLE_VAR] for info in infos])
-        enabled_infos = list(itertools.compress(infos, enabled))
-        if len(infos) != len(enabled_infos):
-            logger.info(f'Enabled {len(enabled_infos)} out of {len(infos)} files in the naming plan.')
-    except KeyError as e:
-        logger.error(f'Error in the finding required key in csv data ({e}).')
+                naming_dict[v] = csv_dict.get(k, '')
+            naming_dicts.append(naming_dict)
+
+        enables = toEnabledList([naming_dict[ENABLE_VAR] for naming_dict in naming_dicts])
+        enabled_naming_dicts = list(itertools.compress(naming_dicts, enables))
+        if len(naming_dicts) != len(enabled_naming_dicts):
+            logger.info(f'Enabled {len(enabled_naming_dicts)} out of {len(naming_dicts)} files in the naming plan.')
+    except:
+        logger.error(f'Failed to load data from "{vnd_csv}".')
         return {}, []
 
-    return default_info, enabled_infos
+    logger.info(f'Loaded data from "{vnd_csv}".')
+    return default_dict, enabled_naming_dicts
 
 
 
-def guessAssNamingFields(fi:FI, logger:logging.Logger):
+def guessAssNamingFields(fi:CF, logger:logging.Logger):
     '''We should be able to guess the eposide index and the language suffix if lucky.'''
 
     #* firstly let's try to get the info from filename
@@ -131,7 +148,7 @@ def guessAssNamingFields(fi:FI, logger:logging.Logger):
 
 
 
-def guessNamingFieldsEarly(fis:list[FI], logger:logging.Logger):
+def guessNamingFieldsEarly(fis:list[CF], logger:logging.Logger):
     '''We can actually guess very few fields at VND, but try it.'''
 
     for i, fi in enumerate(fis):

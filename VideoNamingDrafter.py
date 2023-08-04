@@ -42,11 +42,11 @@ def main(input_dir:Path, vna_file:Path|None=None):
 
     logger.info(f'Loading files with CRC32 checking (this can be slow) ...')
     fis = []
-    for vnd_file in tqdm.tqdm(vnd_files, desc='Loading', unit='file', leave=False, ascii=True, dynamic_ncols=True):
-        fis.append(FI(vnd_file, init_crc32=True))
-    cmpCRC32FI(fis, findCRC32InFilenames(vnd_files), logger)
+    for vnd_file in tqdm.tqdm(vnd_files, desc='Loading', unit='file', leave=True, ascii=True, dynamic_ncols=True):
+        fis.append(CF(vnd_file, init_crc32=True))
+    cmpCRC32VND(fis, findCRC32InFilenames(vnd_files), logger)
     if ENABLE_FILE_CHECKING_IN_VNA:
-        chkFiles(fis, logger)
+        chkSeasonFiles(fis, logger)
 
     # NOTE first guess naming and then fill each FI from VNA
     # so the naming instruction in VNA will not be overwritten
@@ -61,6 +61,8 @@ def main(input_dir:Path, vna_file:Path|None=None):
     # don't forget to update the default dict from VNA, which is not updated in fillFieldsFromVNA()
     # NOTE leave useful fields as '' to notify the user that they can fill it
     default_naming_dict = dict(zip(files_naming_dicts[0].keys(), itertools.repeat(BASE_LINE_LABEL)))
+    for k in VND_BASE_LINE_USER_DICT.keys():
+        default_naming_dict[k] = ''
     for k, v in VNA_BASE_LINE_USER_DICT.items():
         default_naming_dict[k] = vna_base.get(v, '')
 

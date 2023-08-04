@@ -3,7 +3,8 @@ from re import compile as rc
 
 
 MEDIAINFO_CHAPTER_PATTERN = rc(r'(?P<h>[0-9]{2})_(?P<m>[0-9]{2})_(?P<ms>[0-9]{5})')
-BASIC_CRC32_PATTERN = rc(r'\[(?P<crc32>[0-9a-fA-Z]{8})\]')
+BASIC_CRC32_PATTERN = rc(r'^(?P<crc32>[0-9a-fA-F]{8})$')
+CRC32_IN_FILENAME_PATTERN = rc(r'\[(?P<crc32>[0-9a-fA-Z]{8})\]')
 VGMDB_CATALOG_PATTERN = rc(r'^(?P<prefix>.+-)(?P<start>[0-9]{1,5})~(?P<end>[0-9]{1,4})$')
 VGMDB_DATE_FORMAT = rc(r'(?P<year>(19[5-9]|20[0-2])[0-9])-(?P<month>[0-9]{2})-(?P<day>[0-9]{2})')
 

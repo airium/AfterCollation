@@ -3,13 +3,14 @@ import itertools
 
 from utils import *
 from configs import *
+from helpers.corefile import CF
 
 import numpy as np
 
 __all__ = ['chkAudioTracks', 'cmpAudioContent']
 
 
-def chkAudioTracks(fi:FI, logger:logging.Logger, decode:bool=True):
+def chkAudioTracks(fi:CF, logger:logging.Logger, decode:bool=True):
 
     if fi.ext not in COMMON_VIDEO_EXTS + COMMON_AUDIO_EXTS:
         logger.error(f'The file is not a known file type with audio.')
@@ -130,7 +131,7 @@ def chkAudioTracks(fi:FI, logger:logging.Logger, decode:bool=True):
 
 
 
-def cmpAudioContent(input1:FI|list[FI], input2:FI|list[FI], logger:logging.Logger) -> list[tuple[int, np.ndarray, int]]:
+def cmpAudioContent(input1:CF|list[CF], input2:CF|list[CF], logger:logging.Logger) -> list[tuple[int, np.ndarray, int]]:
     '''
     Compare two groups of audios, supporting multi-track and multi-file.
     In each group, video files is concatenated in series; audio files is placed parallel (i.e. as a new track).
@@ -140,8 +141,8 @@ def cmpAudioContent(input1:FI|list[FI], input2:FI|list[FI], logger:logging.Logge
     np.ndarray is the difference audio of this track (input1[idx] - input2[idx])
     '''
 
-    if isinstance(input1, FI): input1 = [input1]
-    if isinstance(input2, FI): input2 = [input2]
+    if isinstance(input1, CF): input1 = [input1]
+    if isinstance(input2, CF): input2 = [input2]
 
     if not input1 and not input2:
         logger.error('Missing input(s).)')
@@ -162,7 +163,7 @@ def cmpAudioContent(input1:FI|list[FI], input2:FI|list[FI], logger:logging.Logge
         return []
 
     # tracks1: dict[idx, list[tuple[FileInfo, audio_idx_in_the_file]]]
-    tracks1 : dict[int, list[tuple[FI, int]]] = {}
+    tracks1 : dict[int, list[tuple[CF, int]]] = {}
     vfi1s = [fi for fi in input1 if fi.has_video]
     afi1s = [fi for fi in input1 if not fi.has_video]
     for fi1 in vfi1s:
@@ -173,7 +174,7 @@ def cmpAudioContent(input1:FI|list[FI], input2:FI|list[FI], logger:logging.Logge
         for i, at in enumerate(fi1.audio_tracks, start=0):
             tracks1[i+num_aud_in_vids] = tracks1.get(i, []) + [(fi1, i)]
 
-    tracks2 : dict[int, list[tuple[FI, int]]] = {}
+    tracks2 : dict[int, list[tuple[CF, int]]] = {}
     vfi2s = [fi for fi in input2 if fi.has_video]
     afi2s = [fi for fi in input2 if not fi.has_video]
     for fi2 in vfi2s:

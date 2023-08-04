@@ -14,6 +14,20 @@ from configs import *
 #         self.parent : AlbumInfo = parent
 
 
+
+__all__ = [
+    'AlbumInfo',
+    'matchAlbumName',
+    'matchArtistsName',
+    'matchTrackName',
+    'matchIndex',
+    'lookupVGMDB',
+    'listAlbumDirsFromCDsDir',
+    'chkAlbumDirNaming',
+    'chkAlbumFiles'
+    ,'logContentCheck'
+    ]
+
 class AlbumInfo:
 
     def __init__(self, root: Path):

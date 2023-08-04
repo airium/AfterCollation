@@ -68,7 +68,7 @@ VNA_CSV_FIELDS_DICT = {
 
 VND_CSV_FIELDS_DICT = {
     # VNX_CSV_PERSISTENT_KEY_DICT: these fields are always saved in CSV
-    # 'presistent' means they are created in VND but to be used in VNE
+
     FULLPATH_CN: FULLPATH_VAR,
     CRC32_CN: CRC32_VAR,
     # VNX_USER_FIELDS_NAMING_DICT: these fields are to be input from the user
@@ -110,14 +110,19 @@ VNA_BASE_LINE_USER_DICT = {
     GRPTAG_CN: GRPTAG_VAR,
     SHOWNAME_CN: SHOWNAME_VAR,
 }
-
-VNA_PERSISTENT_USER_DICT = {
+# 'presistent' means they are automatically in VNA but to be used in VND
+VNA_PERSISTENT_FIELDS_DICT = {
+    VNA_VOL_CN: VNA_VOL_VAR,
+    VNA_IDX_CN: VNA_IDX_VAR,
+    VNA_AUDIO_SAMPLES_CN: VNA_AUDIO_SAMPLES_VAR,
+}
+VNA_USER_FIELDS_DICT = {
     TYPENAME_CN: TYPENAME_VAR,
     IDX1_CN: IDX1_VAR,
     IDX2_CN: IDX2_VAR,
     CUSTOM_CN: CUSTOM_VAR,
     GRPTAG_CN: GRPTAG_VAR,
-    SHOWNAME_CN: SHOWNAME_VAR
+    SHOWNAME_CN: SHOWNAME_VAR,
 }
 
 VND_BASE_LINE_USER_DICT = {
@@ -126,12 +131,11 @@ VND_BASE_LINE_USER_DICT = {
     SHOWNAME_CN: SHOWNAME_VAR,
     SUFFIX_CN: SUFFIX_VAR,
 }
-
+# 'presistent' means they are automatically created in VND but to be used in VNE
 VND_PERSISTENT_FIELDS_DICT = {
     FULLPATH_CN: FULLPATH_VAR,
     CRC32_CN: CRC32_VAR,
 }
-
 VND_USER_FIELDS_DICT = {
     GRPTAG_CN: GRPTAG_VAR,
     SHOWNAME_CN: SHOWNAME_VAR,

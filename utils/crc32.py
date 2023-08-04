@@ -5,7 +5,7 @@ from pathlib import Path
 from functools import partial
 from multiprocessing import Pool
 
-from configs.regex import BASIC_CRC32_PATTERN
+from configs.regex import CRC32_IN_FILENAME_PATTERN
 
 
 __all__ = ['getCRC32', 'getCRC32List', 'findCRC32InFilename', 'findCRC32InFilenames']
@@ -50,7 +50,7 @@ def getCRC32List(paths:list[Path], mp:int=1, prefix:str='', read_size:int=16*2**
 
 def findCRC32InFilename(inp:str|Path) -> str:
     name = inp.name if isinstance(inp, Path) else inp
-    if m := re.findall(BASIC_CRC32_PATTERN, name):
+    if m := re.findall(CRC32_IN_FILENAME_PATTERN, name):
         return m[-1]
     return ''
 

@@ -5,6 +5,7 @@ from pathlib import Path
 from configs import *
 from utils import *
 from .image import chkImage
+from helpers.corefile import CF
 
 
 __all__ = ['chkArcFile', 'chkFontArcDir', 'chkImageArcDir']
@@ -12,7 +13,7 @@ __all__ = ['chkArcFile', 'chkFontArcDir', 'chkImageArcDir']
 
 
 
-def chkArcFile(fi:FI, logger:logging.Logger, decompress:bool=True) -> bool:
+def chkArcFile(fi:CF, logger:logging.Logger, decompress:bool=True) -> bool:
 
     if fi.ext not in COMMON_ARCHIVE_EXTS:
         logger.error('The file is not a known archive file.')
@@ -92,6 +93,6 @@ def chkImageArcDir(path:Path, logger:logging.Logger) -> bool:
         logger.error('The archive file contains non-PNG files.')
         ok = False
     for image_file in all_image_files:
-        ok = ok if chkImage(FI(image_file), logger) else False
+        ok = ok if chkImage(CF(image_file), logger) else False
 
     return ok

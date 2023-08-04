@@ -1,13 +1,15 @@
 import logging
 from pathlib import Path
 
-from utils.fileinfo import FI
+from .corefile import CF
 from utils.mediautils import *
 from utils.fileutils import *
 from configs.specification import STD_BKS_DIRNAME, STD_CDS_DIRNAME
 
 
-__all__ = ['toEnabledList', 'cmpCRC32FI', 'printCliNotice', 'filterOutCDsScans']
+__all__ = ['toEnabledList',
+           'cmpCRC32VND', 'cmpCRC32VNE',
+           'printCliNotice', 'filterOutCDsScans']
 
 
 
@@ -37,21 +39,42 @@ def toEnabledList(values:list[str]|tuple[str]) -> list[bool]:
 
 
 
-def cmpCRC32FI(fileinfos:FI|list[FI], expected_crc32s:str|list[str], logger:logging.Logger):
+def cmpCRC32VND(fis:CF|list[CF], expected_crc32s:str|list[str], logger:logging.Logger):
 
-    if isinstance(fileinfos, FI): fileinfos = [fileinfos]
+    if isinstance(fis, CF): fis = [fis]
     if isinstance(expected_crc32s, str): expected_crc32s = [expected_crc32s]
 
-    if len(fileinfos) != len(expected_crc32s):
-        logger.error('Input fileinfos and expected CRC32s have different length.')
-        return
+    if len(fis) != len(expected_crc32s):
+        logger.error('The input files and expected CRC32s have different length.')
 
-    for fi, expected_crc32 in zip(fileinfos, expected_crc32s):
+    # do a shortest loop, though the length mismatches
+    for fi, expected_crc32 in zip(fis, expected_crc32s):
         if not expected_crc32:
             logger.warning(f'No CRC32 found in filename "{fi.path}".')
-        else:
-            if fi.crc32.lower() != expected_crc32.lower():
-                logger.error(f'CRC32 mismatches, actual 0x{fi.crc32} ≠ 0x{expected_crc32} for "{fi.path}".')
+            continue
+        if fi.crc32.lower() != expected_crc32.lower():
+            logger.error(f'CRC32 mismatches, actual 0x{fi.crc32} ≠ 0x{expected_crc32} for "{fi.path}".')
+
+
+
+
+def cmpCRC32VNE(fis:CF|list[CF], expected_crc32s:str|list[str], logger:logging.Logger):
+
+    if isinstance(fis, CF): fis = [fis]
+    if isinstance(expected_crc32s, str): expected_crc32s = [expected_crc32s]
+
+    if len(fis) != len(expected_crc32s):
+        logger.error('The input files and expected CRC32s have different length.')
+
+    # do a shortest loop, though the length mismatches
+    for fi, expected_crc32 in zip(fis, expected_crc32s):
+        if not expected_crc32:
+            logger.warning(f'No CRC32 recorded for "{fi.path}".')
+            continue
+        if fi.crc32.lower() != expected_crc32.lower():
+            logger.error(f'CRC32 mismatches, actual 0x{fi.crc32} ≠ 0x{expected_crc32} for "{fi.path}".')
+
+
 
 
 

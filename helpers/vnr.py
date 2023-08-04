@@ -1,9 +1,11 @@
 import logging
+import itertools
 from pathlib import Path
 
 from utils import *
 from configs import *
 from checkers import *
+from helpers.corefile import CF
 
 
 __all__ = ['readCSV4VNR', 'writeCSV4VNR', 'doComparison']
@@ -76,8 +78,8 @@ def doComparison(*groups:list[Path], grpname:str='0', subgrps_names:list[str]=[]
             logger.error(f'Cannot compare empty group.')
             continue
 
-        g1 = [FI(f) for f in g1]
-        g2 = [FI(f) for f in g2]
+        g1 = [CF(f) for f in g1]
+        g2 = [CF(f) for f in g2]
 
         if any(fi.has_video for fi in g1+g2):
             logger.info('Comparing video...')
@@ -110,4 +112,4 @@ def doComparison(*groups:list[Path], grpname:str='0', subgrps_names:list[str]=[]
             logger.info('Comparing text...')
             cmpTextContent(g1, g2, logger)
 
-        cmpNaming(g1, g2, logger)
+        # cmpNaming(g1, g2, logger)

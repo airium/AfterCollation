@@ -11,7 +11,6 @@ from .scans import *
 from .album import *
 from .fonts import *
 
-
 from .naming import *
 from .season import *
 from .series import *

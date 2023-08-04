@@ -1,18 +1,20 @@
 import re
 import logging
 import itertools
-from utils.fileinfo import FI
+from helpers.corefile import CF
 from utils.mediainfo import *
 from utils.language import chkLang
 from configs import *
 
 
+__all__ = ['chkMenuTracks', 'cmpMenuContent']
 
 
-def cmpMenuContent(input1:FI|list[FI], input2:FI|list[FI], logger:logging.Logger):
 
-    if isinstance(input1, FI): input1 = [input1]
-    if isinstance(input2, FI): input2 = [input2]
+def cmpMenuContent(input1:CF|list[CF], input2:CF|list[CF], logger:logging.Logger):
+
+    if isinstance(input1, CF): input1 = [input1]
+    if isinstance(input2, CF): input2 = [input2]
 
     if not input1 and not input2:
         logger.error('Missing input(s).)')
@@ -70,7 +72,7 @@ def cmpMenuContent(input1:FI|list[FI], input2:FI|list[FI], logger:logging.Logger
 
 
 
-def chkMenuTracks(fi:FI, logger:logging.Logger):
+def chkMenuTracks(fi:CF, logger:logging.Logger):
 
     if fi.ext not in COMMON_VIDEO_EXTS:
         logger.error(f'The file is not a known file type with menu.')

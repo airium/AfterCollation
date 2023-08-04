@@ -54,7 +54,7 @@ def main(input_dir:Path):
         else:
             audio_samples = ''
 
-        fi : FI = FI(m2ts_path)
+        cf : CF = CF(m2ts_path)
         # it seems that keep these BDMV texts is better
         # if (not fi.has_video) and (not fi.has_audio):
         #     print(f'! Skipping {shown_path} as it has no video/audio track.')
@@ -69,9 +69,9 @@ def main(input_dir:Path):
         output_dict[VNA_PATH_CN] = shown_path
         output_dict[VNA_VOL_CN] = assumed_vol
         output_dict[VNA_IDX_CN] = m2ts_idx
-        output_dict[DURATION_CN] = fi.fmtGeneralDuration()
-        output_dict[TRACKCOMP_CN] = fi.fmtTrackTypeCounts()
-        output_dict[VNA_VID_FPS_CN] = fi.fmtFpsInfo()
+        output_dict[DURATION_CN] = cf.fmtGeneralDuration()
+        output_dict[TRACKCOMP_CN] = cf.fmtTrackTypeCounts()
+        output_dict[VNA_VID_FPS_CN] = cf.fmtFpsInfo()
         output_dict[VNA_AUDIO_SAMPLES_CN] = audio_samples
 
         output_dicts.append(output_dict)

@@ -3,7 +3,7 @@ import logging
 import itertools
 from pathlib import Path
 
-from utils.fileinfo import FI
+from helpers.corefile import CF
 from utils.ffmpegutils import *
 from utils.webputils import *
 from configs import *
@@ -14,7 +14,7 @@ __all__ = ['chkImage', 'chkScansImage', 'chkImageTracks', 'cmpImageContent']
 
 
 
-def chkImage(fi:FI, logger:logging.Logger, decode:bool=True) -> bool:
+def chkImage(fi:CF, logger:logging.Logger, decode:bool=True) -> bool:
 
     if fi.ext not in COMMON_IMAGE_EXTS:
         logger.info('The input file is not an image file.')
@@ -48,7 +48,7 @@ def chkImage(fi:FI, logger:logging.Logger, decode:bool=True) -> bool:
 
 
 
-def chkScansImage(fi:FI, temp_dir:Path|None, logger:logging.Logger, decode:bool=True):
+def chkScansImage(fi:CF, temp_dir:Path|None, logger:logging.Logger, decode:bool=True):
 
     if not chkImage(fi, logger, decode=decode): return
 
@@ -104,7 +104,7 @@ def chkScansImage(fi:FI, temp_dir:Path|None, logger:logging.Logger, decode:bool=
 
 
 
-def chkImageTracks(fi:FI, logger:logging.Logger, decode:bool=True):
+def chkImageTracks(fi:CF, logger:logging.Logger, decode:bool=True):
 
     if fi.ext not in COMMON_IMAGE_EXTS:
         logger.error(f'The file is not a known file type with image.')
@@ -121,10 +121,10 @@ def chkImageTracks(fi:FI, logger:logging.Logger, decode:bool=True):
 
 
 
-def cmpImageContent(input1:FI|list[FI], input2:FI|list[FI], logger:logging.Logger):
+def cmpImageContent(input1:CF|list[CF], input2:CF|list[CF], logger:logging.Logger):
 
-    if isinstance(input1, FI): input1 = [input1]
-    if isinstance(input2, FI): input2 = [input2]
+    if isinstance(input1, CF): input1 = [input1]
+    if isinstance(input2, CF): input2 = [input2]
 
     if not input1 and not input2:
         logger.error('Missing input(s).)')

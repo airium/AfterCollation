@@ -4,8 +4,8 @@ VNR_USAGE = '''
 VideoNamingRechecker (VNR) accepts the following input:
 1. one dir -> do basic checking without reference group
 2. two dirs -> match videos inside two dirs and generate a VNR.csv for your review
-3. one VNR.csv -> do video comparison as instructed in CSV (will also do 1 for input dirnames with 'vcb')
-4. even numbers of files (mkv/mp4/png/flac) -> do video comparison (will also do 1 for input filenames with 'vcb')
+3. one VNR.csv -> do video comparison as instructed in CSV
+4. even numbers of files (mkv/mp4/png/flac) -> do video comparison
 '''
 
 
@@ -137,19 +137,19 @@ def main2doMatching2CSV(input1_dir:Path, input2_dir:Path):
     if len(input2_fs) != len(input2_fs_all):
         logger.info(f'Removed some FLAC in {STD_CDS_DIRNAME} from the input dir "{input2_dir}".')
 
-    input1_fis = [FI(f) for f in input1_fs]
-    input2_fis = [FI(f) for f in input2_fs]
+    input1_cfs = [CF(f) for f in input1_fs]
+    input2_cfs = [CF(f) for f in input2_fs]
 
     groups : dict[str, list[tuple[str, str, str]]] = dict()
-    if not input1_fis or not input2_fis:
+    if not input1_cfs or not input2_cfs:
         logger.warning('No video files found in either of the input dirs.')
         logger.info('VNR will still try to generate a non-ref CSV in case you want to fill it by yourself.')
-        if input1_fis and not input2_fis:
-            for i, input1_fi in enumerate(input1_fis):
-                groups[str(i)] = [('', '', input1_fi.path.resolve().as_posix())]
-        elif input2_fis and not input1_fis:
-            for i, input2_fi in enumerate(input2_fis):
-                groups[str(i)] = [('', '', input2_fi.path.resolve().as_posix())]
+        if input1_cfs and not input2_cfs:
+            for i, input1_cf in enumerate(input1_cfs):
+                groups[str(i)] = [('', '', input1_cf.path.resolve().as_posix())]
+        elif input2_cfs and not input1_cfs:
+            for i, input2_cf in enumerate(input2_cfs):
+                groups[str(i)] = [('', '', input2_cf.path.resolve().as_posix())]
         else:
             raise ValueError # NOTE this should be never reached
 
@@ -174,160 +174,160 @@ def main2doMatching2CSV(input1_dir:Path, input2_dir:Path):
     #***********************************************************************************************
     # step 1: match by chapter timestamps
 
-    for input1_fi in input1_fis[:]: # make a copy of the list, so we can call .remove() in the loop
+    for input1_cf in input1_cfs[:]: # make a copy of the list, so we can call .remove() in the loop
         # NOTE we only match the first menu track, is this not robust enough?
-        matches = [input2_fi for input2_fi in input2_fis if (
-                   input1_fi.menu_tracks and input2_fi.menu_tracks
-                   and matchMenuTimeStamps(input1_fi.menu_timestamps[0], input2_fi.menu_timestamps[0]))]
+        matches = [input2_fi for input2_fi in input2_cfs if (
+                   input1_cf.menu_tracks and input2_fi.menu_tracks
+                   and matchMenuTimeStamps(input1_cf.menu_timestamps[0], input2_fi.menu_timestamps[0]))]
         if len(matches) == 1:
             groups[str(next(idx))] = [
-                ('1', '', input1_fi.path.resolve().as_posix()),
+                ('1', '', input1_cf.path.resolve().as_posix()),
                 ('2', '', matches[0].path.resolve().as_posix())
             ]
-            input1_fis.remove(input1_fi)
-            input2_fis.remove(matches[0])
-            logger.info(f'Matched by chapter timestamp: "{input1_fi.path}" <-> "{matches[0].path}"')
+            input1_cfs.remove(input1_cf)
+            input2_cfs.remove(matches[0])
+            logger.info(f'Matched by chapter timestamp: "{input1_cf.path}" <-> "{matches[0].path}"')
         elif len(matches) > 1:
-            logger.warning(f'Cannot match "{input1_fi.path}" as multiple counterparts have the same chapter timestamp.')
+            logger.warning(f'Cannot match "{input1_cf.path}" as multiple counterparts have the same chapter timestamp.')
         else:
-            if input1_fi.menu_tracks:
-                logger.warning(f'Cannot match "{input1_fi.path}" as NO counterpart has the same chapter timestamp.')
+            if input1_cf.menu_tracks:
+                logger.warning(f'Cannot match "{input1_cf.path}" as NO counterpart has the same chapter timestamp.')
 
     #***********************************************************************************************
     # step 2: match by audio digest
     if ENABLE_VNA_AUDIO_SAMPLES:
-        for input1_fi in input1_fis[:]: # make a copy of the list, so we can call .remove() in the loop
-            matches = [input2_fi for input2_fi in input2_fis \
-                       if cmpAudioSamples(input1_fi.audio_samples, input2_fi.audio_samples)]
+        for input1_cf in input1_cfs[:]: # make a copy of the list, so we can call .remove() in the loop
+            matches = [input2_fi for input2_fi in input2_cfs \
+                       if cmpAudioSamples(input1_cf.audio_samples, input2_fi.audio_samples)]
             if len(matches) == 1:
                 groups[str(next(idx))] = [
-                    ('1', '', input1_fi.path.resolve().as_posix()),
+                    ('1', '', input1_cf.path.resolve().as_posix()),
                     ('2', '', matches[0].path.resolve().as_posix())
                 ]
-                input1_fis.remove(input1_fi)
-                input2_fis.remove(matches[0])
-                logger.info(f'Matched by audio digest: "{input1_fi.path}" <-> "{matches[0].path}"')
+                input1_cfs.remove(input1_cf)
+                input2_cfs.remove(matches[0])
+                logger.info(f'Matched by audio digest: "{input1_cf.path}" <-> "{matches[0].path}"')
             elif len(matches) > 1:
-                logger.warning(f'Cannot match "{input1_fi.path}" as multiple counterparts have the same audio digest.')
+                logger.warning(f'Cannot match "{input1_cf.path}" as multiple counterparts have the same audio digest.')
             else:
-                if input1_fi.audio_samples:
-                    logger.warning(f'Cannot match "{input1_fi.path}" as NO counterpart has the same audio digest.')
+                if input1_cf.audio_samples:
+                    logger.warning(f'Cannot match "{input1_cf.path}" as NO counterpart has the same audio digest.')
 
     #***********************************************************************************************
     # step 3: match by duration
-    for input1_fi in input1_fis[:]: # make a copy of the list, so we can call .remove() in the loop
-        matches = [input2_fi for input2_fi in input2_fis if (
-                    input1_fi.has_duration and input2_fi.has_duration
-                    and matchTime(input1_fi.duration, input2_fi.duration))]
+    for input1_cf in input1_cfs[:]: # make a copy of the list, so we can call .remove() in the loop
+        matches = [input2_fi for input2_fi in input2_cfs if (
+                    input1_cf.has_duration and input2_fi.has_duration
+                    and matchTime(input1_cf.duration, input2_fi.duration))]
         if len(matches) == 1:
             groups[str(next(idx))] = [
-                ('1', '', input1_fi.path.resolve().as_posix()),
+                ('1', '', input1_cf.path.resolve().as_posix()),
                 ('2', '', matches[0].path.resolve().as_posix())
             ]
-            input1_fis.remove(input1_fi)
-            input2_fis.remove(matches[0])
-            logger.info(f'Matched by duration: "{input1_fi.path}" <-> "{matches[0].path}"')
+            input1_cfs.remove(input1_cf)
+            input2_cfs.remove(matches[0])
+            logger.info(f'Matched by duration: "{input1_cf.path}" <-> "{matches[0].path}"')
         elif len(matches) > 1:
             # TODO this implementation is dirty, fix it
-            if all('menu' in fi.path.name.lower() for fi in (input1_fi, *matches)):
+            if all('menu' in fi.path.name.lower() for fi in (input1_cf, *matches)):
                 subidx = itertools.count(1)
                 group : list[tuple[str, str, str]] = []
-                group.append((str(next(subidx)), '', input1_fi.path.resolve().as_posix()))
+                group.append((str(next(subidx)), '', input1_cf.path.resolve().as_posix()))
                 for match in matches:
                     group.append((str(next(subidx)), '', match.path.resolve().as_posix()))
-                    input2_fis.remove(match)
-                input1_fis.remove(input1_fi)
+                    input2_cfs.remove(match)
+                input1_cfs.remove(input1_cf)
                 groups[str(next(idx))] = group
-                logger.info(f'Matched by duration for menus: "{input1_fi.path}". (NOTE this is not robust)')
+                logger.info(f'Matched by duration for menus: "{input1_cf.path}". (NOTE this is not robust)')
             else:
-                logger.warning(f'Cannot match "{input1_fi.path}" as multiple counterparts have the same duration.')
+                logger.warning(f'Cannot match "{input1_cf.path}" as multiple counterparts have the same duration.')
         else:
-            logger.warning(f'Cannot match "{input1_fi.path}" as NO counterpart has the same duration.')
+            logger.warning(f'Cannot match "{input1_cf.path}" as NO counterpart has the same duration.')
 
     # we need to do this again for input2_fis
-    for input2_fi in input2_fis[:]: # make a copy of the list, so we can call .remove() in the loop
-        matches = [input1_fi for input1_fi in input1_fis if (
-                    input2_fi.has_duration and input1_fi.has_duration
-                    and matchTime(input2_fi.duration, input1_fi.duration))]
+    for input2_cf in input2_cfs[:]: # make a copy of the list, so we can call .remove() in the loop
+        matches = [input1_fi for input1_fi in input1_cfs if (
+                    input2_cf.has_duration and input1_fi.has_duration
+                    and matchTime(input2_cf.duration, input1_fi.duration))]
         if len(matches) == 1:
             groups[str(next(idx))] = [
-                ('1', '', input2_fi.path.resolve().as_posix()),
+                ('1', '', input2_cf.path.resolve().as_posix()),
                 ('2', '', matches[0].path.resolve().as_posix())
             ]
-            input2_fis.remove(input2_fi)
-            input1_fis.remove(matches[0])
-            logger.info(f'Matched by duration: "{matches[0].path}" <-> "{input2_fi.path}"')
+            input2_cfs.remove(input2_cf)
+            input1_cfs.remove(matches[0])
+            logger.info(f'Matched by duration: "{matches[0].path}" <-> "{input2_cf.path}"')
         elif len(matches) > 1:
             # TODO this implementation is dirty, fix it
-            if all('menu' in fi.path.name.lower() for fi in (input2_fi, *matches)):
+            if all('menu' in fi.path.name.lower() for fi in (input2_cf, *matches)):
                 subidx = itertools.count(1)
                 group : list[tuple[str, str, str]] = []
-                group.append((str(next(subidx)), '', input2_fi.path.resolve().as_posix()))
+                group.append((str(next(subidx)), '', input2_cf.path.resolve().as_posix()))
                 for match in matches:
                     group.append((str(next(subidx)), '', match.path.resolve().as_posix()))
-                    input1_fis.remove(match)
-                input2_fis.remove(input2_fi)
+                    input1_cfs.remove(match)
+                input2_cfs.remove(input2_cf)
                 groups[str(next(idx))] = group
-                logger.info(f'Matched by duration for menus: "{input2_fi.path}". (NOTE this is not robust)')
+                logger.info(f'Matched by duration for menus: "{input2_cf.path}". (NOTE this is not robust)')
             else:
-                logger.warning(f'Cannot match "{input2_fi.path}" as multiple counterparts have the same duration.')
+                logger.warning(f'Cannot match "{input2_cf.path}" as multiple counterparts have the same duration.')
         else:
-            logger.warning(f'Cannot match "{input2_fi.path}" as NO counterpart has the same duration.')
+            logger.warning(f'Cannot match "{input2_cf.path}" as NO counterpart has the same duration.')
 
     #***********************************************************************************************
     # slicing is common in videos, so we need to match the rest by filename
 
-    for input1_fi in [input1_fi for input1_fi in input1_fis if input1_fi.menu_tracks]:
-        timestamps = input1_fi.menu_timestamps[0]
+    for input1_cf in [input1_fi for input1_fi in input1_cfs if input1_fi.menu_tracks]:
+        timestamps = input1_cf.menu_timestamps[0]
         if len(timestamps) < 2: continue # this seems an incorrect menu
         distances = [(timestamps[i+1] - timestamps[i]) for i in range(len(timestamps)-1)]
-        founds : list[FI] = []
+        founds : list[CF] = []
         for i, distance in enumerate(distances):
-            for input2_fi in input2_fis:
-                if input2_fi in founds: continue
-                if matchTime(distance, input2_fi.duration):
-                    founds.append(input2_fi)
+            for input2_cf in input2_cfs:
+                if input2_cf in founds: continue
+                if matchTime(distance, input2_cf.duration):
+                    founds.append(input2_cf)
                     break
         if len(founds) == len(distances):
             matched_group : list[tuple[str, str, str]] = []
-            matched_group.append(('1', '', input1_fi.path.resolve().as_posix()))
+            matched_group.append(('1', '', input1_cf.path.resolve().as_posix()))
             for found in founds:
                 matched_group.append(('2', '', found.path.resolve().as_posix()))
-                input2_fis.remove(found)
-            input1_fis.remove(input1_fi)
+                input2_cfs.remove(found)
+            input1_cfs.remove(input1_cf)
             groups[str(next(idx))] = matched_group
-            logger.info(f'Matched sliced videos: {input1_fi}')
+            logger.info(f'Matched sliced videos: {input1_cf}')
 
     # we need to do this again for input2_fis
-    for input2_fi in [input2_fi for input2_fi in input2_fis if input2_fi.menu_tracks]:
-        timestamps = input2_fi.menu_timestamps[0]
+    for input2_cf in [input2_fi for input2_fi in input2_cfs if input2_fi.menu_tracks]:
+        timestamps = input2_cf.menu_timestamps[0]
         if len(timestamps) < 2: continue # this seems an incorrect menu
         distances = [(timestamps[i+1] - timestamps[i]) for i in range(len(timestamps)-1)]
-        founds : list[FI] = []
+        founds : list[CF] = []
         for i, distance in enumerate(distances):
-            for input1_fi in input1_fis:
-                if input1_fi in founds: continue
-                if matchTime(distance, input1_fi.duration):
-                    founds.append(input1_fi)
+            for input1_cf in input1_cfs:
+                if input1_cf in founds: continue
+                if matchTime(distance, input1_cf.duration):
+                    founds.append(input1_cf)
                     break
         if len(founds) == len(distances):
             matched_group : list[tuple[str, str, str]] = []
             # NOTE always place input1_fis first
             for found in founds:
                 matched_group.append(('1', '', found.path.resolve().as_posix()))
-                input1_fis.remove(found)
-            input2_fis.remove(input2_fi)
-            matched_group.append(('2', '', input2_fi.path.resolve().as_posix()))
+                input1_cfs.remove(found)
+            input2_cfs.remove(input2_cf)
+            matched_group.append(('2', '', input2_cf.path.resolve().as_posix()))
             groups[str(next(idx))] = matched_group
-            logger.info(f'Matched sliced videos: {input2_fi}')
+            logger.info(f'Matched sliced videos: {input2_cf}')
 
     #***********************************************************************************************
     # place all the rest into an unnamed group
     unmatched_group : list[tuple[str, str, str]] = []
-    for input1_fi in input1_fis:
-        unmatched_group.append(('', '', input1_fi.path.resolve().as_posix()))
-    for input2_fi in input2_fis:
-        unmatched_group.append(('', '', input2_fi.path.resolve().as_posix()))
+    for input1_cf in input1_cfs:
+        unmatched_group.append(('', '', input1_cf.path.resolve().as_posix()))
+    for input2_cf in input2_cfs:
+        unmatched_group.append(('', '', input2_cf.path.resolve().as_posix()))
     if unmatched_group:
         groups[''] = unmatched_group
 
@@ -391,7 +391,7 @@ def _cli(*paths:Path):
         main2doComparisonFromCSV(paths[0])
     elif n == 2 and paths[0].is_dir() and paths[1].is_dir():
         main2doMatching2CSV(paths[0], paths[1])
-    elif (not n % 2) and all(p.is_file() and p.suffix.endswith(VNx_MAIN_EXTS) for p in paths):
+    elif paths and (not n % 2) and all(p.is_file() and p.suffix.endswith(VNx_MAIN_EXTS) for p in paths):
         main2doDroppedComparison(*paths)
     else:
         printCliNotice(VNR_USAGE, paths)
