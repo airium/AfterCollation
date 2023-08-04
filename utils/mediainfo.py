@@ -38,7 +38,7 @@ def getMediaInfoList(paths:list[Path], mp:int=1) -> list[MediaInfo]:
 
 
 
-def matchTime(duration1:int, duration2:int, threshold:int=SAME_DURATION_THRESHOLD_MS) -> bool:
+def matchTime(duration1:int, duration2:int, threshold:int=SAME_DURATION_THRESHOLD) -> bool:
     '''The unit is millisecond.'''
     if abs(duration1 - duration2) <= threshold:
         return True
@@ -47,7 +47,7 @@ def matchTime(duration1:int, duration2:int, threshold:int=SAME_DURATION_THRESHOL
 
 
 
-def matchMenuTimeStamps(ts1:list[int], ts2:list[int], threshold:int=SAME_DURATION_THRESHOLD_MS) -> bool:
+def matchMenuTimeStamps(ts1:list[int], ts2:list[int], threshold:int=SAME_DURATION_THRESHOLD) -> bool:
     if len(ts1) != len(ts2):
         return False
     for t1, t2 in zip(ts1, ts2):

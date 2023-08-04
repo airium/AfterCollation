@@ -195,7 +195,7 @@ def main2doMatching2CSV(input1_dir:Path, input2_dir:Path):
 
     #***********************************************************************************************
     # step 2: match by audio digest
-    if ENABLE_VNA_AUDIO_SAMPLES:
+    if ENABLE_AUDIO_SAMPLES_IN_VNA:
         for input1_cf in input1_cfs[:]: # make a copy of the list, so we can call .remove() in the loop
             matches = [input2_fi for input2_fi in input2_cfs \
                        if cmpAudioSamples(input1_cf.audio_samples, input2_fi.audio_samples)]

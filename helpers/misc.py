@@ -6,7 +6,7 @@ from .corefile import CF
 from utils.mediautils import *
 from utils.fileutils import *
 from configs.specification import STD_BKS_DIRNAME, STD_CDS_DIRNAME
-from configs.user import ENABLED_MULTI_PROC_IF_NOT_SURE, NUM_IO_JOBS
+from configs.user import ENABLE_MULTI_PROC_IF_UNSURE, NUM_IO_JOBS
 from configs.runtime import VNx_ALL_EXTS
 from configs.debug import DEBUG
 
@@ -120,10 +120,10 @@ def isSSD(path:Path, logger:logging.Logger|None=None) -> bool:
     except KeyError:
         if logger: logger.debug(f'KeyError when checking "{path}".')
         # this happens when the input path is an SCSI device which is not listed as system physical drives
-        return ENABLED_MULTI_PROC_IF_NOT_SURE
+        return ENABLE_MULTI_PROC_IF_UNSURE
     except Exception as e:
         if logger: logger.debug(f'Unknown error {e} when checking "{path}".')
-        return ENABLED_MULTI_PROC_IF_NOT_SURE
+        return ENABLE_MULTI_PROC_IF_UNSURE
 
 
 

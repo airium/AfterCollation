@@ -120,7 +120,7 @@ def chkMenuTracks(fi:CF, logger:logging.Logger):
             hour, minute, milisecond = m.groups()
             last_chap_time = int(hour) * 3600000 + int(minute) * 60000 + int(milisecond)
             duration = fi.duration
-            if last_chap_time >= (duration - MAX_DISTANCE_FROM_LAST_CHAPTER_VIDEO_END):
+            if last_chap_time >= (duration - MIN_DISTANCE_FROM_LASTER_CHAP_TO_END):
                 logger.warning('The last chapter locates too close to the video end.')
             elif last_chap_time >= duration:
                 logger.warning('The last chapter locates outside of the video duration.')

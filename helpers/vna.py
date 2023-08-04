@@ -111,7 +111,7 @@ def copyNamingFromVNA(corefiles:list[CF], vna_configs:list[dict], logger:logging
     vna_config_used_bools = [False] * len(vna_configs)
     for fi, guessed_vol_num in zip(corefiles, guessed_vol_nums):
         audio_samples_matched = False
-        if ENABLE_VNA_AUDIO_SAMPLES:
+        if ENABLE_AUDIO_SAMPLES_IN_VNA:
             for i, vna_config in enumerate(vna_configs):
                 if cmpAudioSamples(fi.audio_samples, vna_config.get(VNA_AUDIO_SAMPLES_VAR, '')):
                     fi.updateFromVNA(vna_config)

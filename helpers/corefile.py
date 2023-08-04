@@ -44,7 +44,7 @@ class CoreFile:
         if init_crc32:
             self._crc32 = getCRC32(self.path, prefix='')
 
-        if init_audio_digest and self.has_audio and ENABLE_VNA_AUDIO_SAMPLES:
+        if init_audio_digest and self.has_audio and ENABLE_AUDIO_SAMPLES_IN_VNA:
             self._audio_samples = pickAudioSamples(self.path)
 
 
@@ -206,7 +206,7 @@ class CoreFile:
 
     @property
     def audio_samples(self) -> str:
-        if not ENABLE_VNA_AUDIO_SAMPLES: return ''
+        if not ENABLE_AUDIO_SAMPLES_IN_VNA: return ''
         if not self.has_audio: return ''
         if not self._audio_samples: self._audio_samples = pickAudioSamples(self.path)
         return self._audio_samples

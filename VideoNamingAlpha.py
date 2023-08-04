@@ -48,7 +48,7 @@ def main(input_dir:Path):
         pbar.set_description(f'Reading {assumed_vol}-{m2ts_path.stem}')
         m2ts_idx = m2ts_path.stem
         shown_path = m2ts_path.relative_to(input_dir).as_posix()
-        if ENABLE_VNA_AUDIO_SAMPLES:
+        if ENABLE_AUDIO_SAMPLES_IN_VNA:
             pbar.write('Reading the full M2TS to pick audio samples (this can be slow) ...')
             audio_samples : str = pickAudioSamples(m2ts_path)
         else:

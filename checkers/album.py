@@ -969,7 +969,7 @@ def chkAlbumDirNaming(album_path:Path, logger:logging.Logger) -> AlbumInfo:
         elif set(log_file.name for log_file in log_files).intersection(set(aud_file.name for aud_file in aud_files)):
             is_split_track = False
         # check `configs` for the explanation
-        elif len(aud_files) >= NUM_AUD_TO_CONSIDER_AS_SPLIT_TRACK_DISC:
+        elif len(aud_files) >= MIN_NUM_AUDIO_TO_SEEN_AS_SPLIT_TRACK_DISC:
             is_split_track = True
         # NOTE if all above criteria failed, we cant image what the user is doing with the ALBUM
         else: # now we try some unreliable clues

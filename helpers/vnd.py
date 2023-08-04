@@ -12,7 +12,7 @@ from helpers.corefile import CF
 
 __all__ = [
     'toVNDNamingDicts',
-    'loadVNDNamingInfo',
+    'loadVNDNaming',
     'doEarlyNamingGuess',
     ]
 
@@ -54,7 +54,7 @@ def toVNDNamingDicts(fis:list[CF], logger:logging.Logger) -> list[dict[str, str]
 
 
 
-def loadVNDNamingInfo(vnd_csv:Path, logger:logging.Logger) -> tuple[dict[str, str], list[dict[str, str]]]:
+def loadVNDNaming(vnd_csv:Path, logger:logging.Logger) -> tuple[dict[str, str], list[dict[str, str]]]:
 
     logger.info(f'Loading "{vnd_csv}" ...')
 

@@ -118,7 +118,7 @@ def chkAudioTracks(fi:CF, logger:logging.Logger, decode:bool=True):
             pass # TODO seems difficult to check something meaningful here (AAC has no such tag)
         if not atr.duration:
             logger.error(f'The audio track #{i} has no duration.')
-        elif not matchTime(int(float(atr.duration)), fi.duration, MAX_TRACK_DURATION_DIFF_MS):
+        elif not matchTime(int(float(atr.duration)), fi.duration, MAX_DURATION_DIFF_BETWEEN_TRACKS):
                 logger.warning(f'The audio track #{i} has a different duration.')
         if atr.delay:
             logger.warning(f'The audio track #{i} has delay ({atr.delay}).')

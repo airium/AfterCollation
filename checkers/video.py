@@ -70,7 +70,7 @@ def chkVideoTracks(fi:CF, logger:logging.Logger, decode:bool=False):
             logger.warning(f'The video track #{i} is not using 4:2:0 ({vtr.chroma_subsampling}).')
         if not vtr.duration:
             logger.warning(f'The video is missing duration information.')
-        elif not matchTime(int(float(vtr.duration)), fi.duration, MAX_TRACK_DURATION_DIFF_MS):
+        elif not matchTime(int(float(vtr.duration)), fi.duration, MAX_DURATION_DIFF_BETWEEN_TRACKS):
             logger.warning(f'The video track #{i} has a different duration.')
         if vtr.language:
             logger.warning(f'The video track #{i} should not have a language tag.')
