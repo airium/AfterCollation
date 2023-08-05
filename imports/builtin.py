@@ -12,8 +12,9 @@ import string
 import random
 import difflib
 import logging
-import itertools
 import platform
+import traceback
+import itertools
 from pathlib import Path
 from itertools import starmap, compress, product, permutations
 from functools import partial

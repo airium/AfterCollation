@@ -69,14 +69,9 @@ def _cli(*paths:Path):
 
 
 if __name__ == '__main__':
-
-    paths = [Path(p) for p in sys.argv[1:]]
-    if DEBUG:
-        _cli(*paths)
-    else: # if catch the exception as below, vscode doesn't jump to the actual line
-        try:
-            _cli(*paths)
-        except Exception as e:
-            print(f'!!! Run into an unexpected error:\n{e}\nPlease report.')
-
+    try:
+        _cli(*[Path(p) for p in sys.argv[1:]])
+    except:
+        traceback.print_exc()
+        print('Run into an unexpected error as above. Please report.')
     input('Press ENTER to exit...')

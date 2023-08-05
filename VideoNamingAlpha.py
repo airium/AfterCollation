@@ -75,10 +75,9 @@ def _cli(*paths:Path):
 
 
 if __name__ == '__main__':
-
-    paths = [Path(p) for p in sys.argv[1:]]
     try:
-        _cli(*paths)
-    except Exception as e:
-        print(f'Run into an unexpected error:\n{e}\nPlease report.')
+        _cli(*[Path(p) for p in sys.argv[1:]])
+    except:
+        traceback.print_exc()
+        print('Run into an unexpected error as above. Please report.')
     input('Press ENTER to exit...')
