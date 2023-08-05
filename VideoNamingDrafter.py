@@ -26,7 +26,7 @@ def main(input_dir:Path, vna_file:Path|None=None):
     cmpCfCRC32(cfs, findCRC32InFilenames(paths), logger)
     if ENABLE_FILE_CHECKING_IN_VND: chkSeasonFiles(cfs, logger)
 
-    # NOTE first guess naming and then fill each FI from VNA
+    # NOTE first guess naming and then fill each CF from VNA
     # so the naming instruction in VNA will not be overwritten
     # also, audio samples will not appear in files_naming_dicts to be sent to VNE
     # so we cannot use files_naming_dicts for fillNamingFieldsFromVNA()

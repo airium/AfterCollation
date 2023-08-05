@@ -19,33 +19,33 @@ __all__ = [
 
 
 
-def toVNDNamingDicts(fis:list[CF], logger:logging.Logger) -> list[dict[str, str]]:
+def toVNDNamingDicts(cfs:list[CF], logger:logging.Logger) -> list[dict[str, str]]:
     ret = []
 
-    for fi in fis:
+    for cf in cfs:
         d : dict[str, str] = dict()
 
         for k, v in VND_CSV_FIELDS_DICT.items():
             d[k] = ''
 
-        d[FULLPATH_CN] = fi.path.resolve().as_posix()
-        d[CRC32_CN] = fi.crc32
+        d[FULLPATH_CN] = cf.path.resolve().as_posix()
+        d[CRC32_CN] = cf.crc32
 
         for k, v in VND_USER_FIELDS_DICT.items():  # user fields
             # these keys may be already filled from VNA
-            d[k] = getattr(fi, v, '')
+            d[k] = getattr(cf, v, '')
 
         # the following keys are just for presenting mediainfo
         # they have no usage in later stages
-        d[DURATION_CN] = fi.fmtGeneralDuration()
-        d[FILESIZE_CN] = fi.fmtFileSize()
-        d[EXTENSION_CN] = fi.ext
-        d[CONTAINER_CN] = fi.format
-        d[TRACKCOMP_CN] = fi.fmtTrackTypeCountsWithOrder()
-        d[TR_VIDEO_CN] = '／'.join(fi.digestVideoTracksInfo())
-        d[TR_AUDIO_CN] = '／'.join(fi.digestAudioTracksInfo())
-        d[TR_TEXT_CN] = '／'.join(fi.digestTextTracksInfo())
-        d[TR_MENU_CN] = '／'.join(fi.digestMenuTracksInfo())
+        d[DURATION_CN] = cf.fmtGeneralDuration()
+        d[FILESIZE_CN] = cf.fmtFileSize()
+        d[EXTENSION_CN] = cf.ext
+        d[CONTAINER_CN] = cf.format
+        d[TRACKCOMP_CN] = cf.fmtTrackTypeCountsWithOrder()
+        d[TR_VIDEO_CN] = '／'.join(cf.digestVideoTracksInfo())
+        d[TR_AUDIO_CN] = '／'.join(cf.digestAudioTracksInfo())
+        d[TR_TEXT_CN] = '／'.join(cf.digestTextTracksInfo())
+        d[TR_MENU_CN] = '／'.join(cf.digestMenuTracksInfo())
 
         ret.append(d)
 
@@ -101,31 +101,31 @@ def loadVNDNaming(vnd_csv:Path, logger:logging.Logger) -> tuple[dict[str, str], 
 
 
 
-def guessAssNamingFields(fi:CF, logger:logging.Logger):
+def guessAssNamingFields(cf:CF, logger:logging.Logger):
     '''We should be able to guess the eposide index and the language suffix if lucky.'''
 
     #* firstly let's try to get the info from filename
 
     lang, idx = '', ''
-    if match := re.match(ASS_FILENAME_EARLY_PATTERN, fi.path.name):
+    if match := re.match(ASS_FILENAME_EARLY_PATTERN, cf.path.name):
         lang, idx = match.group('lang'), match.group('idx')
     lang_in_filename = lang if lang else ''
     idx_in_filename = idx if idx else ''
     langs_in_filename = toUniformLangSuffixes(lang_in_filename)
     if not langs_in_filename:
-        langs_in_filename = toUniformLangSuffixes(fi.path.parent.name)
+        langs_in_filename = toUniformLangSuffixes(cf.path.parent.name)
         if langs_in_filename:
-            lang_in_filename = fi.path.parent.name
+            lang_in_filename = cf.path.parent.name
 
     #* eposide naming can be done now
 
     if idx_in_filename:
-        setattr(fi, IDX1_VAR, float(idx_in_filename) if '.' in idx_in_filename else int(idx_in_filename))
+        setattr(cf, IDX1_VAR, float(idx_in_filename) if '.' in idx_in_filename else int(idx_in_filename))
 
     #* then detect the language from ASS content
 
     lang_detected = ''
-    if ass_obj := toAssFileObj(fi.path, test=True):
+    if ass_obj := toAssFileObj(cf.path, test=True):
         full_text = ' '.join(listEventTextsInAssFileObj(ass_obj))
         langs = getAssTextLangDict(full_text)
         has_chs = bool(langs.get('chs'))
@@ -147,19 +147,19 @@ def guessAssNamingFields(fi:CF, logger:logging.Logger):
             # NOTE use un-normalized `lang_in_filename` as this may be the expectation of the fansub groups
             # TODO normalize the field so the user wont get an error message in VNE
             # if the fansub groups used a language tag not meeting our naming standard
-            setattr(fi, SUFFIX_VAR, lang_in_filename if lang_in_filename else lang_detected)
+            setattr(cf, SUFFIX_VAR, lang_in_filename if lang_in_filename else lang_detected)
 
 
 
 
-def doEarlyNamingGuess(fis:list[CF], logger:logging.Logger):
+def doEarlyNamingGuess(cfs:list[CF], logger:logging.Logger):
     '''We can actually guess very few fields at VND, but try it.'''
 
-    for i, fi in enumerate(fis):
+    for i, cf in enumerate(cfs):
 
-        match fi.ext:
+        match cf.ext:
             case 'ass': # we can guess ass lang suffix at VND
-                guessAssNamingFields(fi, logger)
+                guessAssNamingFields(cf, logger)
             case '7z'|'zip'|'rar':
                 pass # TODO
             case 'mka':

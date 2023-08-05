@@ -3,23 +3,30 @@ from __future__ import annotations
 import re
 from typing import Any
 from pathlib import Path
+from multiprocessing import Pool
 
 from utils import *
 from configs import *
 
 from pymediainfo import Track
-from multiprocessing import Pool
 
 
-__all__ = ['CoreFile', 'CF', 'getCoreFile', 'getCoreFileList']
+__all__ = [
+    'CF',
+    'CoreFile',
+    'getCoreFile',
+    'getCoreFileList',
+    ]
 
 
 
 
 class CoreFile:
     '''
-    FileInfo is a wrapper over MediaInfo.
-    It provdes easier interface to some mediainfo.
+    CoreFile is a wrapper over MediaInfo, providing easier access to mediainfo.
+    A `core file` means it's one in `VNx_ALL_EXTS` (MKV/MKA/MP4/FLAC/PNG/ASS/7Z/ZIP/RAR)
+    i.e. the core part of files in a BDRip (to the contrary of CDs/Scans).
+
     VideoNaming tools depends on this class.
     '''
 
@@ -379,6 +386,7 @@ class CoreFile:
 
 
 
+
 CF = CoreFile
 
 
@@ -390,7 +398,7 @@ def getCoreFile(path:Path, **kwargs:Any) -> CoreFile:
 
 
 
-def getCoreFileList(paths:list[Path], kwargs:dict|list[dict]={}, mp:int=4) -> list[CoreFile]:
+def getCoreFileList(paths:list[Path], kwargs:dict|list[dict]={}, mp:int=NUM_IO_JOBS) -> list[CoreFile]:
 
     if isinstance(kwargs, dict):
         kwargs = [kwargs] * len(paths)

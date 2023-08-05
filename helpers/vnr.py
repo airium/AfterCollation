@@ -81,15 +81,15 @@ def doComparison(*groups:list[Path], grpname:str='0', subgrps_names:list[str]=[]
         g1 = [CF(f) for f in g1]
         g2 = [CF(f) for f in g2]
 
-        if any(fi.has_video for fi in g1+g2):
+        if any(cf.has_video for cf in g1+g2):
             logger.info('Comparing video...')
             cmpVideoContent(g1, g2, logger)
 
-        if any(fi.has_audio for fi in g1+g2):
+        if any(cf.has_audio for cf in g1+g2):
             logger.info('Comparing audio...')
             diff_audios = cmpAudioContent(g1, g2, logger)
             for k, diff_audio, freq in diff_audios:
-                img_path = findCommonParentDir(*[fi.path for fi in g1+g2])
+                img_path = findCommonParentDir(*[cf.path for cf in g1+g2])
                 if not img_path:
                     print('!!! Cannot find a common parent dir of your input. '
                         'The spectrogram of audio difference will be written under the same dir as this script.')
@@ -100,15 +100,15 @@ def doComparison(*groups:list[Path], grpname:str='0', subgrps_names:list[str]=[]
                 else:
                     logger.error(f'Failed to write spectrogram to "{img_path}".')
 
-        if any(fi.has_menu for fi in g1+g2):
+        if any(cf.has_menu for cf in g1+g2):
             logger.info('Comparing menu...')
             cmpMenuContent(g1, g2, logger)
 
-        if any(fi.has_image for fi in g1+g2):
+        if any(cf.has_image for cf in g1+g2):
             logger.info('Comparing menu...')
             cmpImageContent(g1, g2, logger)
 
-        if any(fi.has_text for fi in g1+g2):
+        if any(cf.has_text for cf in g1+g2):
             logger.info('Comparing text...')
             cmpTextContent(g1, g2, logger)
 

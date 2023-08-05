@@ -53,12 +53,12 @@ def fmtQualityLabel(cf:CF, logger:logging.Logger|None=None) -> str:
 
 
 
-def fmtTrackLabel(fi:CF|MI, logger:logging.Logger|None=None) -> str:
+def fmtTrackLabel(cf:CF|MI, logger:logging.Logger|None=None) -> str:
 
-    if not fi.video_tracks: return ''
+    if not cf.video_tracks: return ''
 
     tracks = {}
-    for t in (fi.video_tracks + fi.audio_tracks):
+    for t in (cf.video_tracks + cf.audio_tracks):
         if t.format:
             format = t.format.lower()
             tracks[format] = tracks.get(format, 0) + 1

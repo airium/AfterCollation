@@ -98,15 +98,15 @@ __all__ = [
 
 #     return True, default, ret_infos
 
-def chkSeasonFiles(fis:list[CF], logger:logging.Logger):
+def chkSeasonFiles(cfs:list[CF], logger:logging.Logger):
 
     with logging_redirect_tqdm([logger]):
-        pbar = tqdm.tqdm(total=len(fis), desc='Checking', unit='file', unit_scale=False, ascii=True, dynamic_ncols=True)
-        for fi in fis:
-            if fi.ext in VNx_ALL_EXTS:
-                chkFile(fi, logger=logger)
+        pbar = tqdm.tqdm(total=len(cfs), desc='Checking', unit='file', unit_scale=False, ascii=True, dynamic_ncols=True)
+        for cf in cfs:
+            if cf.ext in VNx_ALL_EXTS:
+                chkFile(cf, logger=logger)
             else:
-                logger.error(f'"{fi.ext}" is not a valid extension to check.')
+                logger.error(f'"{cf.ext}" is not a valid extension to check.')
             pbar.update(1)
         pbar.close()
 

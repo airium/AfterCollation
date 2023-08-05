@@ -10,33 +10,33 @@ __all__ = ['chkTextTracks', 'chkPGS', 'chkAssFile', 'cmpTextContent']
 
 
 
-def chkTextTracks(fi:CF, logger:logging.Logger):
+def chkTextTracks(cf:CF, logger:logging.Logger):
 
-    if fi.ext not in COMMON_VIDEO_EXTS:
+    if cf.ext not in COMMON_VIDEO_EXTS:
         logger.error(f'The file is not a known file type with text.')
         return
-    if fi.ext not in VNx_VID_EXTS:
-        logger.warning(f'The text checker is not designed to check the file type "{fi.ext}".')
+    if cf.ext not in VNx_VID_EXTS:
+        logger.warning(f'The text checker is not designed to check the file type "{cf.ext}".')
         return
-    if not fi.has_text:
+    if not cf.has_text:
         return
 
-    text_tracks = fi.text_tracks
+    text_tracks = cf.text_tracks
     if len(text_tracks) > 1:
         logger.info(f'The file has multiple ({len(text_tracks)}) text tracks.')
 
     for text_track in text_tracks:
         match text_track.format:
             case 'PGS':
-                chkPGS(fi, logger)
+                chkPGS(cf, logger)
             case 'ASS':
-                chkPGS(fi, logger)
+                chkPGS(cf, logger)
             case _:
                 logger.warning(f'Unhandled text track format "{text_track.format}".')
 
-    if (fi.ext in VNx_EXT_AUD_EXTS) and fi.text_tracks:
+    if (cf.ext in VNx_EXT_AUD_EXTS) and cf.text_tracks:
         logger.warning('External audio track should not have subtitle track.')
-    for i, text_track in enumerate(fi.text_tracks, start=1):
+    for i, text_track in enumerate(cf.text_tracks, start=1):
         # TODO: confirm PGS should be default or not
         if i == 1:
             if text_track.default != 'Yes':
@@ -54,17 +54,17 @@ def chkTextTracks(fi:CF, logger:logging.Logger):
 
 
 
-def chkPGS(fi:CF, logger:logging.Logger):
+def chkPGS(cf:CF, logger:logging.Logger):
     logger.info('PGS checking inside a video file is not supported yet.')
 
 
 
 
-def chkAssFile(fi:CF, logger:logging.Logger):
-    if not tstAssFile(fi.path):
+def chkAssFile(cf:CF, logger:logging.Logger):
+    if not tstAssFile(cf.path):
         logger.error('The ASS file is invalid or of non-standard encoding.')
         return
-    ass_obj = toAssFileObj(fi.path)
+    ass_obj = toAssFileObj(cf.path)
     for section in ass_obj.extra_sections:
         logger.warning(f'Found unnecessary ASS section "{section.name}". '
                        'Consider removing it using the standalone tools in the `scripts` folder.')

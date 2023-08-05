@@ -21,8 +21,8 @@ def cmpMenuContent(input1:CF|list[CF], input2:CF|list[CF], logger:logging.Logger
         return
 
     has_menu = True
-    for fi in input1 + input2:
-        if not fi.has_menu:
+    for cf in input1 + input2:
+        if not cf.has_menu:
             has_menu = False
     if not has_menu:
         logger.info('No menu track found in input(s).')
@@ -50,7 +50,7 @@ def cmpMenuContent(input1:CF|list[CF], input2:CF|list[CF], logger:logging.Logger
                 return
             # NOTE checking if it should only include 1 menu is not the job in cmpMenu
             ts1 = input1[0].menu_timestamps[0]
-            durations = [fi.duration for fi in input2]
+            durations = [cf.duration for cf in input2]
             expected_timestamps = list(itertools.accumulate(durations))
             # NOTE remember to remoev the last one
             if not matchMenuTimeStamps(ts1, expected_timestamps[:-1]):
@@ -61,7 +61,7 @@ def cmpMenuContent(input1:CF|list[CF], input2:CF|list[CF], logger:logging.Logger
                 return
             # NOTE checking if it should only include 1 menu is not the job in cmpMenu
             ts2 = input2[0].menu_timestamps[0]
-            durations = [fi.duration for fi in input1]
+            durations = [cf.duration for cf in input1]
             expected_timestamps = list(itertools.accumulate(durations))
             # NOTE remember to remoev the last one
             if not matchMenuTimeStamps(ts2, expected_timestamps[:-1]):
@@ -72,21 +72,21 @@ def cmpMenuContent(input1:CF|list[CF], input2:CF|list[CF], logger:logging.Logger
 
 
 
-def chkMenuTracks(fi:CF, logger:logging.Logger):
+def chkMenuTracks(cf:CF, logger:logging.Logger):
 
-    if fi.ext not in COMMON_VIDEO_EXTS:
+    if cf.ext not in COMMON_VIDEO_EXTS:
         logger.error(f'The file is not a known file type with menu.')
         return
-    if fi.ext not in VNx_VID_EXTS:
-        logger.warning(f'The menu checker is not designed to check the file type "{fi.ext}".')
+    if cf.ext not in VNx_VID_EXTS:
+        logger.warning(f'The menu checker is not designed to check the file type "{cf.ext}".')
         return
-    if not fi.has_menu:
+    if not cf.has_menu:
         return
 
-    if len(fi.menu_tracks) > 1:
+    if len(cf.menu_tracks) > 1:
         logger.warning('The file has >1 menus.')
 
-    for t in fi.menu_tracks:
+    for t in cf.menu_tracks:
         # first
         chap_times, chap_texts = list(zip(*[(k, v) for (k, v) in t.to_data().items() if re.match(MEDIAINFO_CHAPTER_PATTERN, k)]))
         # disable sorting may preserve the original order?
@@ -119,7 +119,7 @@ def chkMenuTracks(fi:CF, logger:logging.Logger):
         if m := re.match(MEDIAINFO_CHAPTER_PATTERN, last_chap_time):
             hour, minute, milisecond = m.groups()
             last_chap_time = int(hour) * 3600000 + int(minute) * 60000 + int(milisecond)
-            duration = fi.duration
+            duration = cf.duration
             if last_chap_time >= (duration - MIN_DISTANCE_FROM_LASTER_CHAP_TO_END):
                 logger.warning('The last chapter locates too close to the video end.')
             elif last_chap_time >= duration:
@@ -127,7 +127,7 @@ def chkMenuTracks(fi:CF, logger:logging.Logger):
             else:
                 pass # ok
         # check if the menu language label agrees with its text
-        if fi.gtr.format == 'Matroska': # MP4 chap has no language label
+        if cf.gtr.format == 'Matroska': # MP4 chap has no language label
             if len(chap_langs := set(chap_langs)) != 1:
                 logger.warning('Menu language label looks malformed.')
             if chap_langs and (chap_lang := chap_langs.pop()):

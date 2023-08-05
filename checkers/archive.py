@@ -13,19 +13,19 @@ __all__ = ['chkArcFile', 'chkFontArcDir', 'chkImageArcDir']
 
 
 
-def chkArcFile(fi:CF, logger:logging.Logger, decompress:bool=True) -> bool:
+def chkArcFile(cf:CF, logger:logging.Logger, decompress:bool=True) -> bool:
 
-    if fi.ext not in COMMON_ARCHIVE_EXTS:
+    if cf.ext not in COMMON_ARCHIVE_EXTS:
         logger.error('The file is not a known archive file.')
         return False
-    if fi.ext not in VNx_ARC_EXTS:
-        logger.warning(f'The archive checker is not designed to check the file type "{fi.ext}".')
+    if cf.ext not in VNx_ARC_EXTS:
+        logger.warning(f'The archive checker is not designed to check the file type "{cf.ext}".')
         return False
-    if not tstDecompressArchive(fi.path):
+    if not tstDecompressArchive(cf.path):
         logger.error('The archive file cannot be decompressed.')
         return False
 
-    filelist = getArchiveFilelist(fi.path)
+    filelist = getArchiveFilelist(cf.path)
 
     has_png, has_font = False, False
     for filename in filelist:
@@ -43,7 +43,7 @@ def chkArcFile(fi:CF, logger:logging.Logger, decompress:bool=True) -> bool:
         ok = False
 
     if decompress and (has_png or has_font):
-        path = decompressArchives(fi.path)
+        path = decompressArchives(cf.path)
         if not path:
             logger.error('Failed to decompress the archive file to test the content.')
             return False

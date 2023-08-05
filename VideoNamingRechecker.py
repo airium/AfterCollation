@@ -229,7 +229,7 @@ def main2doMatching2CSV(input1_dir:Path, input2_dir:Path):
             logger.info(f'Matched by duration: "{input1_cf.path}" <-> "{matches[0].path}"')
         elif len(matches) > 1:
             # TODO this implementation is dirty, fix it
-            if all('menu' in fi.path.name.lower() for fi in (input1_cf, *matches)):
+            if all('menu' in cf.path.name.lower() for cf in (input1_cf, *matches)):
                 subidx = itertools.count(1)
                 group : list[tuple[str, str, str]] = []
                 group.append((str(next(subidx)), '', input1_cf.path.resolve().as_posix()))
@@ -244,7 +244,7 @@ def main2doMatching2CSV(input1_dir:Path, input2_dir:Path):
         else:
             logger.warning(f'Cannot match "{input1_cf.path}" as NO counterpart has the same duration.')
 
-    # we need to do this again for input2_fis
+    # we need to do this again for input2_cfs
     for input2_cf in input2_cfs[:]: # make a copy of the list, so we can call .remove() in the loop
         matches = [input1_fi for input1_fi in input1_cfs if (
                     input2_cf.has_duration and input1_fi.has_duration
@@ -259,7 +259,7 @@ def main2doMatching2CSV(input1_dir:Path, input2_dir:Path):
             logger.info(f'Matched by duration: "{matches[0].path}" <-> "{input2_cf.path}"')
         elif len(matches) > 1:
             # TODO this implementation is dirty, fix it
-            if all('menu' in fi.path.name.lower() for fi in (input2_cf, *matches)):
+            if all('menu' in cf.path.name.lower() for cf in (input2_cf, *matches)):
                 subidx = itertools.count(1)
                 group : list[tuple[str, str, str]] = []
                 group.append((str(next(subidx)), '', input2_cf.path.resolve().as_posix()))
@@ -298,7 +298,7 @@ def main2doMatching2CSV(input1_dir:Path, input2_dir:Path):
             groups[str(next(idx))] = matched_group
             logger.info(f'Matched sliced videos: {input1_cf}')
 
-    # we need to do this again for input2_fis
+    # we need to do this again for input2_cfs
     for input2_cf in [input2_fi for input2_fi in input2_cfs if input2_fi.menu_tracks]:
         timestamps = input2_cf.menu_timestamps[0]
         if len(timestamps) < 2: continue # this seems an incorrect menu
@@ -312,7 +312,7 @@ def main2doMatching2CSV(input1_dir:Path, input2_dir:Path):
                     break
         if len(founds) == len(distances):
             matched_group : list[tuple[str, str, str]] = []
-            # NOTE always place input1_fis first
+            # NOTE always place input1_cfs first
             for found in founds:
                 matched_group.append(('1', '', found.path.resolve().as_posix()))
                 input1_cfs.remove(found)

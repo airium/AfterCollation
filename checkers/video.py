@@ -9,29 +9,29 @@ __all__ = ['chkVideoTracks', 'cmpVideoContent']
 
 
 
-def cmpVideoContent(fis1:CF|list[CF], fis2:CF|list[CF], logger:logging.Logger):
+def cmpVideoContent(cfs1:CF|list[CF], cfs2:CF|list[CF], logger:logging.Logger):
     logger.info('Video content comparison is not implemented yet.')
     #TODO can we replace RPC's function here
 
 
 
 
-def chkVideoTracks(fi:CF, logger:logging.Logger, decode:bool=False):
+def chkVideoTracks(cf:CF, logger:logging.Logger, decode:bool=False):
 
-    if fi.ext not in COMMON_VIDEO_EXTS:
+    if cf.ext not in COMMON_VIDEO_EXTS:
         logger.error(f'The file is not a known file type with video.')
         return
-    if fi.ext not in VNx_VID_EXTS:
-        logger.warning(f'The video checker is not designed to check the file type "{fi.ext}".')
+    if cf.ext not in VNx_VID_EXTS:
+        logger.warning(f'The video checker is not designed to check the file type "{cf.ext}".')
         return
-    if not fi.has_video:
+    if not cf.has_video:
         return
 
     #* ---------------------------------------------------------------------------------------------
     # specific check for each video file type
-    match fi.ext:
+    match cf.ext:
         case 'mkv':
-            for i, vtr in enumerate(fi.video_tracks):
+            for i, vtr in enumerate(cf.video_tracks):
                 if i == 0 and vtr.default != 'Yes':
                     logger.warning(f'The MKV video track #{i} is not marked as DEFAULT.')
                 if i > 0 and vtr.default == 'Yes':
@@ -44,12 +44,12 @@ def chkVideoTracks(fi:CF, logger:logging.Logger, decode:bool=False):
 
     #* ---------------------------------------------------------------------------------------------
     # general check applicable to all video files
-    if len(fi.video_tracks) > 1:
+    if len(cf.video_tracks) > 1:
         logger.error(f'The video has multiple video tracks.')
-    if not fi.video_tracks:
-        logger.error(f'The video ext {fi.ext} is incorrect.')
+    if not cf.video_tracks:
+        logger.error(f'The video ext {cf.ext} is incorrect.')
 
-    for i, vtr in enumerate(fi.video_tracks):
+    for i, vtr in enumerate(cf.video_tracks):
         if vtr.format not in COMMON_VIDEO_FORMATS:
             logger.warning(f'The video track #{i} encoding format is uncommon ({vtr.format}).')
         if vtr.height not in COMMON_VIDEO_HEIGHTS:
@@ -70,7 +70,7 @@ def chkVideoTracks(fi:CF, logger:logging.Logger, decode:bool=False):
             logger.warning(f'The video track #{i} is not using 4:2:0 ({vtr.chroma_subsampling}).')
         if not vtr.duration:
             logger.warning(f'The video is missing duration information.')
-        elif not matchTime(int(float(vtr.duration)), fi.duration, MAX_DURATION_DIFF_BETWEEN_TRACKS):
+        elif not matchTime(int(float(vtr.duration)), cf.duration, MAX_DURATION_DIFF_BETWEEN_TRACKS):
             logger.warning(f'The video track #{i} has a different duration.')
         if vtr.language:
             logger.warning(f'The video track #{i} should not have a language tag.')
@@ -83,5 +83,5 @@ def chkVideoTracks(fi:CF, logger:logging.Logger, decode:bool=False):
 
         # do a full decoding test for each audio track
         if decode:
-            if not tryFFMPEGVideoDecode(fi.path, id=i):
+            if not tryFFMPEGVideoDecode(cf.path, id=i):
                 logger.error(f'The video track #{i} failed to decode.')

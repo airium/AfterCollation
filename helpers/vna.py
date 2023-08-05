@@ -106,27 +106,27 @@ def copyNamingFromVNA(corefiles:list[CF], vna_configs:list[dict], logger:logging
 
     if not vna_configs: return
 
-    guessed_vol_nums = guessVolNumsFromPaths([fi.path for fi in corefiles])
+    guessed_vol_nums = guessVolNumsFromPaths([cf.path for cf in corefiles])
 
     vna_config_used_bools = [False] * len(vna_configs)
-    for fi, guessed_vol_num in zip(corefiles, guessed_vol_nums):
+    for cf, guessed_vol_num in zip(corefiles, guessed_vol_nums):
         audio_samples_matched = False
         if ENABLE_AUDIO_SAMPLES_IN_VNA:
             for i, vna_config in enumerate(vna_configs):
-                if cmpAudioSamples(fi.audio_samples, vna_config.get(VNA_AUDIO_SAMPLES_VAR, '')):
-                    fi.updateFromVNA(vna_config)
+                if cmpAudioSamples(cf.audio_samples, vna_config.get(VNA_AUDIO_SAMPLES_VAR, '')):
+                    cf.updateFromVNA(vna_config)
                     audio_samples_matched = True
                     vna_config_used_bools[i] = True
                     break
         if audio_samples_matched: continue
         # start matching by volume number, much less reliable
         for i, vna_config in enumerate(vna_configs):
-            if (vna_vol_num := vna_config.get(VNA_VOL_VAR, '')) and (m := re.match(OKE_FILESTEM_PATTERN, fi.path.stem)):
+            if (vna_vol_num := vna_config.get(VNA_VOL_VAR, '')) and (m := re.match(OKE_FILESTEM_PATTERN, cf.path.stem)):
                 if int(vna_vol_num) == int(m.group('idx1')):
-                    fi.updateFromVNA(vna_config)
+                    cf.updateFromVNA(vna_config)
                     vna_config_used_bools[i] = True
                     break
-        logger.warning(f'"{fi.path}" cannot match a VNA config.')
+        logger.warning(f'"{cf.path}" cannot match a VNA config.')
     for vna_config_used_bool, vna_config in zip(vna_config_used_bools, vna_configs):
         if not vna_config_used_bool:
             logger.warning(f'Unused VNA config "{vna_config}".')
