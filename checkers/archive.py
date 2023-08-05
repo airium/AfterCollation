@@ -8,7 +8,11 @@ from .image import chkImage
 from helpers.corefile import CF
 
 
-__all__ = ['chkArcFile', 'chkFontArcDir', 'chkImageArcDir']
+__all__ = [
+    'chkArcFile',
+    'chkFontArcDir',
+    'chkImageArcDir',
+    ]
 
 
 
@@ -25,10 +29,9 @@ def chkArcFile(cf:CF, logger:logging.Logger, decompress:bool=True) -> bool:
         logger.error('The archive file cannot be decompressed.')
         return False
 
-    filelist = getArchiveFilelist(cf.path)
-
+    filenames = getArchiveFilelist(cf.path)
     has_png, has_font = False, False
-    for filename in filelist:
+    for filename in filenames:
         if filename.lower().endswith(VNx_IMG_EXTS): has_png = True
         if filename.lower().endswith(COMMON_FONT_EXTS): has_font = True
         if has_png and has_font: break

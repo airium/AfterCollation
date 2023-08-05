@@ -10,7 +10,11 @@ import py7zr
 import rarfile
 
 
-__all__ = [ 'decompressArchives', 'tstDecompressArchive', 'getArchiveFilelist']
+__all__ = [
+    'decompressArchives',
+    'tstDecompressArchive',
+    'getArchiveFilelist',
+    ]
 
 
 

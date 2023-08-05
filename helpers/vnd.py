@@ -14,6 +14,10 @@ __all__ = [
     'toVNDNamingDicts',
     'loadVNDNaming',
     'doEarlyNamingGuess',
+    'guessNamingFieldsFromSimpleFilename',
+    'guessNamingFields4ASS',
+    'guessNamingFields4ARC',
+    'guessNamingFields4MKA',
     ]
 
 
@@ -28,7 +32,7 @@ def toVNDNamingDicts(cfs:list[CF], logger:logging.Logger) -> list[dict[str, str]
         for k, v in VND_ALL_DICT.items():
             d[k] = ''
 
-        d[FULLPATH_CN] = cf.path.resolve().as_posix()
+        d[FULLPATH_CN] = cf.src
         d[CRC32_CN] = cf.crc32
 
         for k, v in VND_USER_DICT.items():  # user fields
@@ -101,26 +105,53 @@ def loadVNDNaming(vnd_csv:Path, logger:logging.Logger) -> tuple[dict[str, str], 
 
 
 
-def guessAssNamingFields(cf:CF, logger:logging.Logger):
+
+def guessNamingFieldsFromSimpleFilename(cf:CF, logger:logging.Logger):
+    '''Sometimes the video may be already simply named. Let's try our luck.'''
+
+    filename = m.group('stem') if (m := re.match(GENERIC_FILENAME, cf.path.name)) else ''
+    if not filename:
+        logger.debug(f'Got nothing from "{cf.path.name}".')
+        return
+    filename = filename.strip().strip('.-_').strip()
+
+    # TODO use VideoNamingCopier API to handle this
+    if any(c in filename for c in '[]()'):
+        logger.debug(f'Complex named file detected "{cf.path.name}".')
+        return
+
+    if match := re.match(EXPECTED_SIMPLE_NAME, filename):
+        typename, idx, note = match.group('typename'), match.group('idx'), match.group('note')
+        if typename: cf.t = typename.strip().strip('.-_').strip()
+        if idx: cf.i1 = idx.strip().strip('.-_').strip()
+        if (typename or idx) and note: cf.n = note.strip().strip('.-_').strip()
+        # NOTE there is no need to fill in the location fields
+        # if a typename is detected, VNE will automatically place it under SPs if location is empty
+
+
+
+
+def guessNamingFields4ASS(cf:CF, logger:logging.Logger):
     '''We should be able to guess the eposide index and the language suffix if lucky.'''
 
     #* firstly let's try to get the info from filename
 
-    lang, idx = '', ''
     if match := re.match(ASS_FILENAME_EARLY_PATTERN, cf.path.name):
-        lang, idx = match.group('lang'), match.group('idx')
-    lang_in_filename = lang if lang else ''
-    idx_in_filename = idx if idx else ''
-    langs_in_filename = toUniformLangSuffixes(lang_in_filename)
-    if not langs_in_filename:
-        langs_in_filename = toUniformLangSuffixes(cf.path.parent.name)
-        if langs_in_filename:
-            lang_in_filename = cf.path.parent.name
+        filename_lang_tag, filename_ep_idx = match.group('lang'), match.group('idx')
+    else:
+        filename_lang_tag, filename_ep_idx = '', ''
+    filename_lang_tag = filename_lang_tag if filename_lang_tag else ''
+    filename_ep_idx = filename_ep_idx if filename_ep_idx else ''
+    langs = toUniformLangTags(filename_lang_tag)
+    if not langs: # if got no valid language tag from filename, then try its parent dirname
+        langs = toUniformLangTags(cf.path.parent.name)
+        if langs:
+            filename_lang_tag = cf.path.parent.name # overwrite the one found in filename
 
     #* eposide naming can be done now
 
-    if idx_in_filename:
-        setattr(cf, IDX1_VAR, float(idx_in_filename) if '.' in idx_in_filename else int(idx_in_filename))
+    if filename_ep_idx:
+        cf.i1 = filename_ep_idx
 
     #* then detect the language from ASS content
 
@@ -136,18 +167,43 @@ def guessAssNamingFields(cf:CF, logger:logging.Logger):
                 lang_detected = 'chs'
             case False, True, _:
                 lang_detected = 'cht'
-    lang_detected = toUniformLangSuffix(lang_detected)
+    lang_detected = toUniformLangTag(lang_detected)
     # NOTE dont copy the langs_in_file
     if lang_detected:
-        if langs_in_filename and not (lang_detected in langs_in_filename):
-            # NOTE this means the detected lang differs from the one in filename, so don't fill it
-            logger.warning(f'The detected language tag "{lang_detected}" differs from that in filename "{lang_in_filename}". '
-                           f'The naming guesser wont fill in the info for you.')
+        if langs and not (lang_detected in langs):
+            #! this means the detected lang differs from the one in filename - dont fill anything
+            logger.warning(f'The detected language "{lang_detected}" differs from that in filename '
+                           f'{cf.path.parent.name}/{cf.path.name}". '
+                           f'The naming guesser wont fill in the language suffix for you.')
         else:
             # NOTE use un-normalized `lang_in_filename` as this may be the expectation of the fansub groups
             # TODO normalize the field so the user wont get an error message in VNE
             # if the fansub groups used a language tag not meeting our naming standard
-            setattr(cf, SUFFIX_VAR, lang_in_filename if lang_in_filename else lang_detected)
+            cf.x = filename_lang_tag if filename_lang_tag else lang_detected
+
+
+
+
+def guessNamingFields4ARC(cf:CF, logger:logging.Logger):
+    filenames = getArchiveFilelist(cf.path)
+    has_png, has_font = False, False
+    for filename in filenames:
+        if filename.lower().endswith(VNx_IMG_EXTS): has_png = True
+        if filename.lower().endswith(COMMON_FONT_EXTS): has_font = True
+        if has_png and has_font: break
+    if has_png and not has_font:
+        cf.l = STD_SPS_DIRNAME
+    if not has_png and has_font:
+        cf.t = STD_FONT_NAME
+
+
+
+
+def guessNamingFields4MKA(mka:CF, cfs:list[CF], logger:logging.Logger):
+
+    candidates = [cf for cf in cfs if (cf.e == 'mkv' and matchTime(mka.duration, cf.duration))]
+    if len(candidates) == 1:
+        mka.c = candidates[0].crc32
 
 
 
@@ -156,13 +212,18 @@ def doEarlyNamingGuess(cfs:list[CF], logger:logging.Logger):
     '''We can actually guess very few fields at VND, but try it.'''
 
     for i, cf in enumerate(cfs):
-
         match cf.ext:
-            case 'ass': # we can guess ass lang suffix at VND
-                guessAssNamingFields(cf, logger)
-            case '7z'|'zip'|'rar':
-                pass # TODO
+            case 'mkv'|'mp4':
+                guessNamingFieldsFromSimpleFilename(cf, logger)
             case 'mka':
-                pass # TODO
+                guessNamingFieldsFromSimpleFilename(cf, logger)
+                guessNamingFields4MKA(cf, cfs[:i] + cfs[i+1:], logger)
             case 'flac':
-                pass # TODO
+                guessNamingFieldsFromSimpleFilename(cf, logger)
+                cf.l = STD_SPS_DIRNAME
+            case 'ass': # we can guess ass lang suffix at VND
+                guessNamingFields4ASS(cf, logger)
+            case '7z'|'zip'|'rar':
+                guessNamingFields4ARC(cf, logger)
+            case _:
+                logger.error(f'Got "{cf.ext}" but "{VNx_ALL_EXTS=}".')

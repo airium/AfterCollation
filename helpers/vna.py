@@ -2,7 +2,6 @@ import os
 import json
 import logging
 import itertools
-from typing import Callable
 from pathlib import Path
 
 from configs import *

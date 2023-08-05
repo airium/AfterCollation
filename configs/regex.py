@@ -2,12 +2,20 @@ import re
 from re import compile as rc
 
 
-MEDIAINFO_CHAPTER_PATTERN = rc(r'(?P<h>[0-9]{2})_(?P<m>[0-9]{2})_(?P<ms>[0-9]{5})')
+
 BASIC_CRC32_PATTERN = rc(r'^(?P<crc32>[0-9a-fA-F]{8})$')
 CRC32_IN_FILENAME_PATTERN = rc(r'\[(?P<crc32>[0-9a-fA-Z]{8})\]')
+CRC32_CSV_PATTERN = rc(r'(?P<crc32>0x[0-9a-f]{8})')
+
+
+
+
+GENERIC_FILENAME = rc(r'^(?P<m2ts_idx>[0-9]{5})?(?P<stem>.*[^]])(\[(?P<crc32>[0-9a-f]{8})\])?\.(mkv|mka|mp4|flac|png|ass|7z|zip|rar)$', re.IGNORECASE)
+EXPECTED_SIMPLE_NAME = rc(r'^(?P<typename>[^0-9]*)[ -]*(?P<idx>[0-9]*(\.[1-9])?)[ -]*(?P<note>.*)$')
+
+MEDIAINFO_CHAPTER_PATTERN = rc(r'(?P<h>[0-9]{2})_(?P<m>[0-9]{2})_(?P<ms>[0-9]{5})')
 VGMDB_CATALOG_PATTERN = rc(r'^(?P<prefix>.+-)(?P<start>[0-9]{1,5})~(?P<end>[0-9]{1,4})$')
 VGMDB_DATE_FORMAT = rc(r'(?P<year>(19[5-9]|20[0-2])[0-9])-(?P<month>[0-9]{2})-(?P<day>[0-9]{2})')
-
 VNA_CONFS_FILENAME_PATTERN = rc(r'^VNA-[0-9]{6}-[0-9]{6}\.(csv|json|yaml)$')
 VND_TABLE_FILENAME_PATTERN = rc(r'^VND-[0-9]{6}-[0-9]{6}\.csv$')
 VNR_TABLE_FILENAME_PATTERN = rc(r'^VNR-[0-9]{6}-[0-9]{6}\.csv$')
@@ -16,13 +24,8 @@ VNR_TABLE_FILENAME_PATTERN = rc(r'^VNR-[0-9]{6}-[0-9]{6}\.csv$')
 # TODO [^0-9[\]] is not robust for misclabel
 VCBS_SERIES_ROOT_DIRNAME_PATTERN = rc(r'^\[(?P<grptag>.*(VCB-Studio|VCB-S).*)\] (?P<showname>[^\[\]]+)( \[(?P<misclabel>[^0-9[\]])\])?$')
 VCBS_SEASON_ROOT_DIRNAME_PATTERN = rc(r'^\[(?P<grptag>.*(VCB-Studio|VCB-S).*)\] (?P<showname>[^\[\]]+) \[(?P<qlabel>[^\]]*[0-9]{3}p)\](\[(?P<misclabel>[^0-9[\]])\])?$')
-
-
 VOLUME_NAME_PATTERN = rc(r'^(?P<pre>.*)(?P<idx>[0-9]{1,3})(?P<aft>[^0-9]*)$')
 OKE_FILESTEM_PATTERN = rc(r'^(?P<idx1>[0-9]{5})[ -]*(?P<idx2>[0-9]*) *(\[(?P<crc32>[0-9a-zA-Z]{8})\])?$')
-
-CRC32_CSV_PATTERN = rc(r'(?P<crc32>0x[0-9a-f]{8})')
-
 STD_CHAP_TXT_PATTERN = rc(r'((?P<lang>[a-z]{2}):)?(?P<text>Chapter (?P<idx>[0-9]{2,3}))')
 CUSTOM_CHAP_PATTERN = rc(r'((?P<lang>[a-z]{2}):)?(?P<text>.*)')
 BDMV_M2TS_NAME_PATTERN = rc(r'^[0-9]{5}\.(m2ts|M2TS)$')
