@@ -33,7 +33,7 @@ class CoreFile:
     def __init__(self,
                  path:Path|str,
                  init_crc32:bool=False,
-                 init_audio_digest:bool=False) -> None:
+                 init_audio_samples:bool=False) -> None:
 
         path = Path(path).resolve()
         if not path.is_file():
@@ -43,9 +43,9 @@ class CoreFile:
         self.minfo = getMediaInfo(path)
         self.dst = ''
 
-        for v in VNA_USER_FIELDS_DICT.values():
+        for v in VNA_USER_DICT.values():
             setattr(self, v, '')
-        for v in VND_USER_FIELDS_DICT.values():
+        for v in VND_USER_DICT.values():
             setattr(self, v, '')
 
         self._crc32 : str = ''
@@ -54,7 +54,7 @@ class CoreFile:
         if init_crc32:
             self._crc32 = getCRC32(self.path, prefix='')
 
-        if init_audio_digest and self.has_audio and ENABLE_AUDIO_SAMPLES_IN_VNA:
+        if init_audio_samples and self.has_audio and ENABLE_AUDIO_SAMPLES_IN_VNA:
             self._audio_samples = pickAudioSamples(self.path)
 
 
@@ -71,12 +71,12 @@ class CoreFile:
 
 
     def updateFromVNA(self, vna_config:dict[str, str]) -> None:
-        for k, v in VNA_USER_FIELDS_DICT.items():
+        for k, v in VNA_USER_DICT.items():
             setattr(self, v, vna_config.get(v, ''))
 
 
     def updateFromVND(self, vnd_config:dict[str, str]) -> None:
-        for k, v in VND_USER_FIELDS_DICT.items():
+        for k, v in VND_USER_DICT.items():
             setattr(self, v, vnd_config.get(v, ''))
 
 

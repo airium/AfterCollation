@@ -52,7 +52,7 @@ def writeCSV4VNR(ouput_path:Path, grouping_dict:dict[str, list[tuple[str, str, s
     vnr_csv_dicts : list[dict] = []
     for group_idx, group_list in grouping_dict.items():
         for group in group_list:
-            vnr_csv_dict = dict(zip(VNR_CSV_FIELDS_DICT.keys(), (group_idx, *group)))
+            vnr_csv_dict = dict(zip(VNR_ALL_DICT.keys(), (group_idx, *group)))
             vnr_csv_dicts.append(vnr_csv_dict)
 
     return writeCSV(output_path, quotFields4CSV(vnr_csv_dicts))

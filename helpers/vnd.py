@@ -25,13 +25,13 @@ def toVNDNamingDicts(cfs:list[CF], logger:logging.Logger) -> list[dict[str, str]
     for cf in cfs:
         d : dict[str, str] = dict()
 
-        for k, v in VND_CSV_FIELDS_DICT.items():
+        for k, v in VND_ALL_DICT.items():
             d[k] = ''
 
         d[FULLPATH_CN] = cf.path.resolve().as_posix()
         d[CRC32_CN] = cf.crc32
 
-        for k, v in VND_USER_FIELDS_DICT.items():  # user fields
+        for k, v in VND_USER_DICT.items():  # user fields
             # these keys may be already filled from VNA
             d[k] = getattr(cf, v, '')
 
@@ -82,9 +82,9 @@ def loadVNDNaming(vnd_csv:Path, logger:logging.Logger) -> tuple[dict[str, str], 
             if is_base_dict: continue
             #* per file dict -----------------------------------------
             naming_dict : dict[str, str] = {}
-            for k, v in VND_PERSISTENT_FIELDS_DICT.items():
+            for k, v in VND_PERSISTENT_DICT.items():
                 naming_dict[v] = csv_dict.get(k, '')
-            for k, v in VND_USER_FIELDS_DICT.items():
+            for k, v in VND_USER_DICT.items():
                 naming_dict[v] = csv_dict.get(k, '')
             naming_dicts.append(naming_dict)
 

@@ -10,8 +10,8 @@ BASE_LINE_LABEL = '勿填此格'
 
 # these fields are used in dedicated in VNA
 VNA_PATH_CN,                    VNA_PATH_VAR = 'M2TS路径',   'vna_m2ts_path'
-VNA_VOL_CN,                      VNA_VOL_VAR = 'VOL卷号',    'vna_volume_idx'
-VNA_IDX_CN,                      VNA_IDX_VAR = 'M2TS序号',   'vna_m2ts_idx'
+VNA_M2TS_VOL_CN,            VNA_M2TS_VOL_VAR = 'VOL卷号',    'vna_volume_idx'
+VNA_M2TS_IDX_CN,            VNA_M2TS_IDX_VAR = 'M2TS序号',   'vna_m2ts_idx'
 VNA_SCRIPT_CN,                VNA_SCRIPT_VAR = '使用脚本',   'vna_script'
 VNA_COMMENT_CN,              VNA_COMMENT_VAR = '其它备注',   'vna_comment'
 VNA_AUDIO_SAMPLES_CN,  VNA_AUDIO_SAMPLES_VAR = '音频摘要',   'vna_audio_samples'
@@ -48,10 +48,10 @@ ENABLE_CN,       ENABLE_VAR = '启用?',      'vn_enabled'
 # these are the field order to be shown in CSV files
 # NOTE dont change the order unless you know what you are doing
 
-VNA_CSV_FIELDS_DICT = {
+VNA_ALL_DICT = {
     VNA_PATH_CN: VNA_PATH_VAR,
-    VNA_VOL_CN: VNA_VOL_VAR,
-    VNA_IDX_CN: VNA_IDX_VAR,
+    VNA_M2TS_VOL_CN: VNA_M2TS_VOL_VAR,
+    VNA_M2TS_IDX_CN: VNA_M2TS_IDX_VAR,
     DURATION_CN: DURATION_VAR,
     TRACKCOMP_CN: TRACKCOMP_VAR,
     VNA_VID_FPS_CN: VNA_VID_FPS_VAR,
@@ -66,7 +66,7 @@ VNA_CSV_FIELDS_DICT = {
     VNA_AUDIO_SAMPLES_CN: VNA_AUDIO_SAMPLES_VAR,
 }
 
-VND_CSV_FIELDS_DICT = {
+VND_ALL_DICT = {
     # VNX_CSV_PERSISTENT_KEY_DICT: these fields are always saved in CSV
 
     FULLPATH_CN: FULLPATH_VAR,
@@ -96,7 +96,7 @@ VND_CSV_FIELDS_DICT = {
 }
 
 # if change, also change the order in `read/writeCSV4VNR()`
-VNR_CSV_FIELDS_DICT = {
+VNR_ALL_DICT = {
     VNR_GRP_IDX_CN: VNR_GRP_IDX_VAR,
     VNR_SUBGRP_IDX_CN: VNR_SUBGRP_IDX_VAR,
     ENABLE_CN: ENABLE_VAR,
@@ -111,12 +111,12 @@ VNA_BASE_LINE_USER_DICT = {
     SHOWNAME_CN: SHOWNAME_VAR,
 }
 # 'presistent' means they are automatically in VNA but to be used in VND
-VNA_PERSISTENT_FIELDS_DICT = {
-    VNA_VOL_CN: VNA_VOL_VAR,
-    VNA_IDX_CN: VNA_IDX_VAR,
+VNA_PERSISTENT_DICT = {
+    VNA_M2TS_VOL_CN: VNA_M2TS_VOL_VAR,
+    VNA_M2TS_IDX_CN: VNA_M2TS_IDX_VAR,
     VNA_AUDIO_SAMPLES_CN: VNA_AUDIO_SAMPLES_VAR,
 }
-VNA_USER_FIELDS_DICT = {
+VNA_USER_DICT = {
     TYPENAME_CN: TYPENAME_VAR,
     IDX1_CN: IDX1_VAR,
     IDX2_CN: IDX2_VAR,
@@ -132,11 +132,11 @@ VND_BASE_LINE_USER_DICT = {
     SUFFIX_CN: SUFFIX_VAR,
 }
 # 'presistent' means they are automatically created in VND but to be used in VNE
-VND_PERSISTENT_FIELDS_DICT = {
+VND_PERSISTENT_DICT = {
     FULLPATH_CN: FULLPATH_VAR,
     CRC32_CN: CRC32_VAR,
 }
-VND_USER_FIELDS_DICT = {
+VND_USER_DICT = {
     GRPTAG_CN: GRPTAG_VAR,
     SHOWNAME_CN: SHOWNAME_VAR,
     LOCATION_CN: LOCATION_VAR,

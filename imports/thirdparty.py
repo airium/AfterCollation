@@ -1,4 +1,5 @@
 import tqdm                                 # pip install tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
 import langdetect                           # pip install langdetect
 import yaml                                 # pip install pyyaml
 import ffmpeg                               # pip install ffmpeg-python

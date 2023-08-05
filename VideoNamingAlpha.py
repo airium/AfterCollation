@@ -16,83 +16,47 @@ The video naming fields in the CSV/YAML/JSON can be accepted by VND.
 
 def main(input_dir:Path):
 
-    # NOTE there is a small difference between Path.resolve() and Path.absolute()
-    output_parent = input_dir.absolute().parent
-    input_dir = input_dir.resolve()
-
-    print(f'Using VideoNamingAlpha (VNA) of AfterCollation {AC_VERSION}')
-    print(f'The user input is "{input_dir}".')
+    logger = initLogger(log_path := input_dir.parent.joinpath(f'VNA-{TIMESTAMP}.log'))
+    logger.info(f'Using VideoNamingAlpha (VNA) of AfterCollation {AC_VERSION}')
+    logger.info(f'The user input is "{input_dir}".')
 
     # TODO better adding CLI interface in the future
     config : dict = readConf4VNA(__file__, input_dir)
 
     # TODO support DVD in the future
-    m2ts_paths = listFile(input_dir, ext='m2ts')
-    if not m2ts_paths:
-        print('\nNo M2TS found under your input.\n')
+    if not (m2ts_paths := listFile(input_dir, ext='m2ts')):
+        logger.error('No M2TS found under your input.')
         return
 
-    rel_paths_strs = [m2ts_file.parent.relative_to(input_dir).as_posix() for m2ts_file in m2ts_paths]
-    rel_paths_parts = [rel_path_str.split('/') for rel_path_str in rel_paths_strs]
-    rel_paths_depths = [len(rel_path_parts) for rel_path_parts in rel_paths_parts]
-    if len(set(rel_paths_depths)) != 1:
-        print(f'!!! M2TS files are placed at different depth under your input. '
-              f'This will make volume index detection more inaccurate.')
+    assumed_vols = guessVolNumsFromPaths(m2ts_paths, input_dir, logger)
+    if ENABLE_AUDIO_SAMPLES_IN_VNA:
+        logger.info('Full reading the M2TS to pick audio samples (this will be slow) ...')
 
-    assumed_vols = guessVolNumsFromPaths(m2ts_paths, input_dir)
+    mp = NUM_CPU_JOBS if ENABLE_AUDIO_SAMPLES_IN_VNA else NUM_IO_JOBS
+    logger.info(f'Loading files with {mp} workers ...')
+    with logging_redirect_tqdm([logger]):
+        pbar = tqdm.tqdm(total=len(m2ts_paths), desc='Loading', dynamic_ncols=True, ascii=True, unit='file')
+        def callback(result):
+            pbar.update(1)
+            logger.info(f'Added "{result[VNA_PATH_CN]}".')
+        ret = []
+        with Pool(mp) as pool:
+            for m2ts_path, assumed_vol in zip(m2ts_paths, assumed_vols):
+                ret.append(pool.apply_async(toVNAFullDict, args=(m2ts_path, assumed_vol, input_dir), callback=callback))
+            pool.close()
+            pool.join()
+        pbar.close()
+        vna_full_dicts : list[dict[str, str]] = [r.get() for r in ret]
 
-    output_dicts : list[dict[str, str]] = []
-    pbar = tqdm.tqdm(total=len(m2ts_paths), desc='Loading', dynamic_ncols=True, ascii=True, unit='file')
-    for i, m2ts_path, assumed_vol in zip(itertools.count(), m2ts_paths, assumed_vols):
-
-        pbar.set_description(f'Reading {assumed_vol}-{m2ts_path.stem}')
-        m2ts_idx = m2ts_path.stem
-        shown_path = m2ts_path.relative_to(input_dir).as_posix()
-        if ENABLE_AUDIO_SAMPLES_IN_VNA:
-            pbar.write('Reading the full M2TS to pick audio samples (this can be slow) ...')
-            audio_samples : str = pickAudioSamples(m2ts_path)
-        else:
-            audio_samples = ''
-
-        cf : CF = CF(m2ts_path)
-        # it seems that keep these BDMV texts is better
-        # if (not fi.has_video) and (not fi.has_audio):
-        #     print(f'! Skipping {shown_path} as it has no video/audio track.')
-        #     continue
-
-        pbar.write(f'Added "{shown_path}".')
-        output_dict = {}
-        # NOTE the order of keys is defined by VNA_TITLE_DICT
-        for key in VNA_CSV_FIELDS_DICT.keys():
-            output_dict[key] = ''
-        # then we need to fill some of them right now
-        output_dict[VNA_PATH_CN] = shown_path
-        output_dict[VNA_VOL_CN] = assumed_vol
-        output_dict[VNA_IDX_CN] = m2ts_idx
-        output_dict[DURATION_CN] = cf.fmtGeneralDuration()
-        output_dict[TRACKCOMP_CN] = cf.fmtTrackTypeCounts()
-        output_dict[VNA_VID_FPS_CN] = cf.fmtFpsInfo()
-        output_dict[VNA_AUDIO_SAMPLES_CN] = audio_samples
-
-        output_dicts.append(output_dict)
-        pbar.update(1)
-    pbar.close()
-
-    if not output_dicts:
-        print('!!! No valid M2TS to be listed for output.')
-        return
-
-
-    base = dict(zip(output_dicts[0].keys(), itertools.repeat(BASE_LINE_LABEL)))
-    for k in VNA_BASE_LINE_USER_DICT.keys():
-        base[k] = ''
-    output_dicts = [base] + output_dicts
+    vna_base_dict = dict(zip(vna_full_dicts[0].keys(), itertools.repeat(BASE_LINE_LABEL)))
+    vna_base_dict.update({k:'' for k in VNA_BASE_LINE_USER_DICT.keys()})
+    vna_full_dicts = [vna_base_dict] + vna_full_dicts
 
     for ext in VNA_OUTPUT_EXTS:
         if config.get(ext, False):
-            out_file = output_parent.joinpath(f'VNA-{TIMESTAMP}.{ext}')
+            out_file = input_dir.parent.joinpath(f'VNA-{TIMESTAMP}.{ext}')
             print(f'Generating pre-encoding instruction sheet at "{out_file}"...')
-            working_list = quotFields4CSV(output_dicts) if ext == 'csv' else output_dicts
+            working_list = quotFields4CSV(vna_full_dicts) if ext == 'csv' else vna_full_dicts
             if not globals()[f'listM2TS2{ext.upper()}'](out_file, working_list):
                 print(f'! Failed to write {out_file}.')
 

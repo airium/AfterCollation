@@ -2,6 +2,7 @@ import os
 import json
 import logging
 import itertools
+from typing import Callable
 from pathlib import Path
 
 from configs import *
@@ -16,6 +17,7 @@ __all__ = [
     'loadVNANamingFile',
     'copyNamingFromVNA',
     'guessVolNumsFromPaths',
+    'toVNAFullDict',
     ]
 
 
@@ -83,9 +85,9 @@ def loadVNANamingFile(vna_file:Path|None, logger:logging.Logger) -> tuple[dict, 
             if is_base_dict: continue
             #* per file dict -----------------------------------------
             naming_dict : dict[str, str] = {}
-            for k, v in VNA_PERSISTENT_FIELDS_DICT.items():
+            for k, v in VNA_PERSISTENT_DICT.items():
                 naming_dict[v] = data_dict.get(k, '')
-            for k, v in VNA_USER_FIELDS_DICT.items():
+            for k, v in VNA_USER_DICT.items():
                 naming_dict[v] = data_dict.get(k, '')
             naming_dicts.append(naming_dict)
     except:
@@ -106,7 +108,7 @@ def copyNamingFromVNA(corefiles:list[CF], vna_configs:list[dict], logger:logging
 
     if not vna_configs: return
 
-    guessed_vol_nums = guessVolNumsFromPaths([cf.path for cf in corefiles])
+    guessed_vol_nums = guessVolNumsFromPaths([cf.path for cf in corefiles], logger=logger)
 
     vna_config_used_bools = [False] * len(vna_configs)
     for cf, guessed_vol_num in zip(corefiles, guessed_vol_nums):
@@ -121,7 +123,7 @@ def copyNamingFromVNA(corefiles:list[CF], vna_configs:list[dict], logger:logging
         if audio_samples_matched: continue
         # start matching by volume number, much less reliable
         for i, vna_config in enumerate(vna_configs):
-            if (vna_vol_num := vna_config.get(VNA_VOL_VAR, '')) and (m := re.match(OKE_FILESTEM_PATTERN, cf.path.stem)):
+            if (vna_vol_num := vna_config.get(VNA_M2TS_VOL_VAR, '')) and (m := re.match(OKE_FILESTEM_PATTERN, cf.path.stem)):
                 if int(vna_vol_num) == int(m.group('idx1')):
                     cf.updateFromVNA(vna_config)
                     vna_config_used_bools[i] = True
@@ -134,7 +136,7 @@ def copyNamingFromVNA(corefiles:list[CF], vna_configs:list[dict], logger:logging
 
 
 
-def guessVolNumsFromPaths(paths:list[Path], parent:Path|None=None) -> list[str]:
+def guessVolNumsFromPaths(paths:list[Path], parent:Path|None=None, logger:logging.Logger|None=None) -> list[str]:
     '''
     If all inputs are from the same directory, it will use `parent` as the common parent instead of the most common prefix.
     '''
@@ -159,6 +161,11 @@ def guessVolNumsFromPaths(paths:list[Path], parent:Path|None=None) -> list[str]:
     rel_paths_parts = [rel_path_str.split('/') for rel_path_str in rel_paths_strs]
     rel_paths_depths = [len(rel_path_parts) for rel_path_parts in rel_paths_parts]
 
+    if logger:
+        if len(set(rel_paths_depths)) != 1:
+            logger.warning('The files are placed at different depth under your input. '
+                           'This will make volume number detection less accurate.')
+
     processed_bools = [False] * len(paths)
     assumed_vols : list[str] = [''] * len(paths)
 
@@ -172,3 +179,18 @@ def guessVolNumsFromPaths(paths:list[Path], parent:Path|None=None) -> list[str]:
         if all(processed_bools): break
 
     return assumed_vols
+
+
+
+
+def toVNAFullDict(m2ts_path:Path, assumed_vol:str, input_dir:Path) -> dict[str, str]:
+    cf : CF = CF(m2ts_path, init_crc32=False, init_audio_samples=ENABLE_AUDIO_SAMPLES_IN_VNA)
+    vna_full_dict = dict(zip(VNA_ALL_DICT.keys(), itertools.repeat('')))
+    vna_full_dict[VNA_PATH_CN] = m2ts_path.relative_to(input_dir).as_posix()
+    vna_full_dict[VNA_M2TS_VOL_CN] = assumed_vol
+    vna_full_dict[VNA_M2TS_IDX_CN] = m2ts_path.stem
+    vna_full_dict[DURATION_CN] = cf.fmtGeneralDuration()
+    vna_full_dict[TRACKCOMP_CN] = cf.fmtTrackTypeCounts()
+    vna_full_dict[VNA_VID_FPS_CN] = cf.fmtFpsInfo()
+    vna_full_dict[VNA_AUDIO_SAMPLES_CN] = cf.audio_samples
+    return vna_full_dict
