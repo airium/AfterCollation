@@ -28,8 +28,8 @@ def main(input_dir:Path, vna_file:Path|None=None):
 
     # NOTE first guess naming and then fill each CF from VNA
     # so the naming instruction in VNA will not be overwritten
-    # also, audio samples will not appear in files_naming_dicts to be sent to VNE
-    # so we cannot use files_naming_dicts for fillNamingFieldsFromVNA()
+    # also, audio samples will not appear in file_naming_dicts to be sent to VNE
+    # so we cannot use file_naming_dicts for copyNamingFromVNA()
     doEarlyNamingGuess(cfs, logger)
     copyNamingFromVNA(cfs, vna_file_naming_dicts, logger)
     file_naming_dicts = toVNDNamingDicts(cfs, logger)

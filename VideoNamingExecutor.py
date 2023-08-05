@@ -29,7 +29,7 @@ def main(csv_path:Path):
     hl = tstMkHardlinks(src_file_paths, dst_parent_dir)
     mp = getCRC32MultiProc(src_file_paths, logger)
 
-    season = Season(**{FULLPATH_VAR : dst_parent_dir.as_posix()})
+    (season := Season()).p = dst_parent_dir.as_posix()
     season.cfs.extend(toCoreFileObjs(src_file_paths, logger, mp=mp))
     cmpCfCRC32(season.cfs, [naming_info[CRC32_VAR] for naming_info in file_naming_dicts], logger)
     applyNamingDicts(season, base_naming_dict, file_naming_dicts, logger)

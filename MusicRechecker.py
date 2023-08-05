@@ -16,7 +16,7 @@ A processing log (MR-*.log) will be generated for later review.
 
 def main(root):
 
-    log_path = paths[0].parent.joinpath(f'MR-{TIMESTAMP}.log')
+    log_path = root.parent.joinpath(f'MR-{TIMESTAMP}.log')
     logger = initLogger(log_path=log_path)
     logger.info(f'Using MusicRechecker (MR) of AfterCollation {AC_VERSION}')
     logger.info(f'The user input is "{root}".')
