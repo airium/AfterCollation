@@ -23,7 +23,7 @@ def main(input_dir:Path, vna_file:Path|None=None):
 
     paths = listVNxFilePaths(input_dir, logger)
     cfs = toCoreFileObjs(paths, logger, mp=getCRC32MultiProc(paths, logger))
-    cmpCRC32VND(cfs, findCRC32InFilenames(paths), logger)
+    cmpCfCRC32(cfs, findCRC32InFilenames(paths), logger)
     if ENABLE_FILE_CHECKING_IN_VND: chkSeasonFiles(cfs, logger)
 
     # NOTE first guess naming and then fill each FI from VNA

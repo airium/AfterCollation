@@ -1,4 +1,6 @@
+import re
 import logging
+import itertools
 from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor
 
@@ -9,14 +11,14 @@ from configs.specification import STD_BKS_DIRNAME, STD_CDS_DIRNAME
 from configs.user import ENABLE_MULTI_PROC_IF_UNSURE, NUM_IO_JOBS
 from configs.runtime import VNx_ALL_EXTS
 from configs.debug import DEBUG
+from configs.regex import BASIC_CRC32_PATTERN
 
 import ssd_checker
 
 
 __all__ = [
     'toEnabledList',
-    'cmpCRC32VND',
-    'cmpCRC32VNE',
+    'cmpCfCRC32',
     'printCliNotice',
     'filterOutCDsScans',
     'isSSD',
@@ -52,40 +54,40 @@ def toEnabledList(values:list[str]|tuple[str]) -> list[bool]:
 
 
 
-def cmpCRC32VND(fis:CF|list[CF], expected_crc32s:str|list[str], logger:logging.Logger):
+def cmpCfCRC32(cfs:CF|list[CF], expects:str|list[str], logger:logging.Logger, pass_not_recorded:bool=False) -> bool:
 
-    if isinstance(fis, CF): fis = [fis]
-    if isinstance(expected_crc32s, str): expected_crc32s = [expected_crc32s]
+    if isinstance(cfs, CF): cfs = [cfs]
+    if isinstance(expects, str): expects = [expects]
 
-    if len(fis) != len(expected_crc32s):
-        logger.error('The input files and expected CRC32s have different length.')
+    if not cfs or not expects:
+        logger.warning('Missing input for CRC32 comparison.')
+        return False
 
-    # do a shortest loop, though the length mismatches
-    for fi, expected_crc32 in zip(fis, expected_crc32s):
-        if not expected_crc32:
-            logger.warning(f'No CRC32 found in filename "{fi.path}".')
+    if len(cfs) != len(expects):
+        logger.warning('The input files and expected CRC32s have different length.')
+
+    ok = True
+    cf_paths, cf_crc32s = (cf.src for cf in cfs), (cf.crc32 for cf in cfs)
+    for cf_path, cf_crc32, exp_crc32 in itertools.zip_longest(cf_paths, cf_crc32s, expects, fillvalue=''):
+        if not cf_path:
+            logger.info(f'Reaching the end of actual files.')
+            return ok #! exit at the end of actual files
+        if not cf_crc32:
+            logger.error(f'The source file "{cf_path}" used to instantiate CoreFile is missing now.')
+            ok = False
             continue
-        if fi.crc32.lower() != expected_crc32.lower():
-            logger.error(f'CRC32 mismatches, actual 0x{fi.crc32} ≠ 0x{expected_crc32} for "{fi.path}".')
-
-
-
-
-def cmpCRC32VNE(fis:CF|list[CF], expected_crc32s:str|list[str], logger:logging.Logger):
-
-    if isinstance(fis, CF): fis = [fis]
-    if isinstance(expected_crc32s, str): expected_crc32s = [expected_crc32s]
-
-    if len(fis) != len(expected_crc32s):
-        logger.error('The input files and expected CRC32s have different length.')
-
-    # do a shortest loop, though the length mismatches
-    for fi, expected_crc32 in zip(fis, expected_crc32s):
-        if not expected_crc32:
-            logger.warning(f'No CRC32 recorded for "{fi.path}".')
+        if not exp_crc32:
+            logger.warning(f'No recorded CRC32 to verify "{cf_path}" (0x{cf_crc32}).')
+            if not pass_not_recorded: ok = False
             continue
-        if fi.crc32.lower() != expected_crc32.lower():
-            logger.error(f'CRC32 mismatches, actual 0x{fi.crc32} ≠ 0x{expected_crc32} for "{fi.path}".')
+        if not re.match(BASIC_CRC32_PATTERN, exp_crc32):
+            logger.error(f'The recorded CRC32 "{exp_crc32}" is malformed.')
+            ok = False
+            continue
+        if cf_crc32.lower() != exp_crc32.lower():
+            logger.error(f'Mismatched CRC32 - actual 0x{cf_crc32} but recorded 0x{exp_crc32} for "{cf_path}".')
+            ok = False
+    return ok
 
 
 

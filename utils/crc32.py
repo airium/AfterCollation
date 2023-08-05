@@ -4,7 +4,8 @@ import zlib
 from pathlib import Path
 from functools import partial
 from multiprocessing import Pool
-from configs.regex import CRC32_IN_FILENAME_PATTERN
+from configs.regex import CRC32_IN_FILENAME_PATTERN, BASIC_CRC32_PATTERN
+
 
 
 
@@ -18,7 +19,7 @@ __all__ = [
 
 
 
-def getCRC32(path:Path|str, prefix:str='', read_size:int=16*2**20) -> str:
+def getCRC32(path:Path|str, prefix:str='', read_size:int=16*2**20, pass_not_found:bool=False) -> str:
     '''
     path:Path: the Path to the file
 
@@ -31,13 +32,20 @@ def getCRC32(path:Path|str, prefix:str='', read_size:int=16*2**20) -> str:
 
     return:str: the hash string
 
-    typical speed: 500-1000MB/s on NVMe SSD
+    typical speed: 500-1500MB/s on NVMe SSD per thread
     '''
-    hash = 0
-    with Path(path).open('rb') as fo:
-        while (b := fo.read(read_size)):
-            hash = zlib.crc32(b, hash)
-    return f'{prefix}{hash:08x}'
+
+    try:
+        hash = 0
+        with Path(path).open('rb') as fo:
+            while (b := fo.read(read_size)):
+                hash = zlib.crc32(b, hash)
+        return f'{prefix}{hash:08x}'
+    except FileNotFoundError as e:
+        if pass_not_found: return ''
+        raise e
+    except Exception as e:
+        raise e
 
 
 
@@ -67,12 +75,25 @@ def findCRC32InFilenames(inp:list[Path]|list[str]) -> list[str]:
 
 
 
-# def cmpCRC32(paths:list[Path], actual_crc32s:list[str], logger:logging.Logger):
-#     for (path, actual_crc32) in zip(paths, actual_crc32s):
-#         if matches := re.findall(BASIC_CRC32_PATTERN, path.as_posix()):
-#             # NOTE using the last found crc32, which should be the correct one
-#             assumed_crc32_in_filename = matches[-1]
-#             if actual_crc32.lower() != assumed_crc32_in_filename.lower():
-#                 logger.error(f'CRC32 mismatched (actual 0x{actual_crc32} ≠ 0x{assumed_crc32_in_filename} in "{path}".')
-#         else:
-#             logger.warning(f'CRC32 not found in "{path}".')
+
+def cmpCRC32(*, actuals:str|list[str], expects:str|list[str]) -> bool|list[bool]:
+
+    is_str = False
+    if isinstance(actuals, str):
+        actuals = [actuals]
+        is_str = True
+    if isinstance(expects, str):
+        expects = [expects]
+        is_str = True
+    if len(actuals) != len(expects):
+        raise ValueError('The actual and expected CRC32s have different length.')
+
+    ret : list[bool] = []
+    for (actual, expects) in zip(actuals, expects):
+        if not actual or not re.match(BASIC_CRC32_PATTERN, actual):
+            ret.append(False)
+        elif not expects or not re.match(BASIC_CRC32_PATTERN, expects):
+            ret.append(False)
+        else:
+            ret.append(actual.lower() == expects.lower())
+    return ret[0] if is_str else ret

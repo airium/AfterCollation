@@ -31,7 +31,7 @@ def main(csv_path:Path):
 
     season = Season(**{FULLPATH_VAR : dst_parent_dir.as_posix()})
     season.cfs.extend(toCoreFileObjs(src_file_paths, logger, mp=mp))
-    cmpCRC32VNE(season.cfs, [naming_info[CRC32_VAR] for naming_info in file_naming_dicts], logger)
+    cmpCfCRC32(season.cfs, [naming_info[CRC32_VAR] for naming_info in file_naming_dicts], logger)
     applyNamingDicts(season, base_naming_dict, file_naming_dicts, logger)
     doAutoIndexing(season, logger)
     fmtContentName(season, logger)

@@ -28,8 +28,11 @@ class CoreFile:
                  init_crc32:bool=False,
                  init_audio_digest:bool=False) -> None:
 
-        path = Path(path)
-        self.path = path.resolve()
+        path = Path(path).resolve()
+        if not path.is_file():
+            raise FileNotFoundError(f'Missing "{self.path}" at CoreFile instantiation.')
+        self.path = path
+
         self.minfo = getMediaInfo(path)
         self.dst = ''
 
@@ -49,7 +52,7 @@ class CoreFile:
 
 
     def __getattr__(self, __name: str) -> Any:
-        return getattr(self.minfo, __name, '')
+        return getattr(self.minfo, __name)
 
 
     def __getstate__(self) -> dict:
@@ -200,7 +203,7 @@ class CoreFile:
             return self.ext
     @property
     def crc32(self) -> str:
-        if not self._crc32: self._crc32 = getCRC32(self.path, prefix='')
+        if not self._crc32: self._crc32 = getCRC32(self.path, prefix='', pass_not_found=True)
         return self._crc32
 
 
