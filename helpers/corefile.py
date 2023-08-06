@@ -248,7 +248,7 @@ class CoreFile:
 
     @property
     def dst(self) -> str:
-        relative_path = f'{self.season.dst}/{self.dstname}'.strip(string.whitespace + '/\\')
+        relative_path = f'{self.l}/{self.dstname}'.strip(string.whitespace + '/\\')
         if self.__season:
             return (Path(self.__season.dst) / relative_path).as_posix()
         else:
