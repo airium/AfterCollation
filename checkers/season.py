@@ -27,9 +27,10 @@ __all__ = [
 
 
 
-def chkSeasonFiles(season: Season, logger: logging.Logger):
+def chkSeasonFiles(inp: Season|list[CoreFile], logger: logging.Logger):
+    cfs = inp.cfs if isinstance(inp, Season) else inp
     with logging_redirect_tqdm([logger]):
-        for cf in tqdm.tqdm(season.cfs, desc='Checking', unit='file', ascii=True, dynamic_ncols=True):
+        for cf in tqdm.tqdm(cfs, desc='Checking', unit='file', ascii=True, dynamic_ncols=True):
             if cf.ext in VNx_ALL_EXTS:
                 chkFile(cf, logger=logger)
             else:
