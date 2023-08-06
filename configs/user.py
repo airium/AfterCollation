@@ -46,6 +46,8 @@ ENABLE_AUDIO_SAMPLES_IN_VNA : bool = True
 #! however, you will always get a warning if allowing/using any 'non-safe' characters
 USER_GROUP_NAME_CHARS = ''
 USER_SHOW_TITLE_CHARS = ''
+USER_LOCATION_CHARS = ''
+USER_CLASSIFICATION_CHARS = ''
 USER_DESCRIPTION_CHARS = ''
 USER_SUFFIX_CHARS = ''
 # rarely you may need: "# ？꞉⁄‹›＜＞"

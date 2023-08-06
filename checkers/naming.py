@@ -224,7 +224,7 @@ def chkLocation(location:str, logger:logging.Logger) -> bool:
     if not location: return True # empty location is correct here
 
     ok = True
-    cleaned_location = cleanLocation(location)
+    cleaned_location = cleanFullLocation(location)
     if location != cleaned_location:
         logger.error(f'The location contains disallowed characters or incorrect spacing.')
         ok = False
