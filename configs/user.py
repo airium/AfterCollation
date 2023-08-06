@@ -42,6 +42,14 @@ TEMP_DIRNAME_HARDLINK : str = '@AC-Temp'
 # note that this will cause full reading m2ts files, significantly slowing down VNA
 ENABLE_AUDIO_SAMPLES_IN_VNA : bool = True
 
+# if your input got rejected by VNE, you can add additional characters to be allowed here
+#! however, you will always get a warning if allowing/using any 'non-safe' characters
+USER_GROUP_NAME_CHARS = ''
+USER_SHOW_TITLE_CHARS = ''
+USER_DESCRIPTION_CHARS = ''
+USER_SUFFIX_CHARS = ''
+# rarely you may need: "# ？꞉⁄‹›＜＞"
+
 # this is the default output format from VNA
 VNA_DEFAULT_CONFIG = {'csv': True, 'yaml': False, 'json': False }
 

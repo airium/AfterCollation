@@ -46,7 +46,7 @@ class CoreFile:
 
         if not (path := Path(path).resolve()).is_file():
             raise FileNotFoundError(f'The file "{self.path}" is missing to init CoreFile instance.')
-        self.path: Path = path
+        self.__path: Path = path
 
         # once the path is validated, init mediainfo
         self.__mediainfo: MediaInfo = getMediaInfo(path)
@@ -89,15 +89,15 @@ class CoreFile:
 
     @property
     def path(self) -> Path:
-        return self.path
+        return self.__path
 
     @property  # NOTE no setter for read-only path
     def src(self) -> str:
-        return self.path.resolve().as_posix()
+        return self.__path.resolve().as_posix()
 
     @property
     def srcname(self) -> str:
-        return self.path.name
+        return self.__path.name
 
     @property
     def season(self) -> hs.Season|None:
@@ -158,7 +158,7 @@ class CoreFile:
     @property
     def t(self) -> str:
         if self.depends: return self.depends.t
-        if ret := getattr(self, GRPTAG_VAR, ''):
+        if ret := getattr(self, TITLE_VAR, ''):
             return ret
         if self.__season:
             return self.__season.t

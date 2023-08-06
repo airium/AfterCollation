@@ -39,8 +39,9 @@ def main(csv_path: Path):
     stageClassificationName(season, logger)
     chkNamingDependency(season, logger)
     if ENABLE_FILE_CHECKING_IN_VNE:
-        if not chkSeasonFiles(season.cfs, logger): return
+        if not chkSeasonFiles(season, logger): return
     if not chkFinalNamingConflict(season, logger): return
+    logNamingSummary(base_naming_dict, file_naming_dicts, season, logger)
     if not doNaming(season, hl, logger): return
 
 

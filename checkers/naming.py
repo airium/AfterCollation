@@ -7,7 +7,7 @@ from configs import *
 from utils import *
 from helpers import *
 from helpers.error import NamingDraftError
-
+from helpers.naming import *
 
 __all__ = [
     'chkNamingDicts',
@@ -37,14 +37,12 @@ def chkNamingDicts(default_dict:dict[str, str], naming_dicts:list[dict[str, str]
         #! 1. there must be at least one file specified
         if not naming_dicts:
             logger.warning('No file specified or enabled from the input.')
-            logger.error('Rejected the naming draft. Stopping ...')
             raise NamingDraftError
 
         #! 2. all files should have a path specified (except the default)
         for i, path in enumerate(paths[1:], start=3):
             if not path:
                 logger.error(f'Missing file path at possibly line {i}.')
-                logger.error('Rejected the naming draft. Stopping ...')
                 raise NamingDraftError
 
         # #! 3. no invalid characters should exist in the path
@@ -68,7 +66,6 @@ def chkNamingDicts(default_dict:dict[str, str], naming_dicts:list[dict[str, str]
                 all_files_exists = False
                 logger.error(f'Error in locating "{path}".')
         if not all_files_exists:
-            logger.error('Rejected the naming draft. Stopping ...')
             raise NamingDraftError
 
         #! 5. the default path should be an existing file
@@ -89,7 +86,6 @@ def chkNamingDicts(default_dict:dict[str, str], naming_dicts:list[dict[str, str]
             if not re.match(BASIC_CRC32_PATTERN, crc32):
                 logger.error(f'Invalid CRC32 string: "{crc32}".')
         if not all_crc32_valid:
-            logger.error('Rejected the naming draft. Stopping ...')
             raise NamingDraftError
 
         #! 8. there should be no file with identical crc32
@@ -168,7 +164,7 @@ def chkGrpTag(fullname:str, logger:logging.Logger) -> bool:
 
 def chkTitle(fullname:str, logger:logging.Logger) -> bool:
 
-    cleaned_fullname = cleanGenericName(fullname)
+    cleaned_fullname = cleanTitle(fullname)
     if not fullname or not cleaned_fullname:
         logger.error(f'The show name is empty.')
         return False
@@ -250,7 +246,7 @@ def chkTypeName(typename:str, logger:logging.Logger) -> bool:
     if not typename: return True # empty typename is correct here
 
     ok = True
-    cleaned_typename = cleanGenericName(typename)
+    cleaned_typename = cleanDescription(typename)
     if typename != cleaned_typename:
         logger.error(f'The typename contains disallowed characters or incorrect spacing.')
         ok = False
@@ -333,7 +329,7 @@ def chkNote(fullnote:str, logger:logging.Logger) -> bool:
 
     ok = True
 
-    cleaned_fullnote = cleanGenericName(fullnote)
+    cleaned_fullnote = cleanDescription(fullnote)
     if fullnote != cleaned_fullnote:
         logger.error(f'The location contains disallowed characters or incorrect spacing.')
         ok = False
@@ -352,7 +348,7 @@ def chkCustom(cname:str, logger:logging.Logger) -> bool:
 
     ok = True
 
-    cleaned_cname = cleanGenericName(cname)
+    cleaned_cname = cleanDescription(cname)
     if cname != cleaned_cname:
         logger.error(f'The customized name contains disallowed characters or incorrect spacing.')
         ok = False
