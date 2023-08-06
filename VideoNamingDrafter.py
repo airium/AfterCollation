@@ -1,5 +1,6 @@
 from imports import *
 
+
 VND_USAGE = f'''
 VideoNamingDrafter (VND) only accepts the following input:
 1. drop/cli a single folder (and optionally a single VNA.csv/yaml/json)
@@ -13,7 +14,7 @@ VND includes the following behaviors:
 
 
 
-def main(input_dir:Path, vna_file:Path|None=None):
+def main(input_dir: Path, vna_file: Path|None = None):
 
     logger = initLogger(log_path := input_dir.parent.joinpath(f'VND-{TIMESTAMP}.log'))
     logger.info(f'Using VideoNamingDrafter (VND) of AfterCollation {AC_VERSION}')
@@ -53,7 +54,7 @@ def main(input_dir:Path, vna_file:Path|None=None):
 
 
 
-def _cli(*paths:Path):
+def _cli(*paths: Path):
 
     n = len(paths)
     if (n == 1) and (path := paths[0]).is_dir():

@@ -34,9 +34,9 @@ TR_AUDIO_CN,   TR_AUDIO_VAR = '音频轨道',   'vn_audio_tracks'
 TR_TEXT_CN,     TR_TEXT_VAR = '图形字幕',   'vn_text_tracks'
 TR_MENU_CN,     TR_MENU_VAR = '章节菜单',   'vn_menu_tracks'
 GRPTAG_CN,       GRPTAG_VAR = '组名',       'vn_grptag'
-SHOWNAME_CN,   SHOWNAME_VAR = '片名',       'vn_showname'
+TITLE_CN,         TITLE_VAR = '片名',       'vn_showname'
 LOCATION_CN,   LOCATION_VAR = '位置',       'vn_location'
-TYPENAME_CN,   TYPENAME_VAR = '内容类型',   'vn_typename'
+CLASSIFY_CN,   CLASSIFY_VAR = '内容类型',   'vn_classification'
 IDX1_CN,           IDX1_VAR = '主序号',     'vn_idx1'
 IDX2_CN,           IDX2_VAR = '副序号',     'vn_idx2'
 NOTE_CN,           NOTE_VAR = '补充说明',   'vn_note'
@@ -57,12 +57,12 @@ VNA_ALL_DICT = {
     VNA_VID_FPS_CN: VNA_VID_FPS_VAR,
     VNA_SCRIPT_CN: VNA_SCRIPT_VAR,
     VNA_COMMENT_CN: VNA_COMMENT_VAR,
-    TYPENAME_CN: TYPENAME_VAR,
+    CLASSIFY_CN: CLASSIFY_VAR,
     IDX1_CN: IDX1_VAR,
     IDX2_CN: IDX2_VAR,
     CUSTOM_CN: CUSTOM_VAR,
     GRPTAG_CN: GRPTAG_VAR,
-    SHOWNAME_CN: SHOWNAME_VAR,
+    TITLE_CN: TITLE_VAR,
     VNA_AUDIO_SAMPLES_CN: VNA_AUDIO_SAMPLES_VAR,
 }
 
@@ -73,9 +73,9 @@ VND_ALL_DICT = {
     CRC32_CN: CRC32_VAR,
     # VNX_USER_FIELDS_NAMING_DICT: these fields are to be input from the user
     GRPTAG_CN: GRPTAG_VAR,
-    SHOWNAME_CN: SHOWNAME_VAR,
+    TITLE_CN: TITLE_VAR,
     LOCATION_CN: LOCATION_VAR,
-    TYPENAME_CN: TYPENAME_VAR,
+    CLASSIFY_CN: CLASSIFY_VAR,
     IDX1_CN: IDX1_VAR,
     IDX2_CN: IDX2_VAR,
     NOTE_CN: NOTE_VAR,
@@ -108,7 +108,7 @@ VNR_ALL_DICT = {
 
 VNA_BASE_LINE_USER_DICT = {
     GRPTAG_CN: GRPTAG_VAR,
-    SHOWNAME_CN: SHOWNAME_VAR,
+    TITLE_CN: TITLE_VAR,
 }
 # 'presistent' means they are automatically in VNA but to be used in VND
 VNA_PERSISTENT_DICT = {
@@ -117,18 +117,18 @@ VNA_PERSISTENT_DICT = {
     VNA_AUDIO_SAMPLES_CN: VNA_AUDIO_SAMPLES_VAR,
 }
 VNA_USER_DICT = {
-    TYPENAME_CN: TYPENAME_VAR,
+    CLASSIFY_CN: CLASSIFY_VAR,
     IDX1_CN: IDX1_VAR,
     IDX2_CN: IDX2_VAR,
     CUSTOM_CN: CUSTOM_VAR,
     GRPTAG_CN: GRPTAG_VAR,
-    SHOWNAME_CN: SHOWNAME_VAR,
+    TITLE_CN: TITLE_VAR,
 }
 
 VND_BASE_LINE_USER_DICT = {
     FULLPATH_CN: FULLPATH_VAR,
     GRPTAG_CN: GRPTAG_VAR,
-    SHOWNAME_CN: SHOWNAME_VAR,
+    TITLE_CN: TITLE_VAR,
     SUFFIX_CN: SUFFIX_VAR,
 }
 # 'presistent' means they are automatically created in VND but to be used in VNE
@@ -138,9 +138,9 @@ VND_PERSISTENT_DICT = {
 }
 VND_USER_DICT = {
     GRPTAG_CN: GRPTAG_VAR,
-    SHOWNAME_CN: SHOWNAME_VAR,
+    TITLE_CN: TITLE_VAR,
     LOCATION_CN: LOCATION_VAR,
-    TYPENAME_CN: TYPENAME_VAR,
+    CLASSIFY_CN: CLASSIFY_VAR,
     IDX1_CN: IDX1_VAR,
     IDX2_CN: IDX2_VAR,
     NOTE_CN: NOTE_VAR,
@@ -154,39 +154,43 @@ VND_USER_DICT = {
 #* file extension vs expected format -----------------------------------------------------------------------------------
 # these are the format string in libmediainfo
 
+#! the values should be all lowercase to temporarily solve the mediainfo detection issue on UTF-8-BOM encoded ASS
+#! details: libmediainfo wont recognise BOM-leading .ass file as ASS format, as a imperfect solution
+#! details: we use make CoreFile.format to generate a lowercased format fallback from its extension
+#! details: then the format will get matched
 EXTS2FORMATS = {
-    'mkv' : 'Matroska',
-    'mka' : 'Matroska',
-    'mp4' : 'MPEG-4',
-    'm4a' : 'MPEG-4',
+    'mkv' : 'matroska',
+    'mka' : 'matroska',
+    'mp4' : 'mpeg-4',
+    'm4a' : 'mpeg-4',
 
-    'flac': 'FLAC',
-    'aac' : 'AAC',
-    'ac3' : 'AC-3',
-    'dts' : 'DTS',
+    'flac': 'flac',
+    'aac' : 'aac',
+    'ac3' : 'ac-3',
+    'dts' : 'dts',
 
-    'wav' : 'Wave',
-    'wav64': 'Wave',
+    'wav' : 'wave',
+    'wav64': 'wave',
 
-    'tak' : 'TAK',
-    'ape' : 'Monkey\'s Audio',
-    'wv'  : 'WavPack',
-    'tak' : 'TAK',
-    'mp3' : 'MPEG Audio',
+    'tak' : 'tak',
+    'ape' : 'monkey\'s audio',
+    'wv'  : 'wavpack',
+    'tak' : 'tak',
+    'mp3' : 'mpeg audio',
 
-    'webp': 'WebP',
-    'jpg' : 'JPEG',
-    'jpeg': 'JPEG',
-    'png' : 'PNG',
-    'bmp' : 'BMP',
-    'tif' : 'TIFF',
-    'tiff': 'TIFF',
-    'jxl' : 'JPEG XL',
-    'heif': 'HEIF',
+    'webp': 'webp',
+    'jpg' : 'jpeg',
+    'jpeg': 'jpeg',
+    'png' : 'png',
+    'bmp' : 'bmp',
+    'tif' : 'tiff',
+    'tiff': 'tiff',
+    'jxl' : 'jpeg xl',
+    'heif': 'heif',
 
-    'zip' : 'ZIP',
-    '7z'  : '7-Zip',
-    'rar' : 'RAR',
+    'zip' : 'zip',
+    '7z'  : '7-zip',
+    'rar' : 'rar',
 
     # NOTE libmediainfo wont detect ass file as an SSA media track if the file has BOM for UTF-8 encoding
     # remember to specially handle this in VNx tools

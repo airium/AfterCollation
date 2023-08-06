@@ -1,5 +1,6 @@
 from imports import *
 
+
 VNA_USAGE = f'''
 VideoNamingAlpha (VNA) only accepts the following input:
 1. drop/cli a single folder where any M2TS (BDMV) resides
@@ -14,14 +15,14 @@ The video naming fields in the CSV/YAML/JSON can be accepted by VND.
 
 
 
-def main(input_dir:Path):
+def main(input_dir: Path):
 
     logger = initLogger(log_path := input_dir.parent.joinpath(f'VNA-{TIMESTAMP}.log'))
     logger.info(f'Using VideoNamingAlpha (VNA) of AfterCollation {AC_VERSION}')
     logger.info(f'The user input is "{input_dir}".')
 
     # TODO better adding CLI interface in the future
-    config : dict = readConf4VNA(__file__, input_dir)
+    config: dict = readConf4VNA(__file__, input_dir)
 
     # TODO support DVD in the future
     if not (m2ts_paths := listFile(input_dir, ext='m2ts')):
@@ -36,9 +37,11 @@ def main(input_dir:Path):
     logger.info(f'Loading files with {mp} workers ...')
     with logging_redirect_tqdm([logger]):
         pbar = tqdm.tqdm(total=len(m2ts_paths), desc='Loading', dynamic_ncols=True, ascii=True, unit='file')
+
         def callback(result):
             pbar.update(1)
             logger.info(f'Added "{result[VNA_PATH_CN]}".')
+
         ret = []
         with Pool(mp) as pool:
             for m2ts_path, assumed_vol in zip(m2ts_paths, assumed_vols):
@@ -46,10 +49,10 @@ def main(input_dir:Path):
             pool.close()
             pool.join()
         pbar.close()
-        vna_full_dicts : list[dict[str, str]] = [r.get() for r in ret]
+        vna_full_dicts: list[dict[str, str]] = [r.get() for r in ret]
 
     vna_base_dict = dict(zip(vna_full_dicts[0].keys(), itertools.repeat(BASE_LINE_LABEL)))
-    vna_base_dict.update({k:'' for k in VNA_BASE_LINE_USER_DICT.keys()})
+    vna_base_dict.update({k: '' for k in VNA_BASE_LINE_USER_DICT.keys()})
     vna_full_dicts = [vna_base_dict] + vna_full_dicts
 
     for ext in VNA_OUTPUT_EXTS:
@@ -63,7 +66,7 @@ def main(input_dir:Path):
 
 
 
-def _cli(*paths:Path):
+def _cli(*paths: Path):
 
     n = len(paths)
     if (n == 1) and (path := paths[0]).is_dir():

@@ -1,5 +1,6 @@
 from imports import *
 
+
 VNE_USAGE = f'''
 VideoNamingExecutor (VNE) only accepts the following input:
 1. drop/cli a single VND.csv
@@ -14,7 +15,7 @@ VNE includes the following behaviors:
 
 
 
-def main(csv_path:Path):
+def main(csv_path: Path):
 
     logger = initLogger(log_path := csv_path.parent.joinpath(f'VNE-{TIMESTAMP}.log'))
     logger.info(f'Using VideoNamingExecutor (VNE) of AfterCollation {AC_VERSION}')
@@ -29,12 +30,14 @@ def main(csv_path:Path):
     hl = tstMkHardlinks(src_file_paths, dst_parent_dir)
     mp = getCRC32MultiProc(src_file_paths, logger)
 
-    (season := Season()).p = dst_parent_dir.as_posix()
-    season.cfs.extend(toCoreFileObjs(src_file_paths, logger, mp=mp))
+    (season := Season()).dst_parent = dst_parent_dir.as_posix()
+    season.add(toCoreFileObjs(src_file_paths, logger, mp=mp))
     cmpCfCRC32(season.cfs, [naming_info[CRC32_VAR] for naming_info in file_naming_dicts], logger)
     applyNamingDicts(season, base_naming_dict, file_naming_dicts, logger)
     doAutoIndexing(season, logger)
-    fmtContentName(season, logger)
+    # chkSeasonNaming(season, logger)
+    stageClassificationName(season, logger)
+    chkNamingDependency(season, logger)
     if ENABLE_FILE_CHECKING_IN_VNE:
         if not chkSeasonFiles(season.cfs, logger): return
     if not chkFinalNamingConflict(season, logger): return
@@ -43,7 +46,7 @@ def main(csv_path:Path):
 
 
 
-def _cli(*paths:Path):
+def _cli(*paths: Path):
 
     n = len(paths)
     if n == 1 and paths[0].is_file() and paths[0].suffix.lower() == '.csv':

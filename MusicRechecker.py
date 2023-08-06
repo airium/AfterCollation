@@ -1,6 +1,7 @@
 from imports import *
 
-MR_USAGE = f'''MusicRechecker (MR) only accepts the following input:
+MR_USAGE = f'''
+MusicRechecker (MR) only accepts the following input:
 1. drop/cli a single folder (ideally "CDs")
 
 MR includes the following behaviors:

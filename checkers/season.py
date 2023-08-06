@@ -1,8 +1,10 @@
 import logging
+import itertools
 from pathlib import Path
 
 from helpers.season import Season
 from helpers.corefile import CF
+from helpers.naming import cmpCoreFileNaming
 from configs.runtime import *
 from .naming import *
 from .tracks import *
@@ -11,12 +13,15 @@ import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 
 
+
+
 __all__ = [
     'chkSeason',
     'chkSeasonFiles',
     'chkSeasonNaming',
     'chkSeasonPerNamingField',
     'chkSeasonNaming',
+    'chkNamingDependency',
     'chkFinalNamingConflict',
     # 'chkCorrelatedNaming',
     # 'chkGlobalNaming'
@@ -98,7 +103,7 @@ __all__ = [
 
 #     return True, default, ret_infos
 
-def chkSeasonFiles(cfs:list[CF], logger:logging.Logger):
+def chkSeasonFiles(cfs:list[CF]|set[CF], logger:logging.Logger):
 
     with logging_redirect_tqdm([logger]):
         pbar = tqdm.tqdm(total=len(cfs), desc='Checking', unit='file', unit_scale=False, ascii=True, dynamic_ncols=True)
@@ -186,27 +191,53 @@ def chkSeasonFiles(cfs:list[CF], logger:logging.Logger):
 
 
 
+def chkNamingDependency(season: Season, logger:logging.Logger, hook:bool=True) -> bool:
+
+    ok = True
+    dep_cfs = list(cf for cf in season.cfs if cf.e in VNx_DEP_EXTS)
+    idp_cfs = list(cf for cf in season.cfs if cf.e not in VNx_DEP_EXTS)
+
+    for i, dep_cf in enumerate(dep_cfs):
+        if dep_cf.depends: continue
+        counterparts = [cf for cf in idp_cfs if all(cmpCoreFileNaming(cf, dep_cf)[:8])] # match any except suffix
+        if counterparts:
+            if hook:
+                dep_cf.depends = counterparts[0]
+                logger.info(f'The file with CRC32 0x{dep_cf.crc} now depends CRC32 0x{counterparts[0].crc} for naming.')
+            if counterparts[1:]:
+                logger.warning(f'Found more than 1 counterpart videos for file with CRC32 0x{dep_cf.crc} '
+                               f'to copy the naming from. You config may be incorrect.')
+        else:
+            logger.error(f'Found NO counterpart video for "{dep_cf.crc}" to copy the quality/track label.')
+            ok = False
+
+    return ok
+
 
 
 
 
 
 def chkFinalNamingConflict(season: Season, logger:logging.Logger) -> bool:
+
     ok = True
     names = []
+    crc32s = []
     for cf in season.cfs:
-        name = f'{cf.e}//{cf.g}//{cf.s}//{cf.l}//{cf.c}//{cf.x}'
-        names.append(name)
+        i_name = f'{cf.e}//{cf.g}//{cf.t}//{cf.l}//{cf.f}//{cf.x}'
+        names.append(i_name)
+        crc32s.append(cf.crc32)
     # we need to show every conflict to the user, so cant use a faster method like set()
-    for i, name in enumerate(names):
-        for j, name2 in enumerate(names[i+1:]):
-            if name == name2:
+    for i, i_name, i_crc32 in zip(itertools.count(), names, crc32s):
+        for j, j_name, j_crc32 in zip(itertools.count(), names[i+1:], crc32s[i+1:]):
+            if i_name == j_name:
                 ok = False
-                logger.error(f'Found naming conflict of between files with '
-                             f'CRC32 0x{season.cfs[i].crc} vs 0x{season.cfs[i+j].crc} '
+                logger.error(f'Found naming conflict between files with CRC32 0x{i_crc32} vs 0x{j_crc32} '
                              f'(possibly at CSV line {i+2} and {i+j+2}).')
-                break
+
     return ok
+
+
 
 
 def chkSeasonPerNamingField(season:Season, logger:logging.Logger) -> bool:
@@ -214,17 +245,17 @@ def chkSeasonPerNamingField(season:Season, logger:logging.Logger) -> bool:
     ok = True
 
     ok = ok if chkGrpTag(season.g, logger) else False
-    ok = ok if chkShowName(season.s, logger) else False
+    ok = ok if chkTitle(season.t, logger) else False
     ok = ok if chkSuffix(season.x, logger) else False
 
     for cf in season.cfs:
         ok = ok if chkGrpTag(cf.g, logger) else False
-        ok = ok if chkShowName(cf.s, logger) else False
+        ok = ok if chkTitle(cf.t, logger) else False
         ok = ok if chkLocation(cf.l, logger) else False
-        ok = ok if chkTypeName(cf.t, logger) else False
+        ok = ok if chkTypeName(cf.c, logger) else False
         ok = ok if chkIndex(cf.i1, cf.i2, logger) else False
         ok = ok if chkNote(cf.n, logger) else False
-        ok = ok if chkCustom(cf.c, logger) else False
+        ok = ok if chkCustom(cf.f, logger) else False
         ok = ok if chkSuffix(cf.x, logger) else False
 
     return ok
@@ -283,9 +314,9 @@ def chkSeasonNaming(season:Season, logger:logging.Logger) -> bool:
             raise ValueError('The number of naming infos must match.')
     for i, naming_info in zip(ret_infos, naming_infos):
         g = naming_info[GRPTAG_VAR]
-        s = naming_info[SHOWNAME_VAR]
+        s = naming_info[TITLE_VAR]
         l = naming_info[LOCATION_VAR]
-        t = naming_info[TYPENAME_VAR]
+        t = naming_info[CLASSIFY_VAR]
         i1 = naming_info[IDX1_VAR]
         i2 = naming_info[IDX2_VAR]
         n = naming_info[NOTE_VAR]

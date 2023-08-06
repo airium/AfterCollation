@@ -9,7 +9,17 @@ from helpers import *
 from helpers.error import NamingDraftError
 
 
-__all__ = ['chkNamingDicts', 'chkGrpTag', 'chkShowName', 'chkLocation', 'chkTypeName', 'chkIndex', 'chkNote', 'chkCustom', 'chkSuffix']
+__all__ = [
+    'chkNamingDicts',
+    'chkGrpTag',
+    'chkTitle',
+    'chkLocation',
+    'chkTypeName',
+    'chkIndex',
+    'chkNote',
+    'chkCustom',
+    'chkSuffix'
+    ]
 
 
 def chkNamingDicts(default_dict:dict[str, str], naming_dicts:list[dict[str, str]], logger:logging.Logger) -> bool:
@@ -90,7 +100,7 @@ def chkNamingDicts(default_dict:dict[str, str], naming_dicts:list[dict[str, str]
         #! 9. if crc32-based name copying is used, ensure the file with the target crc32 exists
 
         #! 10 there is a default showname, or all files have their own showname
-        shownames = [default_dict[SHOWNAME_VAR]] + [d[SHOWNAME_VAR] for d in naming_dicts]
+        shownames = [default_dict[TITLE_VAR]] + [d[TITLE_VAR] for d in naming_dicts]
         if not shownames[0] and not all(shownames[1:]):
             logger.error('Missing showname. You should set a base/default showname, or set each showname for all files.')
             raise NamingDraftError
@@ -148,15 +158,15 @@ def chkGrpTag(fullname:str, logger:logging.Logger) -> bool:
         logger.warning(f'The group tag contains non-ASCII characters.')
     if fullname.endswith(OLD_GRP_NAME):
         logger.warning(f'The group tag ends with the old-fashion "{OLD_GRP_NAME}".')
-    elif not fullname.endswith(STD_GRP_NAME):
-        logger.warning(f'The group tag is NOT ended with "{STD_GRP_NAME}".')
+    elif not fullname.endswith(STD_GRPTAG):
+        logger.warning(f'The group tag is NOT ended with "{STD_GRPTAG}".')
 
     return ok
 
 
 
 
-def chkShowName(fullname:str, logger:logging.Logger) -> bool:
+def chkTitle(fullname:str, logger:logging.Logger) -> bool:
 
     cleaned_fullname = cleanGenericName(fullname)
     if not fullname or not cleaned_fullname:
@@ -342,8 +352,8 @@ def chkCustom(cname:str, logger:logging.Logger) -> bool:
 
     ok = True
 
-    cleaned_canme = cleanGenericName(cname)
-    if cname != cleaned_canme:
+    cleaned_cname = cleanGenericName(cname)
+    if cname != cleaned_cname:
         logger.error(f'The customized name contains disallowed characters or incorrect spacing.')
         ok = False
 

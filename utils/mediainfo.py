@@ -5,6 +5,7 @@ from pymediainfo import MediaInfo
 
 
 __all__ = ['MI',
+           'MediaInfo',
            'getMediaInfo',
            'getMediaInfoList',
            'matchTime',

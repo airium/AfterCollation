@@ -1,5 +1,6 @@
 from imports import *
 
+
 VNR_USAGE = '''
 VideoNamingRechecker (VNR) accepts the following input:
 1. one dir -> do basic checking without reference group
@@ -11,7 +12,7 @@ VideoNamingRechecker (VNR) accepts the following input:
 
 
 
-def main2doStandardCheck(input_dir:Path):
+def main2doStandardCheck(input_dir: Path):
 
     logger = initLogger(log_path := input_dir.parent.joinpath(f'VNR-{TIMESTAMP}.log'))
     logger.info(f'Using VideoNamingRechecker (VNR) of AfterCollation {AC_VERSION}')
@@ -39,7 +40,7 @@ def main2doStandardCheck(input_dir:Path):
 
 
 
-def main2doComparisonFromCSV(input_csv_path:Path):
+def main2doComparisonFromCSV(input_csv_path: Path):
 
     logger = initLogger(log_path := input_csv_path.parent.joinpath(f'VNR-{TIMESTAMP}.log'))
     logger.info(f'Using VideoNamingRechecker (VNR) of AfterCollation {AC_VERSION}')
@@ -68,7 +69,7 @@ def main2doComparisonFromCSV(input_csv_path:Path):
         subgrps = [sub_grp for sub_grp, enabled in zip(subgrps, enableds) if enabled]
         fullpaths = [full_path for full_path, enabled in zip(fullpaths, enableds) if enabled]
         subgrp_tags = list(set(subgrps))
-        assert subgrp_tags # this should never happen
+        assert subgrp_tags  # this should never happen
 
         fullpaths = [Path(fullpath) for fullpath in fullpaths]
         all_files_exist = True
@@ -110,12 +111,13 @@ def main2doComparisonFromCSV(input_csv_path:Path):
 
 
 
-def main2doMatching2CSV(input1_dir:Path, input2_dir:Path):
+def main2doMatching2CSV(input1_dir: Path, input2_dir: Path):
 
     log_path = findCommonParentDir(input1_dir, input2_dir)
     if not log_path:
         print('!!! Cannot find a common parent dir of your input. '
-              'Output log will be located at the same dir as this script.')
+            'Output log will be located at the same dir as this script.'
+            )
         log_path = Path(__file__).parent.joinpath(f'VNR-{TIMESTAMP}.log')
     elif log_path.is_dir():
         log_path = log_path.joinpath(f'VNR-{TIMESTAMP}.log')
@@ -128,8 +130,8 @@ def main2doMatching2CSV(input1_dir:Path, input2_dir:Path):
 
     assert input1_dir.is_dir() and input2_dir.is_dir()
 
-    input1_fs_all : list[Path] = listFile(input1_dir, ext=VNx_MAIN_EXTS)
-    input2_fs_all : list[Path] = listFile(input2_dir, ext=VNx_MAIN_EXTS)
+    input1_fs_all: list[Path] = listFile(input1_dir, ext=VNx_MAIN_EXTS)
+    input2_fs_all: list[Path] = listFile(input2_dir, ext=VNx_MAIN_EXTS)
     input1_fs = filterOutCDsScans(input1_fs_all)
     input2_fs = filterOutCDsScans(input2_fs_all)
     if len(input1_fs) != len(input1_fs_all):
@@ -140,7 +142,7 @@ def main2doMatching2CSV(input1_dir:Path, input2_dir:Path):
     input1_cfs = [CF(f) for f in input1_fs]
     input2_cfs = [CF(f) for f in input2_fs]
 
-    groups : dict[str, list[tuple[str, str, str]]] = dict()
+    groups: dict[str, list[tuple[str, str, str]]] = dict()
     if not input1_cfs or not input2_cfs:
         logger.warning('No video files found in either of the input dirs.')
         logger.info('VNR will still try to generate a non-ref CSV in case you want to fill it by yourself.')
@@ -151,7 +153,7 @@ def main2doMatching2CSV(input1_dir:Path, input2_dir:Path):
             for i, input2_cf in enumerate(input2_cfs):
                 groups[str(i)] = [('', '', input2_cf.path.resolve().as_posix())]
         else:
-            raise ValueError # NOTE this should be never reached
+            raise ValueError  # NOTE this should be never reached
 
         csv_parent = findCommonParentDir(input1_dir, input2_dir)
         if not csv_parent: csv_path = input1_dir.parent.joinpath(f'VNR-{TIMESTAMP}.csv')
@@ -163,7 +165,7 @@ def main2doMatching2CSV(input1_dir:Path, input2_dir:Path):
         logging.shutdown()
         return
 
-    groups : dict[str, list[tuple[str, str, str]]] = dict()
+    groups: dict[str, list[tuple[str, str, str]]] = dict()
     idx = itertools.count(1)
 
     # now let's start matching, we do it in this order:
@@ -174,16 +176,18 @@ def main2doMatching2CSV(input1_dir:Path, input2_dir:Path):
     #***********************************************************************************************
     # step 1: match by chapter timestamps
 
-    for input1_cf in input1_cfs[:]: # make a copy of the list, so we can call .remove() in the loop
+    for input1_cf in input1_cfs[:]:  # make a copy of the list, so we can call .remove() in the loop
         # NOTE we only match the first menu track, is this not robust enough?
-        matches = [input2_fi for input2_fi in input2_cfs if (
-                   input1_cf.menu_tracks and input2_fi.menu_tracks
-                   and matchMenuTimeStamps(input1_cf.menu_timestamps[0], input2_fi.menu_timestamps[0]))]
-        if len(matches) == 1:
-            groups[str(next(idx))] = [
-                ('1', '', input1_cf.path.resolve().as_posix()),
-                ('2', '', matches[0].path.resolve().as_posix())
+        matches = [
+            input2_fi for input2_fi in input2_cfs if (
+                input1_cf.menu_tracks and input2_fi.menu_tracks
+                and matchMenuTimeStamps(input1_cf.menu_timestamps[0],
+                                        input2_fi.menu_timestamps[0])
+                )
             ]
+        if len(matches) == 1:
+            groups[str(next(idx))] = [('1', '', input1_cf.path.resolve().as_posix()),
+                                      ('2', '', matches[0].path.resolve().as_posix())]
             input1_cfs.remove(input1_cf)
             input2_cfs.remove(matches[0])
             logger.info(f'Matched by chapter timestamp: "{input1_cf.path}" <-> "{matches[0].path}"')
@@ -196,14 +200,13 @@ def main2doMatching2CSV(input1_dir:Path, input2_dir:Path):
     #***********************************************************************************************
     # step 2: match by audio digest
     if ENABLE_AUDIO_SAMPLES_IN_VNA:
-        for input1_cf in input1_cfs[:]: # make a copy of the list, so we can call .remove() in the loop
+        for input1_cf in input1_cfs[:]:  # make a copy of the list, so we can call .remove() in the loop
             matches = [input2_fi for input2_fi in input2_cfs \
                        if cmpAudioSamples(input1_cf.audio_samples, input2_fi.audio_samples)]
             if len(matches) == 1:
-                groups[str(next(idx))] = [
-                    ('1', '', input1_cf.path.resolve().as_posix()),
-                    ('2', '', matches[0].path.resolve().as_posix())
-                ]
+                groups[str(next(idx))] = [('1', '', input1_cf.path.resolve().as_posix()),
+                                          ('2', '', matches[0].path.resolve().as_posix())
+                                          ]
                 input1_cfs.remove(input1_cf)
                 input2_cfs.remove(matches[0])
                 logger.info(f'Matched by audio digest: "{input1_cf.path}" <-> "{matches[0].path}"')
@@ -215,15 +218,15 @@ def main2doMatching2CSV(input1_dir:Path, input2_dir:Path):
 
     #***********************************************************************************************
     # step 3: match by duration
-    for input1_cf in input1_cfs[:]: # make a copy of the list, so we can call .remove() in the loop
-        matches = [input2_fi for input2_fi in input2_cfs if (
-                    input1_cf.has_duration and input2_fi.has_duration
-                    and matchTime(input1_cf.duration, input2_fi.duration))]
-        if len(matches) == 1:
-            groups[str(next(idx))] = [
-                ('1', '', input1_cf.path.resolve().as_posix()),
-                ('2', '', matches[0].path.resolve().as_posix())
+    for input1_cf in input1_cfs[:]:  # make a copy of the list, so we can call .remove() in the loop
+        matches = [
+            input2_fi for input2_fi in input2_cfs if
+            (input1_cf.has_duration and input2_fi.has_duration and matchTime(input1_cf.duration,
+                                                                                input2_fi.duration))
             ]
+        if len(matches) == 1:
+            groups[str(next(idx))] = [('1', '', input1_cf.path.resolve().as_posix()),
+                                      ('2', '', matches[0].path.resolve().as_posix())]
             input1_cfs.remove(input1_cf)
             input2_cfs.remove(matches[0])
             logger.info(f'Matched by duration: "{input1_cf.path}" <-> "{matches[0].path}"')
@@ -231,7 +234,7 @@ def main2doMatching2CSV(input1_dir:Path, input2_dir:Path):
             # TODO this implementation is dirty, fix it
             if all('menu' in cf.path.name.lower() for cf in (input1_cf, *matches)):
                 subidx = itertools.count(1)
-                group : list[tuple[str, str, str]] = []
+                group: list[tuple[str, str, str]] = []
                 group.append((str(next(subidx)), '', input1_cf.path.resolve().as_posix()))
                 for match in matches:
                     group.append((str(next(subidx)), '', match.path.resolve().as_posix()))
@@ -245,15 +248,15 @@ def main2doMatching2CSV(input1_dir:Path, input2_dir:Path):
             logger.warning(f'Cannot match "{input1_cf.path}" as NO counterpart has the same duration.')
 
     # we need to do this again for input2_cfs
-    for input2_cf in input2_cfs[:]: # make a copy of the list, so we can call .remove() in the loop
-        matches = [input1_fi for input1_fi in input1_cfs if (
-                    input2_cf.has_duration and input1_fi.has_duration
-                    and matchTime(input2_cf.duration, input1_fi.duration))]
-        if len(matches) == 1:
-            groups[str(next(idx))] = [
-                ('1', '', input2_cf.path.resolve().as_posix()),
-                ('2', '', matches[0].path.resolve().as_posix())
+    for input2_cf in input2_cfs[:]:  # make a copy of the list, so we can call .remove() in the loop
+        matches = [
+            input1_fi for input1_fi in input1_cfs if
+            (input2_cf.has_duration and input1_fi.has_duration and matchTime(input2_cf.duration,
+                                                                                input1_fi.duration))
             ]
+        if len(matches) == 1:
+            groups[str(next(idx))] = [('1', '', input2_cf.path.resolve().as_posix()),
+                                      ('2', '', matches[0].path.resolve().as_posix())]
             input2_cfs.remove(input2_cf)
             input1_cfs.remove(matches[0])
             logger.info(f'Matched by duration: "{matches[0].path}" <-> "{input2_cf.path}"')
@@ -261,7 +264,7 @@ def main2doMatching2CSV(input1_dir:Path, input2_dir:Path):
             # TODO this implementation is dirty, fix it
             if all('menu' in cf.path.name.lower() for cf in (input2_cf, *matches)):
                 subidx = itertools.count(1)
-                group : list[tuple[str, str, str]] = []
+                group: list[tuple[str, str, str]] = []
                 group.append((str(next(subidx)), '', input2_cf.path.resolve().as_posix()))
                 for match in matches:
                     group.append((str(next(subidx)), '', match.path.resolve().as_posix()))
@@ -279,9 +282,9 @@ def main2doMatching2CSV(input1_dir:Path, input2_dir:Path):
 
     for input1_cf in [input1_fi for input1_fi in input1_cfs if input1_fi.menu_tracks]:
         timestamps = input1_cf.menu_timestamps[0]
-        if len(timestamps) < 2: continue # this seems an incorrect menu
-        distances = [(timestamps[i+1] - timestamps[i]) for i in range(len(timestamps)-1)]
-        founds : list[CF] = []
+        if len(timestamps) < 2: continue  # this seems an incorrect menu
+        distances = [(timestamps[i + 1] - timestamps[i]) for i in range(len(timestamps) - 1)]
+        founds: list[CF] = []
         for i, distance in enumerate(distances):
             for input2_cf in input2_cfs:
                 if input2_cf in founds: continue
@@ -289,7 +292,7 @@ def main2doMatching2CSV(input1_dir:Path, input2_dir:Path):
                     founds.append(input2_cf)
                     break
         if len(founds) == len(distances):
-            matched_group : list[tuple[str, str, str]] = []
+            matched_group: list[tuple[str, str, str]] = []
             matched_group.append(('1', '', input1_cf.path.resolve().as_posix()))
             for found in founds:
                 matched_group.append(('2', '', found.path.resolve().as_posix()))
@@ -301,9 +304,9 @@ def main2doMatching2CSV(input1_dir:Path, input2_dir:Path):
     # we need to do this again for input2_cfs
     for input2_cf in [input2_fi for input2_fi in input2_cfs if input2_fi.menu_tracks]:
         timestamps = input2_cf.menu_timestamps[0]
-        if len(timestamps) < 2: continue # this seems an incorrect menu
-        distances = [(timestamps[i+1] - timestamps[i]) for i in range(len(timestamps)-1)]
-        founds : list[CF] = []
+        if len(timestamps) < 2: continue  # this seems an incorrect menu
+        distances = [(timestamps[i + 1] - timestamps[i]) for i in range(len(timestamps) - 1)]
+        founds: list[CF] = []
         for i, distance in enumerate(distances):
             for input1_cf in input1_cfs:
                 if input1_cf in founds: continue
@@ -311,7 +314,7 @@ def main2doMatching2CSV(input1_dir:Path, input2_dir:Path):
                     founds.append(input1_cf)
                     break
         if len(founds) == len(distances):
-            matched_group : list[tuple[str, str, str]] = []
+            matched_group: list[tuple[str, str, str]] = []
             # NOTE always place input1_cfs first
             for found in founds:
                 matched_group.append(('1', '', found.path.resolve().as_posix()))
@@ -323,7 +326,7 @@ def main2doMatching2CSV(input1_dir:Path, input2_dir:Path):
 
     #***********************************************************************************************
     # place all the rest into an unnamed group
-    unmatched_group : list[tuple[str, str, str]] = []
+    unmatched_group: list[tuple[str, str, str]] = []
     for input1_cf in input1_cfs:
         unmatched_group.append(('', '', input1_cf.path.resolve().as_posix()))
     for input2_cf in input2_cfs:
@@ -350,11 +353,11 @@ def main2doMatching2CSV(input1_dir:Path, input2_dir:Path):
 
 
 
-def main2doDroppedComparison(*paths:Path):
+def main2doDroppedComparison(*paths: Path):
 
     assert len(paths) % 2 == 0
-    group1 = paths[:len(paths)//2]
-    group2 = paths[len(paths)//2:]
+    group1 = paths[:len(paths) // 2]
+    group2 = paths[len(paths) // 2:]
 
     log_path = findCommonParentDir(*paths)
     if not log_path:
@@ -381,7 +384,7 @@ def main2doDroppedComparison(*paths:Path):
 
 
 
-def _cli(*paths:Path):
+def _cli(*paths: Path):
 
     n = len(paths)
     if (n == 1) and (path := paths[0]).is_dir():

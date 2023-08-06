@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import re
 import logging
 import itertools
 from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor
 
-from .corefile import CF
+import helpers.corefile as hc
 from utils.mediautils import *
 from utils.fileutils import *
 from configs.specification import STD_BKS_DIRNAME, STD_CDS_DIRNAME
@@ -54,9 +56,9 @@ def toEnabledList(values:list[str]|tuple[str]) -> list[bool]:
 
 
 
-def cmpCfCRC32(cfs:CF|list[CF], expects:str|list[str], logger:logging.Logger, pass_not_recorded:bool=False) -> bool:
+def cmpCfCRC32(cfs:hc.CF|list[hc.CF], expects:str|list[str], logger:logging.Logger, pass_not_recorded:bool=False) -> bool:
 
-    if isinstance(cfs, CF): cfs = [cfs]
+    if isinstance(cfs, hc.CF): cfs = [cfs]
     if isinstance(expects, str): expects = [expects]
 
     if not cfs or not expects:
@@ -93,11 +95,11 @@ def cmpCfCRC32(cfs:CF|list[CF], expects:str|list[str], logger:logging.Logger, pa
 
 
 def printCliNotice(usage_txt:str, paths:list|tuple):
-        print(usage_txt)
-        print()
-        print('Please check your input:')
-        for i, path in enumerate(paths):
-            print(f'{i+1:03d}: "{path}"')
+    print(usage_txt)
+    print()
+    print('Please check your input:')
+    for i, path in enumerate(paths):
+        print(f'{i+1:03d}: "{path}"')
 
 
 

@@ -2,7 +2,7 @@
 ENFORCED_WEBP_QUALITY : int = 90
 
 OLD_GRP_NAME : str = 'VCB-S'
-STD_GRP_NAME : str = 'VCB-Studio'
+STD_GRPTAG : str = 'VCB-Studio'
 STD_FONT_NAME : str = 'Fonts'
 STD_SPS_DIRNAME : str = 'SPs'
 STD_BKS_DIRNAME : str = 'Scans'   # standard BK root dirname
@@ -49,3 +49,12 @@ IMG_EXTS_IN_CDS = tuple('jpg jpeg webp'.split())
 VID_EXTS_IN_CDS = ('mkv', )
 TXT_EXTS_IN_CDS = ('txt', )
 ALL_EXTS_IN_CDS = MAIN_EXTS_IN_CDS + IMG_EXTS_IN_CDS + VID_EXTS_IN_CDS + TXT_EXTS_IN_CDS
+
+GRPTAG : str = 'full_group_tag'
+TITLE : str = 'show_title'
+QUALITY : str = 'quality_label'
+SUFFIX: str = 'suffix'
+EXT : str = 'extension'
+
+SERIES_DIR_FMT = f'{{{GRPTAG}:s}} {{{TITLE}:s}} {{{SUFFIX}:s}}.'
+SEASON_DIR_FMT = f'{{{GRPTAG}:s}} {{{TITLE}:s}} {{{QUALITY}:s}}{{{SUFFIX}:s}}.'

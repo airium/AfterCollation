@@ -6,7 +6,7 @@ from pathlib import Path
 
 from configs import *
 from utils import *
-from helpers.corefile import CF
+from helpers.corefile import CoreFile
 
 import yaml
 
@@ -99,7 +99,7 @@ def loadVNANamingFile(vna_file:Path|None, logger:logging.Logger) -> tuple[dict, 
 
 
 
-def copyNamingFromVNA(corefiles:list[CF], vna_configs:list[dict], logger:logging.Logger):
+def copyNamingFromVNA(corefiles:list[CoreFile], vna_configs:list[dict], logger:logging.Logger):
 
     if not vna_configs: return
 
@@ -183,7 +183,7 @@ def guessVolNumsFromPaths(paths:list[Path], parent:Path|None=None, logger:loggin
 
 
 def toVNAFullDict(m2ts_path:Path, assumed_vol:str, input_dir:Path) -> dict[str, str]:
-    cf : CF = CF(m2ts_path, init_crc32=False, init_audio_samples=ENABLE_AUDIO_SAMPLES_IN_VNA)
+    cf : CoreFile = CoreFile(m2ts_path, init_crc32=False, init_audio_samples=ENABLE_AUDIO_SAMPLES_IN_VNA)
     vna_full_dict = dict(zip(VNA_ALL_DICT.keys(), itertools.repeat('')))
     vna_full_dict[VNA_PATH_CN] = m2ts_path.relative_to(input_dir).as_posix()
     vna_full_dict[VNA_M2TS_VOL_CN] = assumed_vol

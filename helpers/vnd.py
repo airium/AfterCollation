@@ -122,7 +122,7 @@ def guessNamingFieldsFromSimpleFilename(cf:CF, logger:logging.Logger):
 
     if match := re.match(EXPECTED_SIMPLE_NAME, filename):
         typename, idx, note = match.group('typename'), match.group('idx'), match.group('note')
-        if typename: cf.t = typename.strip().strip('.-_').strip()
+        if typename: cf.c = typename.strip().strip('.-_').strip()
         if idx: cf.i1 = idx.strip().strip('.-_').strip()
         if (typename or idx) and note: cf.n = note.strip().strip('.-_').strip()
         # NOTE there is no need to fill in the location fields
@@ -194,7 +194,7 @@ def guessNamingFields4ARC(cf:CF, logger:logging.Logger):
     if has_png and not has_font:
         cf.l = STD_SPS_DIRNAME
     if not has_png and has_font:
-        cf.t = STD_FONT_NAME
+        cf.c = STD_FONT_NAME
 
 
 
@@ -203,7 +203,7 @@ def guessNamingFields4MKA(mka:CF, cfs:list[CF], logger:logging.Logger):
 
     candidates = [cf for cf in cfs if (cf.e == 'mkv' and matchTime(mka.duration, cf.duration))]
     if len(candidates) == 1:
-        mka.c = candidates[0].crc32
+        mka.f = candidates[0].crc32
 
 
 

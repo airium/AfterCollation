@@ -25,7 +25,8 @@ __all__ = [
     'toCoreFileObjs',
     'doNaming',
     'doAutoIndexing',
-    'fmtContentName'
+    'stageClassificationName',
+    'unstageClassificationName',
     ]
 
 
@@ -40,7 +41,7 @@ def cleanNamingDicts(default_dict:dict[str, str], naming_dicts:list[dict[str, st
     logger.debug('PreClean: ' + ('|'.join(f'{k}={v}' for k, v in default_dict.items())))
     default_dict[FULLPATH_VAR] = cleanFullPath(default_dict[FULLPATH_VAR])
     default_dict[GRPTAG_VAR] = cleanFullGroupName(default_dict[GRPTAG_VAR])
-    default_dict[SHOWNAME_VAR] = cleanGenericName(default_dict[SHOWNAME_VAR])
+    default_dict[TITLE_VAR] = cleanGenericName(default_dict[TITLE_VAR])
     default_dict[SUFFIX_VAR] = cleanFullSuffix(default_dict[SUFFIX_VAR])
     logger.debug('AftClean: ' + ('|'.join(f'{k}={v}' for k, v in default_dict.items())))
 
@@ -50,9 +51,9 @@ def cleanNamingDicts(default_dict:dict[str, str], naming_dicts:list[dict[str, st
         naming_dict[FULLPATH_VAR] = cleanFullPath(naming_dict[FULLPATH_VAR])
         naming_dict[CRC32_VAR] = cleanString(naming_dict[CRC32_VAR])
         naming_dict[GRPTAG_VAR] = cleanFullGroupName(naming_dict[GRPTAG_VAR])
-        naming_dict[SHOWNAME_VAR] = cleanGenericName(naming_dict[SHOWNAME_VAR])
+        naming_dict[TITLE_VAR] = cleanGenericName(naming_dict[TITLE_VAR])
         naming_dict[LOCATION_VAR] = cleanLocation(naming_dict[LOCATION_VAR])
-        naming_dict[TYPENAME_VAR] = cleanGenericName(naming_dict[TYPENAME_VAR])
+        naming_dict[CLASSIFY_VAR] = cleanGenericName(naming_dict[CLASSIFY_VAR])
         naming_dict[IDX1_VAR] = cleanDecimal(naming_dict[IDX1_VAR])
         naming_dict[IDX2_VAR] = cleanDecimal(naming_dict[IDX2_VAR])
         naming_dict[NOTE_VAR] = cleanGenericName(naming_dict[NOTE_VAR])
@@ -86,20 +87,20 @@ def applyNamingDicts(season:Season, default_dict:dict[str, str], naming_dicts:li
                         f'The program assumed the most common "{season.g}" as the showname for the root dir. '
                         'You should better recheck this.')
         else:
-            season.g = STD_GRP_NAME
-            logger.info(f'Found empty base/default group tag. The program filled it with the standard "{STD_GRP_NAME}".')
+            season.g = STD_GRPTAG
+            logger.info(f'Found empty base/default group tag. The program filled it with the standard "{STD_GRPTAG}".')
 
-    if default_dict[SHOWNAME_VAR]:
-        season.s = default_dict[SHOWNAME_VAR]
+    if default_dict[TITLE_VAR]:
+        season.t = default_dict[TITLE_VAR]
     else:
-        shownames = [naming_dict[SHOWNAME_VAR] for naming_dict in naming_dicts]
+        shownames = [naming_dict[TITLE_VAR] for naming_dict in naming_dicts]
         if any(shownames):
-            season.s = max(set(shownames), key=shownames.count)
+            season.t = max(set(shownames), key=shownames.count)
             logger.info(f'Found empty base/default show name but this is filled for each file. '
-                        f'The program assumed the most common "{season.s}" as the show name for the root dir. '
+                        f'The program assumed the most common "{season.t}" as the show name for the root dir. '
                         'You should better recheck this.')
         else:
-            season.s = FALLBACK_SHOWNAME
+            season.t = FALLBACK_TITLE
             logger.info(f'Found empty base/default show name everywhere. The program cannot guess this for you, so filled it with a mystery value.')
 
     season.x = default_dict[SUFFIX_VAR]
@@ -112,20 +113,20 @@ def applyNamingDicts(season:Season, default_dict:dict[str, str], naming_dicts:li
         if cf.g != season.g:
             logger.warning('Using non-default group name.')
 
-        cf.s = naming_dict[SHOWNAME_VAR] if naming_dict[SHOWNAME_VAR] else season.s
-        if cf.s != season.s:
+        cf.t = naming_dict[TITLE_VAR] if naming_dict[TITLE_VAR] else season.t
+        if cf.t != season.t:
             logger.warning('Using non-default show name.')
 
         if naming_dict[CUSTOM_VAR] and (
-            any((naming_dict[TYPENAME_VAR], naming_dict[IDX1_VAR], naming_dict[IDX2_VAR], naming_dict[NOTE_VAR]))):
+            any((naming_dict[CLASSIFY_VAR], naming_dict[IDX1_VAR], naming_dict[IDX2_VAR], naming_dict[NOTE_VAR]))):
             logger.warning('Found using customised name. Will clear typename, main/sub index and note fields.')
-        cf.c = naming_dict[CUSTOM_VAR] if naming_dict[CUSTOM_VAR] else ''
-        cf.t = '' if cf.c else naming_dict[TYPENAME_VAR]
-        cf.i1 = '' if cf.c else naming_dict[IDX1_VAR]
-        cf.i2 = '' if cf.c else naming_dict[IDX2_VAR]
-        cf.n = '' if cf.c else naming_dict[NOTE_VAR]
+        cf.f = naming_dict[CUSTOM_VAR] if naming_dict[CUSTOM_VAR] else ''
+        cf.c = '' if cf.f else naming_dict[CLASSIFY_VAR]
+        cf.i1 = '' if cf.f else naming_dict[IDX1_VAR]
+        cf.i2 = '' if cf.f else naming_dict[IDX2_VAR]
+        cf.n = '' if cf.f else naming_dict[NOTE_VAR]
 
-        cf.l = STD_SPS_DIRNAME if (cf.t and not naming_dict[LOCATION_VAR]) else ''
+        cf.l = STD_SPS_DIRNAME if (cf.c and not naming_dict[LOCATION_VAR]) else ''
 
         # possible suffix cases:
         # 1. root has no suffix or a non-lang-suffix like [Lite]:
@@ -249,21 +250,21 @@ def doAutoIndexing(season:Season, logger:logging.Logger):
     # dep_cfs: dependent files, which need to copy the naming from another file by crc32 lookup
     # named_cfs: naming already specified in cf.c, no need to do anything
 
-    auto_cfs : list[CF] = [info for info in cfs if not info.c]
-    dep_cfs  : list[CF] = [info for info in cfs if (info.c and re.match(BASIC_CRC32_PATTERN, info.c))]
-    named_cfs : list[CF] = [info for info in cfs if (info.c and not re.match(BASIC_CRC32_PATTERN, info.c))]
+    auto_cfs : list[CF] = [info for info in cfs if not info.f]
+    dep_cfs  : list[CF] = [info for info in cfs if (info.f and re.match(BASIC_CRC32_PATTERN, info.f))]
+    named_cfs : list[CF] = [info for info in cfs if (info.f and not re.match(BASIC_CRC32_PATTERN, info.f))]
 
     state : dict[str, int|float] = {}
     for i, acf in enumerate(auto_cfs):
         i1 = acf.i1 if acf.i1 else ''
         i2 = acf.i1 if acf.i2 else ''
         if i1 and i2:
-            state[f'{acf.e}//{acf.g}//{acf.s}//{acf.l}//{acf.t}//{acf.x}'] = float(i1)
-            state[f'{acf.e}//{acf.g}//{acf.s}//{acf.l}//{acf.t}//{i1}//{acf.x}'] = float(i2)
+            state[f'{acf.e}//{acf.g}//{acf.t}//{acf.l}//{acf.c}//{acf.x}'] = float(i1)
+            state[f'{acf.e}//{acf.g}//{acf.t}//{acf.l}//{acf.c}//{i1}//{acf.x}'] = float(i2)
         elif i1 and not i2:
-            state[f'{acf.e}//{acf.g}//{acf.s}//{acf.l}//{acf.t}//{acf.x}'] = float(i1)
+            state[f'{acf.e}//{acf.g}//{acf.t}//{acf.l}//{acf.c}//{acf.x}'] = float(i1)
             # whether we need to update i2 depends on whether there is a same key
-            key = f'{acf.e}//{acf.g}//{acf.s}//{acf.l}//{acf.t}//{i1}//{acf.x}'
+            key = f'{acf.e}//{acf.g}//{acf.t}//{acf.l}//{acf.c}//{i1}//{acf.x}'
             if (v := state.get(key)):
                 v = int(v + 1)
                 acf.i2 = str(v)
@@ -273,13 +274,13 @@ def doAutoIndexing(season:Season, logger:logging.Logger):
                 for j, cf in enumerate(auto_cfs[i+1:]):
                     j1 = '' if cf.i1 == None else cf.i1
                     j2 = '' if cf.i2 == None else cf.i2
-                    jey = f'{cf.e}//{cf.g}//{cf.s}//{cf.l}//{cf.t}//{j1}//{cf.x}'
+                    jey = f'{cf.e}//{cf.g}//{cf.t}//{cf.l}//{cf.c}//{j1}//{cf.x}'
                     if key == jey:
                         acf.i2 = str(1)
                         state[key] = 1
                         break
         else: # if not i1
-            key = f'{acf.e}//{acf.g}//{acf.s}//{acf.l}//{acf.t}//{acf.x}'
+            key = f'{acf.e}//{acf.g}//{acf.t}//{acf.l}//{acf.c}//{acf.x}'
             if (v := state.get(key)):
                 v = int(v + 1)
                 acf.i1 = str(v)
@@ -289,7 +290,7 @@ def doAutoIndexing(season:Season, logger:logging.Logger):
                 for j, cf in enumerate(auto_cfs[i+1:]):
                     j1 = cf.i1 if cf.i1 else ''
                     j2 = cf.i2 if cf.i2 else ''
-                    jey = f'{cf.e}//{cf.g}//{cf.s}//{cf.l}//{cf.t}//{cf.x}'
+                    jey = f'{cf.e}//{cf.g}//{cf.t}//{cf.l}//{cf.c}//{cf.x}'
                     if key == jey:
                         acf.i1 = str(1)
                         state[key] = 1
@@ -298,7 +299,7 @@ def doAutoIndexing(season:Season, logger:logging.Logger):
     for i, dcf in enumerate(dep_cfs):
         found = None
         for cf in (auto_cfs + named_cfs):
-            if cf.crc == dcf.c: # TODO use regex for dcf.c
+            if cf.crc == dcf.f: # TODO use regex for dcf.c
                 found = cf
                 break
         if found != None:
@@ -312,14 +313,22 @@ def doAutoIndexing(season:Season, logger:logging.Logger):
 
 
 
-def fmtContentName(season: Season, logger:logging.Logger):
-    '''This function push typename/index/note to the customise'''
+def stageClassificationName(season: Season, logger:logging.Logger):
+    '''
+    This function merge seperated typename/index1/2/note fields to the customization fields.
+
+    Once merged, typename/index/1/2/note will be disposed and no longer usable.
+    Use `splitContentName()` to re-gain access to these seperated fields.
+    #! There is no guarantee the fields that the same seperated fields can be recovered.
+
+    Once merged, all files are ready to accept the final naming conflict check, and then be layouted onto disk.
+    '''
 
     cfs = season.cfs
 
     max_index = {}
-    for cf in [info for info in cfs if not info.c]:
-        l, t, i1, i2 = cf.l, cf.t, cf.i1, cf.i2
+    for cf in [info for info in cfs if not info.f]:
+        l, t, i1, i2 = cf.l, cf.c, cf.i1, cf.i2
         if i2:
             key = f'{l}//{t}//{i1}'
             max_index[key] = max(max_index.get(key, -99999), float(i2))
@@ -328,8 +337,8 @@ def fmtContentName(season: Season, logger:logging.Logger):
             max_index[key] = max(max_index.get(key, -99999), float(i1))
 
     for i, cf in enumerate(cfs):
-        if not cf.c:
-            l, t, i1, i2, n = cf.l, cf.t, cf.i1, cf.i2, cf.n
+        if not cf.f:
+            l, t, i1, i2, n = cf.l, cf.c, cf.i1, cf.i2, cf.n
 
             if i2:
                 m2 = max(1, len(str(max_index[f'{l}//{t}//{i1}']).split('.')[0]))
@@ -359,7 +368,13 @@ def fmtContentName(season: Season, logger:logging.Logger):
                 temp = '{tn}' + '{i1}' + ('_' if i2 else '') + '{i2}'
                 temp +=  (('' if n.startswith('(') else '_') if n else '') + '{nt}'
 
-            cf.t, cf.i1, cf.i2, cf.n, cf.c = '', '', '', '', temp.format(tn=t, i1=i1, i2=i2, nt=n)
+            cf.c, cf.i1, cf.i2, cf.n, cf.f = '', '', '', '', temp.format(tn=t, i1=i1, i2=i2, nt=n)
+
+
+
+
+def unstageClassificationName(season: Season, logger:logging.Logger):
+    pass
 
 
 
@@ -381,83 +396,40 @@ def doNaming(season:Season, hardlink:bool, logger:logging.Logger) -> bool:
 
     # the quality label for the root dir is determined by files at the root dir
 
-    logger.info('Executing the naming plan ......................................................')
+    logger.info('Placing files ...')
 
-    root_qlabel : str = ''
-    qlabels : dict[str, int] = {} # candidate quality labels
-    for cf in [cf for cf in season.cfs if (cf.l in ('', '/'))]:
-        if cf.has_video:
-            q = fmtQualityLabel(cf, logger)
-            qlabels[q] = qlabels.get(q, 0) + 1
-    if qlabels: root_qlabel = max(qlabels, key=qlabels.get)
-    else: logger.warning('No video enabled/located at root dir. The output dirname will have no quality label.')
-
-    # now create the root dir
-    root_qlabel = (f'[{root_qlabel}]' if root_qlabel else '')
-    root_suffix = (f'[{season.x}]' if season.x else '')
-    dst_dir = Path(season.p).joinpath(f'[{season.g}] {season.s} {root_qlabel}{root_suffix}')
-    dst_dir.mkdir(parents=True, exist_ok=True) # the possible trailing space seems not matter
-    logging.info(f'Created base dir "{dst_dir}"')
-
-    # then the files
-    # we need to process independent files first
-    # because the q/t-label for mkv/mp4 must be determined before mka/ass copying
-    # TODO: save quality label and track label in `CF` before `doNaming()`
-
-    dep_cfs = list(cf for cf in season.cfs if cf.e in VNx_DEP_EXTS)
-    idp_cfs = list(cf for cf in season.cfs if cf.e not in VNx_DEP_EXTS)
-
-    for i, idp_cf in enumerate(idp_cfs):
-        g = idp_cf.g
-        s = idp_cf.s
-        c = f'[{c}]' if (c := idp_cf.c) else '' # some files may have no content name
-        q = f'[{q}]' if (q := fmtQualityLabel(idp_cf, logger)) else ''
-        t = f'[{t}]' if (t := fmtTrackLabel(idp_cf, logger)) else ''
-        x = (f'.{idp_cf.x}' if (idp_cf.e in VNx_SUB_EXTS) else f'[{idp_cf.x}]') if idp_cf.x else ''
-        e = idp_cf.e
-        idp_cf.dst = dst_dir.joinpath(idp_cf.l, f'[{g}] {s} {c}{q}{t}{x}.{e}').as_posix()
-
-    for i, dep_cf in enumerate(dep_cfs):
-        g = dep_cf.g
-        s = dep_cf.s
-        c = f'[{c}]' if (c := dep_cf.c) else '' # some files may have no content name
-        counterparts = [cf for cf in idp_cfs if all(cmpCoreFileNaming(cf, dep_cf)[:8])] # match any except suffix
-        if counterparts:
-            q = f'[{q}]' if (q := fmtQualityLabel(counterparts[0], logger)) else ''
-            t = f'[{t}]' if (t := fmtTrackLabel(counterparts[0], logger)) else ''
-            if counterparts[1:]:
-                logger.warning(f'Found more than 1 counterpart videos for "{dep_cf.crc}" '
-                               f'to copy quality/track label You config may be incorrect.')
-        else:
-            logger.error(f'Cannot find a counterpart video for "{dep_cf.crc}" to copy quality/track label.')
-            q = '[x]'
-            t = '[x]'
-        x = (f'.{dep_cf.x}' if (dep_cf.e in VNx_SUB_EXTS) else f'[{dep_cf.x}]') if dep_cf.x else ''
-        e = dep_cf.e
-        dep_cf.dst = dst_dir.joinpath(dep_cf.l, f'[{g}] {s} {c}{q}{t}{x}.{e}').as_posix()
+    ok = True
+    Path(season.dst).mkdir(parents=True, exist_ok=True)
+    logging.info(f'Created the season root dir "{season.dst}".')
 
     # everything looks ok so far, now start creating the target
-    for cf in (idp_cfs + dep_cfs):
-        src, dst = Path(cf.src), Path(cf.dst)
-        if src.resolve() == dst.resolve():
-            logger.error('Source and destination are the same.')
-            continue
-        parent = dst.parent
-        if parent.is_file():
-            logger.error(f'Failed to create "{dst.relative_to(dst_dir)}" (its parent is a file)')
-        else:
-            if not parent.exists():
-                parent.mkdir(parents=True, exist_ok=True)
-                logger.info(f'Created dir "{parent}"')
-            if dst.is_file():
-                dst.unlink()
-                logger.warning(f'Removed existing file "{dst.relative_to(dst_dir)}"')
-            if hardlink:
-                dst.hardlink_to(src)
+    for cf in season.cfs:
+        try:
+            src, dst = Path(cf.src), Path(cf.dst)
+            if src.resolve() == dst.resolve():
+                logger.error(f'The source and destination are the same (file 0x{cf.crc}).')
+                ok = False
+                continue
+            parent = dst.parent
+            if parent.is_file():
+                logger.error(f'Failed to create "{dst}" (its parent is a file)')
             else:
-                shutil.copy(src, dst)
-            logger.info(f'Created file "{dst.relative_to(dst_dir)}" ({cf.crc})')
-
-    logger.info('VNE stopped because of a failure in creating output files.')
-
-    return True
+                if not parent.exists():
+                    parent.mkdir(parents=True, exist_ok=True)
+                    logger.info(f'Created dir "{parent}"')
+                if dst.is_file():
+                    dst.unlink()
+                    logger.warning(f'Removed existing file "{dst}".')
+                if hardlink:
+                    dst.hardlink_to(src)
+                    logger.info(f'harlinked to "{dst}" (0x{cf.crc}).')
+                else:
+                    shutil.copy(src, dst)
+                    logger.info(f'Copied to "{dst}" (0x{cf.crc}).')
+        except Exception as e:
+            logger.error(f'Unknown error {e} occurred during placing files. Stopping...')
+            ok = False
+            break
+    if not ok:
+        logger.error('Error occurred during placing files.')
+    return ok

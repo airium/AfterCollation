@@ -17,7 +17,8 @@ __all__ = [
     'clean1Suffix',
     'cleanFullSuffix',
     'splitGroupTags',
-    'cmpCoreFileNaming']
+    'cmpCoreFileNaming',
+    ]
 
 
 
@@ -106,13 +107,13 @@ def splitGroupTags(chars:str, clean:bool=True, remove_empty:bool=True) -> list[s
 def cmpCoreFileNaming(a:CF, b:CF) -> list[bool]:
     ret = [False] * 10
     if a.g == b.g: ret[0] = True
-    if a.s == b.s: ret[1] = True
+    if a.t == b.t: ret[1] = True
     if a.l == b.l: ret[2] = True
-    if a.t == b.t: ret[3] = True
+    if a.c == b.c: ret[3] = True
     if a.i1 == b.i1: ret[4] = True
     if a.i2 == b.i2: ret[5] = True
     if a.n == b.n: ret[6] = True
-    if a.c == b.c: ret[7] = True
+    if a.f == b.f: ret[7] = True
     if a.x == b.x: ret[8] = True
     if a.e == b.e: ret[9] = True
     return ret
