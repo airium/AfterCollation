@@ -133,22 +133,24 @@ def chkNamingDicts(default_dict: dict[str, str], naming_dicts: list[dict[str, st
 
 
 
-def chkGrpTag(fullname: str, logger: logging.Logger) -> bool:
+def chkGrpTag(inp: Season|CoreFile, logger: logging.Logger) -> bool:
 
-    cleaned_fullname = normFullGroupTag(fullname)
-    if not fullname or not cleaned_fullname:
+    g = inp.g
+    cg = normFullGroupTag(g)
+
+    if not g or not cg:
         logger.error(f'The group tag is empty.')
         return False
 
     ok = True
 
-    if cleaned_fullname != fullname:
-        logger.error(f'The group tag "{fullname}" is dirty.')
+    if cg != g:
+        logger.error(f'The group tag "{g}" is dirty.')
         ok = False
 
     # we need to go deeper and tell the detailed reasons why the naming looks wrong
 
-    groups = splitGroupTag(fullname, clean=False, remove_empty=False)
+    groups = splitGroupTag(g, clean=False, remove_empty=False)
 
     for group in groups:
         cleaned_group = normSingleGroupTag(group)
@@ -164,23 +166,20 @@ def chkGrpTag(fullname: str, logger: logging.Logger) -> bool:
         if [c for c in cleaned_group if c in USER_GROUP_NAME_CHARS]:
             logger.info(f'Using user-allowed char in "{group}".')
 
-    groups = splitGroupTag(fullname, clean=True, remove_empty=True)
+    groups = splitGroupTag(g, clean=True, remove_empty=True)
 
     if len(groups) != len(set(group.lower() for group in groups)):
-        logger.error(f'The group tag "{fullname}" has duplicated section.')
+        logger.error(f'The group tag "{g}" has duplicated section.')
         ok = False
 
     for group in groups:
         if group not in COMMON_GRP_NAMES:
             logger.warning(f'Uncommon group tag "{group}" (or wrong case).')
 
-    if not fullname.isascii():
-        logger.warning(f'The group tag contains non-ASCII characters.')
-
-    if fullname.endswith(OLD_GRP_NAME):
+    if g.endswith(OLD_GRP_NAME):
         logger.warning(f'The group tag ends with the old-fashion "{OLD_GRP_NAME}".')
 
-    elif not fullname.endswith(STD_GRPTAG):
+    elif not g.endswith(STD_GRPTAG):
         logger.warning(f'The group tag is NOT ended with "{STD_GRPTAG}".')
 
     return ok
@@ -188,28 +187,30 @@ def chkGrpTag(fullname: str, logger: logging.Logger) -> bool:
 
 
 
-def chkTitle(fullname: str, logger: logging.Logger) -> bool:
+def chkTitle(inp: Season|CoreFile, logger: logging.Logger) -> bool:
 
-    cleaned_fullname = normTitle(fullname)
-    if not fullname or not cleaned_fullname:
+    t = inp.t
+    ct = normTitle(t)
+
+    if not t or not ct:
         logger.error(f'The title is empty.')
         return False
 
     ok = True
 
-    if cleaned_fullname != fullname:
-        logger.error(f'The title "{fullname}" is dirty.')
+    if ct != t:
+        logger.error(f'The title "{t}" is dirty.')
         ok = False
 
-    if [c for c in cleaned_fullname if c in WARN_T_CHARS]:
-        logger.info(f'Using rare chars in "{fullname}".')
-    if [c for c in cleaned_fullname if c in USER_SHOW_TITLE_CHARS]:
-        logger.info(f'Using user-allowed char in "{fullname}".')
+    if [c for c in ct if c in WARN_T_CHARS]:
+        logger.info(f'Using rare chars in "{t}".')
+    if [c for c in ct if c in USER_SHOW_TITLE_CHARS]:
+        logger.info(f'Using user-allowed char in "{t}".')
 
-    if not fullname.isascii():
+    if not t.isascii():
         logger.warning(f'The title contains non-ascii character.')
 
-    if chkLang(fullname) == 'en':
+    if chkLang(t) == 'en':
         logger.info(
             f'The title looks like an English spelling. '
             f'Make sure that using English instead of Romaji is intended.'
@@ -220,31 +221,34 @@ def chkTitle(fullname: str, logger: logging.Logger) -> bool:
 
 
 
-def chkLocation(location: str, logger: logging.Logger) -> bool:
+def chkLocation(inp:CoreFile, logger: logging.Logger) -> bool:
     #! We no longer check its relation to typename in this function
 
-    if not location: return True  # empty location is correct here
+    l = inp.l
+    cl = normFullLocation(l)
+
+    if not l: return True  # empty location is correct here
 
     ok = True
-    cleaned_location = normFullLocation(location)
-    if location != cleaned_location:
-        logger.error(f'The location "{location}" is dirty.')
+
+    if l != cl:
+        logger.error(f'The location "{l}" is dirty.')
         ok = False
 
-    if cleaned_location.startswith('/'): cleaned_location = location[1:]
-    if cleaned_location not in COMMON_VIDEO_LOCATIONS:
-        logger.warning(f'Using an uncommon location "{cleaned_location}".')
+    if cl.startswith('/'): cl = l[1:]
+    if cl not in COMMON_VIDEO_LOCATIONS:
+        logger.warning(f'Using an uncommon location "{cl}".')
 
-    if '/' in cleaned_location:
+    if '/' in cl:
         logger.info(f'The location contains sub-dirs. Make sure that this is intended.')
 
-    for part in cleaned_location.split('/'):
+    for part in cl.split('/'):
         if [c for c in part if c in WARN_L_CHARS]:
             logger.info(f'Using rare chars in "{part}".')
         if [c for c in part if c in USER_LOCATION_CHARS]:
             logger.info(f'Using user-allowed char in "{part}".')
 
-    if not location.isascii():
+    if not l.isascii():
         logger.warning(f'The location contains non-ascii character.')
 
     return ok
@@ -252,63 +256,68 @@ def chkLocation(location: str, logger: logging.Logger) -> bool:
 
 
 
-def chkClassification(classification: str, logger: logging.Logger) -> bool:
+def chkClassification(inp: CoreFile, logger: logging.Logger) -> bool:
 
-    if not classification: return True  # empty typename is correct here
+    c = inp.c
+    cc = normClassification(c)
+
+    if not c: return True  # empty typename is correct here
 
     ok = True
-    cleaned_classifi = normClassification(classification)
 
-    if classification != cleaned_classifi:
+    if c != cc:
         logger.error(f'The video classification is dirty.')
         ok = False
 
-    if cleaned_classifi not in COMMON_TYPENAME:
-        logger.warning(f'Found uncommon video classification "{cleaned_classifi}" (or wrong case).')
+    if cc not in COMMON_TYPENAME:
+        logger.warning(f'Found uncommon video classification "{cc}" (or wrong case).')
 
-    if [c for c in cleaned_classifi if c in WARN_C_CHARS]:
-        logger.info(f'Using rare chars in "{cleaned_classifi}".')
-    if [c for c in cleaned_classifi if c in USER_CLASSIFICATION_CHARS]:
-        logger.info(f'Using user-allowed chars in "{cleaned_classifi}".')
+    if [c for c in cc if c in WARN_C_CHARS]:
+        logger.info(f'Using rare chars in "{cc}".')
+    if [c for c in cc if c in USER_CLASSIFICATION_CHARS]:
+        logger.info(f'Using user-allowed chars in "{cc}".')
 
-    if not classification.isascii():
-        logger.warning(f'The typename "{classification}" contains non-ascii character.')
+    if not c.isascii():
+        logger.warning(f'The typename "{c}" contains non-ascii character.')
 
     return ok
 
 
 
 
-def chkIndex(idx1: str, idx2: str, logger: logging.Logger) -> bool:
+def chkIndex(inp:CoreFile, logger: logging.Logger) -> bool:
 
-    if not idx1:
-        if idx2: logger.warning(f'Will ignore the sub index "{idx2}" as the main index is empty.')
+    i1 = inp.i1
+    i2 = inp.i2
+    ci1 = normDecimal(i1)
+    ci2 = normDecimal(i2)
+
+    if not i1:
+        if i2: logger.warning(f'Will ignore the sub index "{i2}" as the main index is empty.')
         return True  # empty index is correct here
 
     ok = True
-    cleaned_idx1 = normDecimal(idx1)
-    cleaned_idx2 = normDecimal(idx2)
 
-    if idx1 != cleaned_idx1:
-        logger.error(f'The main index "{idx1}" is malformed.')
+    if i1 != ci1:
+        logger.error(f'The main index "{i1}" is malformed.')
         ok = False
 
-    if idx2 != cleaned_idx2:
-        logger.error(f'The sub index "{idx2}" is malformed.')
+    if i2 != ci2:
+        logger.error(f'The sub index "{i2}" is malformed.')
         ok = False
 
     # look deeper to tell the user what's wrong
-    if cleaned_idx1:
-        if not isDecimal(idx1):
-            logger.error(f'The main index "{idx1}" is not a decimal number.')
-        elif not idx1.isdigit():
-            logger.warning(f'The main index "{idx1}" is not an integer.')
+    if ci1:
+        if not isDecimal(i1):
+            logger.error(f'The main index "{i1}" is not a decimal number.')
+        elif not i1.isdigit():
+            logger.warning(f'The main index "{i1}" is not an integer.')
 
-    if cleaned_idx2:
-        if not isDecimal(idx2):
-            logger.error(f'The sub index "{idx2}" is not a decimal number.')
-        elif not idx2.isdigit():
-            logger.warning(f'The sub index "{idx2}" is not an integer.')
+    if ci2:
+        if not isDecimal(i2):
+            logger.error(f'The sub index "{i2}" is not a decimal number.')
+        elif not i2.isdigit():
+            logger.warning(f'The sub index "{i2}" is not an integer.')
 
     return ok
 

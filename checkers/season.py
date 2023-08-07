@@ -16,7 +16,7 @@ __all__ = [
     'chkSeason',
     'chkSeasonFiles',
     'chkSeasonNaming',
-    'chkSeasonNamingPerFile',
+    'chkSeasonNamingLocally',
     'chkSeasonNamingCorrelation',
     'chkSeasonNamingGlobally',
     'chkNamingDependency',
@@ -55,7 +55,7 @@ def chkSeasonNaming(season: Season, logger: logging.Logger) -> bool:
     #! since it will be not only used in VNE but also in VNR.
     '''
     # local-only naming check
-    if not chkSeasonNamingPerFile(season, logger): return False
+    if not chkSeasonNamingLocally(season, logger): return False
     # mid-level naming check
     if not chkSeasonNamingCorrelation(season, logger): return False
     # global-level naming and sanity check
@@ -65,27 +65,27 @@ def chkSeasonNaming(season: Season, logger: logging.Logger) -> bool:
 
 
 
-def chkSeasonNamingPerFile(season: Season, logger: logging.Logger) -> bool:
+def chkSeasonNamingLocally(season: Season, logger: logging.Logger) -> bool:
     '''Local only naming check.'''
 
     ok = True
 
     logger.info('Checking the naming of season root dir ...')
-    ok = ok if chkGrpTag(season.g, logger) else False
-    ok = ok if chkTitle(season.t, logger) else False
-    ok = ok if chkSuffix(season.x, logger) else False
+    ok = ok if chkGrpTag(season, logger) else False
+    ok = ok if chkTitle(season, logger) else False
+    ok = ok if chkSuffix(season, logger) else False
 
     for cf in season.cfs:
 
         logger.info(f'Checking the naming of file with CRC32 0x{cf.crc32} ...')
-        ok = ok if chkGrpTag(cf.g, logger) else False
-        ok = ok if chkTitle(cf.t, logger) else False
-        ok = ok if chkLocation(cf.l, logger) else False
-        ok = ok if chkClassification(cf.c, logger) else False
-        ok = ok if chkIndex(cf.i1, cf.i2, logger) else False
-        ok = ok if chkSupplementDesp(cf.s, logger) else False
-        ok = ok if chkCustomisedDesp(cf.f, logger) else False
-        ok = ok if chkSuffix(cf.x, logger) else False
+        ok = ok if chkGrpTag(cf, logger) else False
+        ok = ok if chkTitle(cf, logger) else False
+        ok = ok if chkLocation(cf, logger) else False
+        ok = ok if chkClassification(cf, logger) else False
+        ok = ok if chkIndex(cf, logger) else False
+        ok = ok if chkSupplementDesp(cf, logger) else False
+        ok = ok if chkCustomisedDesp(cf, logger) else False
+        ok = ok if chkSuffix(cf, logger) else False
 
     return ok
 
