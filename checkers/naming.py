@@ -132,7 +132,7 @@ def chkNamingDicts(default_dict: dict[str, str], naming_dicts: list[dict[str, st
 
 def chkGrpTag(fullname: str, logger: logging.Logger) -> bool:
 
-    cleaned_fullname = cleanFullGroupName(fullname)
+    cleaned_fullname = normFullGroupTag(fullname)
     if not fullname or not cleaned_fullname:
         logger.error(f'The group tag is empty.')
         return False
@@ -145,10 +145,10 @@ def chkGrpTag(fullname: str, logger: logging.Logger) -> bool:
 
     # we need to go deeper and tell the detailed reasons why the naming looks wrong
 
-    groups = splitGroupTags(fullname, clean=False, remove_empty=False)
+    groups = splitGroupTag(fullname, clean=False, remove_empty=False)
 
     for group in groups:
-        cleaned_group = clean1GrpName(group)
+        cleaned_group = normSingleGroupTag(group)
         if not group or not cleaned_group:
             logger.error(f'Found empty section.')
             ok = False
@@ -161,7 +161,7 @@ def chkGrpTag(fullname: str, logger: logging.Logger) -> bool:
         if [c for c in cleaned_group if c in USER_GROUP_NAME_CHARS]:
             logger.info(f'Using user-allowed char in "{group}".')
 
-    groups = splitGroupTags(fullname, clean=True, remove_empty=True)
+    groups = splitGroupTag(fullname, clean=True, remove_empty=True)
 
     if len(groups) != len(set(group.lower() for group in groups)):
         logger.error(f'The group tag "{fullname}" has duplicated section.')
@@ -187,7 +187,7 @@ def chkGrpTag(fullname: str, logger: logging.Logger) -> bool:
 
 def chkTitle(fullname: str, logger: logging.Logger) -> bool:
 
-    cleaned_fullname = cleanTitle(fullname)
+    cleaned_fullname = normTitle(fullname)
     if not fullname or not cleaned_fullname:
         logger.error(f'The title is empty.')
         return False
@@ -223,7 +223,7 @@ def chkLocation(location: str, logger: logging.Logger) -> bool:
     if not location: return True  # empty location is correct here
 
     ok = True
-    cleaned_location = cleanFullLocation(location)
+    cleaned_location = normFullLocation(location)
     if location != cleaned_location:
         logger.error(f'The location "{location}" is dirty.')
         ok = False
@@ -254,7 +254,7 @@ def chkClassification(classification: str, logger: logging.Logger) -> bool:
     if not classification: return True  # empty typename is correct here
 
     ok = True
-    cleaned_classifi = cleanClassification(classification)
+    cleaned_classifi = normClassification(classification)
 
     if classification != cleaned_classifi:
         logger.error(f'The video classification is dirty.')
@@ -283,8 +283,8 @@ def chkIndex(idx1: str, idx2: str, logger: logging.Logger) -> bool:
         return True  # empty index is correct here
 
     ok = True
-    cleaned_idx1 = cleanDecimal(idx1)
-    cleaned_idx2 = cleanDecimal(idx2)
+    cleaned_idx1 = normDecimal(idx1)
+    cleaned_idx2 = normDecimal(idx2)
 
     if idx1 != cleaned_idx1:
         logger.error(f'The main index "{idx1}" is malformed.')
@@ -315,7 +315,7 @@ def chkIndex(idx1: str, idx2: str, logger: logging.Logger) -> bool:
 def chkSupplementDesp(cf: CoreFile, logger: logging.Logger) -> bool:
 
     s = cf.s
-    cs = cleanDescription(s)
+    cs = normDescription(s)
 
     if not s: return True  # empty location is correct
 
@@ -333,7 +333,7 @@ def chkSupplementDesp(cf: CoreFile, logger: logging.Logger) -> bool:
 def chkCustomisedDesp(cf: CoreFile, logger: logging.Logger) -> bool:
 
     d = cf.f
-    cd = cleanDescription(d)
+    cd = normDescription(d)
 
     if not cf: return True  # empty customised description is correct
 
@@ -353,7 +353,7 @@ def chkSuffix(obj: Season|CoreFile, logger: logging.Logger) -> bool:
     if DEBUG: assert isinstance(obj, (Season, CoreFile))
 
     x = obj.x
-    cx = cleanFullSuffix(obj.x)
+    cx = normFullSuffix(obj.x)
 
     if not x: return True  # having no suffix is OK if only viewed from the file itself
 
@@ -388,7 +388,7 @@ def chkSuffix(obj: Season|CoreFile, logger: logging.Logger) -> bool:
 
         #! check the spelling style is coherent
         styles: list[int] = []
-        for part in cx.split('&'):
+        for part in cx.split(TAG_SPLITTER):
             if part not in AVAIL_LANG_SUFFIXES:
                 logger.error(f'Found incorrect capitalization "{part}" in suffix "{cx}".')
                 ok = False

@@ -39,26 +39,26 @@ def cleanNamingDicts(default_dict:dict[str, str], naming_dicts:list[dict[str, st
     '''
 
     logger.debug('PreClean: ' + ('|'.join(f'{k}={v}' for k, v in default_dict.items())))
-    default_dict[FULLPATH_VAR] = cleanFullPath(default_dict[FULLPATH_VAR])
-    default_dict[GRPTAG_VAR] = cleanFullGroupName(default_dict[GRPTAG_VAR])
-    default_dict[TITLE_VAR] = cleanTitle(default_dict[TITLE_VAR])
-    default_dict[SUFFIX_VAR] = cleanFullSuffix(default_dict[SUFFIX_VAR])
+    default_dict[FULLPATH_VAR] = normInputPath(default_dict[FULLPATH_VAR])
+    default_dict[GRPTAG_VAR] = normFullGroupTag(default_dict[GRPTAG_VAR])
+    default_dict[TITLE_VAR] = normTitle(default_dict[TITLE_VAR])
+    default_dict[SUFFIX_VAR] = normFullSuffix(default_dict[SUFFIX_VAR])
     logger.debug('AftClean: ' + ('|'.join(f'{k}={v}' for k, v in default_dict.items())))
 
     for naming_dict in naming_dicts:
 
         logger.debug('PreClean: ' + ('|'.join(f'{k}={v}' for k, v in naming_dict.items())))
-        naming_dict[FULLPATH_VAR] = cleanFullPath(naming_dict[FULLPATH_VAR])
-        naming_dict[CRC32_VAR] = stripString(naming_dict[CRC32_VAR])
-        naming_dict[GRPTAG_VAR] = cleanFullGroupName(naming_dict[GRPTAG_VAR])
-        naming_dict[TITLE_VAR] = cleanTitle(naming_dict[TITLE_VAR])
-        naming_dict[LOCATION_VAR] = cleanFullLocation(naming_dict[LOCATION_VAR])
-        naming_dict[CLASSIFY_VAR] = cleanClassification(naming_dict[CLASSIFY_VAR])
-        naming_dict[IDX1_VAR] = cleanDecimal(naming_dict[IDX1_VAR])
-        naming_dict[IDX2_VAR] = cleanDecimal(naming_dict[IDX2_VAR])
-        naming_dict[SUPPLEMENT_VAR] = cleanDescription(naming_dict[SUPPLEMENT_VAR])
-        naming_dict[CUSTOM_VAR] = cleanDescription(naming_dict[CUSTOM_VAR])
-        naming_dict[SUFFIX_VAR] = cleanFullSuffix(naming_dict[SUFFIX_VAR])
+        naming_dict[FULLPATH_VAR] = normInputPath(naming_dict[FULLPATH_VAR])
+        naming_dict[CRC32_VAR] = rmInvalidChars(naming_dict[CRC32_VAR])
+        naming_dict[GRPTAG_VAR] = normFullGroupTag(naming_dict[GRPTAG_VAR])
+        naming_dict[TITLE_VAR] = normTitle(naming_dict[TITLE_VAR])
+        naming_dict[LOCATION_VAR] = normFullLocation(naming_dict[LOCATION_VAR])
+        naming_dict[CLASSIFY_VAR] = normClassification(naming_dict[CLASSIFY_VAR])
+        naming_dict[IDX1_VAR] = normDecimal(naming_dict[IDX1_VAR])
+        naming_dict[IDX2_VAR] = normDecimal(naming_dict[IDX2_VAR])
+        naming_dict[SUPPLEMENT_VAR] = normDescription(naming_dict[SUPPLEMENT_VAR])
+        naming_dict[CUSTOM_VAR] = normDescription(naming_dict[CUSTOM_VAR])
+        naming_dict[SUFFIX_VAR] = normFullSuffix(naming_dict[SUFFIX_VAR])
         logger.debug('AftClean: ' + ('|'.join(f'{k}={v}' for k, v in naming_dict.items())))
 
 
