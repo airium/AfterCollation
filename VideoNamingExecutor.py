@@ -35,7 +35,7 @@ def main(csv_path: Path):
     cmpCfCRC32(season.cfs, [naming_info[CRC32_VAR] for naming_info in file_naming_dicts], logger)
     applyNamingDicts(season, base_naming_dict, file_naming_dicts, logger)
     doAutoIndexing(season, logger)
-    # chkSeasonNaming(season, logger)
+    chkSeasonNaming(season, logger)
     stageClassificationName(season, logger)
     chkNamingDependency(season, logger)
     if ENABLE_FILE_CHECKING_IN_VNE:

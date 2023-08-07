@@ -169,12 +169,7 @@ def chkSeasonNamingCorrelation(season: Season, logger: logging.Logger) -> bool:
 
 def chkSeasonNamingGlobally(season: Season, logger: logging.Logger):
 
-    #! check suffix
-
-
-
-
-
+    # TODO: check suffix
 
     num_vid = len([cf for cf in season.cfs if ((cf.l == '') and (cf.e in VNx_VID_EXTS))])
     num_ass = len([cf for cf in season.cfs if ((cf.l == '') and (cf.e in VNx_SUB_EXTS))])
