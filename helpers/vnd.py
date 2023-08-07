@@ -124,7 +124,7 @@ def guessNamingFieldsFromSimpleFilename(cf:CF, logger:logging.Logger):
         typename, idx, note = match.group('typename'), match.group('idx'), match.group('note')
         if typename: cf.c = typename.strip().strip('.-_').strip()
         if idx: cf.i1 = idx.strip().strip('.-_').strip()
-        if (typename or idx) and note: cf.n = note.strip().strip('.-_').strip()
+        if (typename or idx) and note: cf.s = note.strip().strip('.-_').strip()
         # NOTE there is no need to fill in the location fields
         # if a typename is detected, VNE will automatically place it under SPs if location is empty
 

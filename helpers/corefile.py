@@ -206,13 +206,13 @@ class CoreFile:
         setattr(self, IDX2_VAR, v)
 
     @property
-    def n(self) -> str:
-        if self.depends: return self.depends.n
-        return getattr(self, NOTE_VAR, '')
+    def s(self) -> str:
+        if self.depends: return self.depends.s
+        return getattr(self, SUPPLEMENT_VAR, '')
 
-    @n.setter
-    def n(self, v: str) -> None:
-        setattr(self, NOTE_VAR, v)
+    @s.setter
+    def s(self, v: str) -> None:
+        setattr(self, SUPPLEMENT_VAR, v)
 
     @property
     def f(self) -> str:
@@ -221,6 +221,10 @@ class CoreFile:
 
     @f.setter
     def f(self, v: str) -> None:
+        self.t = ''
+        self.i1 = ''
+        self.i2 = ''
+        self.s = ''
         setattr(self, CUSTOM_VAR, v)
 
     @property
@@ -389,10 +393,12 @@ class CoreFile:
 
     @property
     def qlabel(self) -> str:
+        if self.depends: return self.depends.qlabel
         return fmtQualityLabel(self, self.logger)
 
     @property
     def tlabel(self) -> str:
+        if self.depends: return self.depends.tlabel
         return fmtTrackLabel(self, self.logger)
 
     def updateFromVNA(self, vna_config: dict[str, str]) -> None:
@@ -408,7 +414,7 @@ class CoreFile:
         self.c = cf.c
         self.i1 = cf.i1
         self.i2 = cf.i2
-        self.n = cf.n
+        self.s = cf.s
         self.f = cf.f
 
     def fmtGeneralDuration(self) -> str:

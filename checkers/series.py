@@ -44,7 +44,7 @@ def chkSeriesNaming(series:Series, logger:logging.Logger, check_sub_seasons:bool
     #     logger.error('The input does not match the SERIES naming pattern.')
 
     # series_grptag = series_mobj.group('grptag') if series_mobj else ''
-    # series_showname = series_mobj.group('showname') if series_mobj else ''
+    # series_title = series_mobj.group('title') if series_mobj else ''
     # series_misclabel = series_mobj.group('misclabel') if series_mobj else ''
 
     # possible_season_dirs = listDir(input_dir, rglob=False)
@@ -55,7 +55,7 @@ def chkSeriesNaming(series:Series, logger:logging.Logger, check_sub_seasons:bool
 
     # season_dirs = []
     # season_grptags = []
-    # season_shownames = []
+    # season_titles = []
     # season_qlabels = []
     # season_misclabels = []
     # for possible_season_dir in possible_season_dirs:
@@ -65,7 +65,7 @@ def chkSeriesNaming(series:Series, logger:logging.Logger, check_sub_seasons:bool
     #     else:
     #         season_dirs.append(possible_season_dir)
     #         season_grptags.append(season_mobj.group('grptag'))
-    #         season_shownames.append(season_mobj.group('showname'))
+    #         season_titles.append(season_mobj.group('title'))
     #         season_qlabels.append(season_mobj.group('qlabel'))
     #         season_misclabels.append(season_mobj.group('misclabel'))
 
@@ -79,7 +79,7 @@ def chkSeriesNaming(series:Series, logger:logging.Logger, check_sub_seasons:bool
 
 
 
-    # if series_showname: logger.info(f'Found SERIES show name "{series_showname}"')
+    # if series_title: logger.info(f'Found SERIES show name "{series_title}"')
     # if series_misclabel:
     #     if series_misclabel.lower() in AVAIL_SUB_LANG_TAGS:
     #         logger.info(f'Found SERIES language label "{series_misclabel}". Take care.')

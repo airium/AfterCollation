@@ -3,9 +3,9 @@ from re import compile as rc
 
 
 
-BASIC_CRC32_PATTERN = rc(r'^(?P<crc32>[0-9a-fA-F]{8})$')
-CRC32_IN_FILENAME_PATTERN = rc(r'\[(?P<crc32>[0-9a-fA-Z]{8})\]')
-CRC32_CSV_PATTERN = rc(r'(?P<crc32>0x[0-9a-f]{8})')
+BASIC_CRC32_PATTERN = rc(r'^(?P<crc32>[0-9a-f]{8})$', re.IGNORECASE)
+CRC32_IN_FILENAME_PATTERN = rc(r'\[(?P<crc32>[0-9a-f]{8})\]', re.IGNORECASE)
+CRC32_CSV_PATTERN = rc(r'^(0x)?(?P<crc32>[0-9a-f]{8})$', re.IGNORECASE)
 
 
 
@@ -22,8 +22,8 @@ VNR_TABLE_FILENAME_PATTERN = rc(r'^VNR-[0-9]{6}-[0-9]{6}\.csv$')
 
 
 # TODO [^0-9[\]] is not robust for misclabel
-VCBS_SERIES_ROOT_DIRNAME_PATTERN = rc(r'^\[(?P<grptag>.*(VCB-Studio|VCB-S).*)\] (?P<showname>[^\[\]]+)( \[(?P<misclabel>[^0-9[\]])\])?$')
-VCBS_SEASON_ROOT_DIRNAME_PATTERN = rc(r'^\[(?P<grptag>.*(VCB-Studio|VCB-S).*)\] (?P<showname>[^\[\]]+) \[(?P<qlabel>[^\]]*[0-9]{3}p)\](\[(?P<misclabel>[^0-9[\]])\])?$')
+VCBS_SERIES_ROOT_DIRNAME_PATTERN = rc(r'^\[(?P<grptag>.*(VCB-Studio|VCB-S).*)\] (?P<title>[^\[\]]+)( \[(?P<misclabel>[^0-9[\]])\])?$')
+VCBS_SEASON_ROOT_DIRNAME_PATTERN = rc(r'^\[(?P<grptag>.*(VCB-Studio|VCB-S).*)\] (?P<title>[^\[\]]+) \[(?P<qlabel>[^\]]*[0-9]{3}p)\](\[(?P<misclabel>[^0-9[\]])\])?$')
 VOLUME_NAME_PATTERN = rc(r'^(?P<pre>.*)(?P<idx>[0-9]{1,3})(?P<aft>[^0-9]*)$')
 OKE_FILESTEM_PATTERN = rc(r'^(?P<idx1>[0-9]{5})[ -]*(?P<idx2>[0-9]*) *(\[(?P<crc32>[0-9a-zA-Z]{8})\])?$')
 STD_CHAP_TXT_PATTERN = rc(r'((?P<lang>[a-z]{2}):)?(?P<text>Chapter (?P<idx>[0-9]{2,3}))')

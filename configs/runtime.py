@@ -22,27 +22,27 @@ VNR_GRP_IDX_CN,       VNR_GRP_IDX_VAR = '主分组', 'vnr_main_grouping'
 VNR_SUBGRP_IDX_CN, VNR_SUBGRP_IDX_VAR = '子分组', 'vnr_sub_grouping'
 
 # these fields are generally used in VNx scripts
-FULLPATH_CN,   FULLPATH_VAR = '完整路径',   'vn_fullpath'
-CRC32_CN,         CRC32_VAR = 'CRC32',      'vn_crc32'
-DURATION_CN,   DURATION_VAR = '时长',       'vn_duration'
-FILESIZE_CN,   FILESIZE_VAR = '大小',       'vn_filesize'
-EXTENSION_CN, EXTENSION_VAR = '文件后缀',   'vn_fileext'
-CONTAINER_CN, CONTAINER_VAR = '实际格式',   'vn_container'
-TRACKCOMP_CN, TRACKCOMP_VAR = '轨道组成',   'vn_trackcomp'
-TR_VIDEO_CN,   TR_VIDEO_VAR = '视频轨道',   'vn_video_tracks'
-TR_AUDIO_CN,   TR_AUDIO_VAR = '音频轨道',   'vn_audio_tracks'
-TR_TEXT_CN,     TR_TEXT_VAR = '图形字幕',   'vn_text_tracks'
-TR_MENU_CN,     TR_MENU_VAR = '章节菜单',   'vn_menu_tracks'
-GRPTAG_CN,       GRPTAG_VAR = '组名',       'vn_grptag'
-TITLE_CN,         TITLE_VAR = '片名',       'vn_showname'
-LOCATION_CN,   LOCATION_VAR = '位置',       'vn_location'
-CLASSIFY_CN,   CLASSIFY_VAR = '内容类型',   'vn_classification'
-IDX1_CN,           IDX1_VAR = '主序号',     'vn_idx1'
-IDX2_CN,           IDX2_VAR = '副序号',     'vn_idx2'
-NOTE_CN,           NOTE_VAR = '补充说明',   'vn_note'
-CUSTOM_CN,       CUSTOM_VAR = '自定义名称', 'vn_custom'
-SUFFIX_CN,       SUFFIX_VAR = '后缀',       'vn_suffix'
-ENABLE_CN,       ENABLE_VAR = '启用?',      'vn_enabled'
+FULLPATH_CN,      FULLPATH_VAR = '完整路径',   'vn_fullpath'
+CRC32_CN,            CRC32_VAR = 'CRC32',      'vn_crc32'
+DURATION_CN,      DURATION_VAR = '时长',       'vn_duration'
+FILESIZE_CN,      FILESIZE_VAR = '大小',       'vn_filesize'
+EXTENSION_CN,    EXTENSION_VAR = '文件后缀',   'vn_fileext'
+CONTAINER_CN,    CONTAINER_VAR = '实际格式',   'vn_container'
+TRACKCOMP_CN,    TRACKCOMP_VAR = '轨道组成',   'vn_trackcomp'
+TR_VIDEO_CN,      TR_VIDEO_VAR = '视频轨道',   'vn_video_tracks'
+TR_AUDIO_CN,      TR_AUDIO_VAR = '音频轨道',   'vn_audio_tracks'
+TR_TEXT_CN,        TR_TEXT_VAR = '图形字幕',   'vn_text_tracks'
+TR_MENU_CN,        TR_MENU_VAR = '章节菜单',   'vn_menu_tracks'
+GRPTAG_CN,          GRPTAG_VAR = '组名',       'vn_grptag'
+TITLE_CN,            TITLE_VAR = '片名',       'vn_title'
+LOCATION_CN,      LOCATION_VAR = '位置',       'vn_location'
+CLASSIFY_CN,      CLASSIFY_VAR = '内容类型',   'vn_classification'
+IDX1_CN,              IDX1_VAR = '主序号',     'vn_idx1'
+IDX2_CN,              IDX2_VAR = '副序号',     'vn_idx2'
+SUPPLEMENT_CN,  SUPPLEMENT_VAR = '补充说明',   'vn_supplement'
+CUSTOM_CN,          CUSTOM_VAR = '自定义名称', 'vn_customised_desp'
+SUFFIX_CN,          SUFFIX_VAR = '后缀',       'vn_suffix'
+ENABLE_CN,          ENABLE_VAR = '启用?',      'vn_enabled'
 
 #* CSV fields the their order ------------------------------------------------------------------------------------------
 # these are the field order to be shown in CSV files
@@ -78,7 +78,7 @@ VND_ALL_DICT = {
     CLASSIFY_CN: CLASSIFY_VAR,
     IDX1_CN: IDX1_VAR,
     IDX2_CN: IDX2_VAR,
-    NOTE_CN: NOTE_VAR,
+    SUPPLEMENT_CN: SUPPLEMENT_VAR,
     CUSTOM_CN: CUSTOM_VAR,
     SUFFIX_CN: SUFFIX_VAR,
     ENABLE_CN: ENABLE_VAR,
@@ -143,7 +143,7 @@ VND_USER_DICT = {
     CLASSIFY_CN: CLASSIFY_VAR,
     IDX1_CN: IDX1_VAR,
     IDX2_CN: IDX2_VAR,
-    NOTE_CN: NOTE_VAR,
+    SUPPLEMENT_CN: SUPPLEMENT_VAR,
     CUSTOM_CN: CUSTOM_VAR,
     SUFFIX_CN: SUFFIX_VAR,
     ENABLE_CN: ENABLE_VAR,

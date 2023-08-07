@@ -56,7 +56,7 @@ def cleanNamingDicts(default_dict:dict[str, str], naming_dicts:list[dict[str, st
         naming_dict[CLASSIFY_VAR] = cleanClassification(naming_dict[CLASSIFY_VAR])
         naming_dict[IDX1_VAR] = cleanDecimal(naming_dict[IDX1_VAR])
         naming_dict[IDX2_VAR] = cleanDecimal(naming_dict[IDX2_VAR])
-        naming_dict[NOTE_VAR] = cleanDescription(naming_dict[NOTE_VAR])
+        naming_dict[SUPPLEMENT_VAR] = cleanDescription(naming_dict[SUPPLEMENT_VAR])
         naming_dict[CUSTOM_VAR] = cleanDescription(naming_dict[CUSTOM_VAR])
         naming_dict[SUFFIX_VAR] = cleanFullSuffix(naming_dict[SUFFIX_VAR])
         logger.debug('AftClean: ' + ('|'.join(f'{k}={v}' for k, v in naming_dict.items())))
@@ -84,7 +84,7 @@ def applyNamingDicts(season:Season, default_dict:dict[str, str], naming_dicts:li
         if all(grptags):
             season.g = max(set(grptags), key=grptags.count)
             logger.info(f'Found empty base/default group tag but this is filled for each file. '
-                        f'The program assumed the most common "{season.g}" as the showname for the root dir. '
+                        f'The program assumed the most common "{season.g}" as the title for the root dir. '
                         'You should better recheck this.')
         else:
             season.g = STD_GRPTAG
@@ -93,9 +93,9 @@ def applyNamingDicts(season:Season, default_dict:dict[str, str], naming_dicts:li
     if default_dict[TITLE_VAR]:
         season.t = default_dict[TITLE_VAR]
     else:
-        shownames = [naming_dict[TITLE_VAR] for naming_dict in naming_dicts]
-        if any(shownames):
-            season.t = max(set(shownames), key=shownames.count)
+        titles = [naming_dict[TITLE_VAR] for naming_dict in naming_dicts]
+        if any(titles):
+            season.t = max(set(titles), key=titles.count)
             logger.info(f'Found empty base/default show name but this is filled for each file. '
                         f'The program assumed the most common "{season.t}" as the show name for the root dir. '
                         'You should better recheck this.')
@@ -118,13 +118,13 @@ def applyNamingDicts(season:Season, default_dict:dict[str, str], naming_dicts:li
             logger.warning('Using non-default show name.')
 
         if naming_dict[CUSTOM_VAR] and (
-            any((naming_dict[CLASSIFY_VAR], naming_dict[IDX1_VAR], naming_dict[IDX2_VAR], naming_dict[NOTE_VAR]))):
+            any((naming_dict[CLASSIFY_VAR], naming_dict[IDX1_VAR], naming_dict[IDX2_VAR], naming_dict[SUPPLEMENT_VAR]))):
             logger.warning('Found using customised name. Will clear typename, main/sub index and note fields.')
         cf.f = naming_dict[CUSTOM_VAR] if naming_dict[CUSTOM_VAR] else ''
         cf.c = '' if cf.f else naming_dict[CLASSIFY_VAR]
         cf.i1 = '' if cf.f else naming_dict[IDX1_VAR]
         cf.i2 = '' if cf.f else naming_dict[IDX2_VAR]
-        cf.n = '' if cf.f else naming_dict[NOTE_VAR]
+        cf.s = '' if cf.f else naming_dict[SUPPLEMENT_VAR]
 
         cf.l = STD_SPS_DIRNAME if (cf.c and not naming_dict[LOCATION_VAR]) else ''
 
@@ -133,7 +133,7 @@ def applyNamingDicts(season:Season, default_dict:dict[str, str], naming_dicts:li
         # if (not default_dict[SUFFIX_VAR]) or (default_dict[SUFFIX_VAR] not in AVAIL_SUB_LANG_TAGS):
         #     pass # dont touch any file suffix, as the files are free to use any suffix is this case (at least here)
         # 2. root has a language suffix like [CHS], files should have the same suffix
-        if season.x and (season.x in AVAIL_SUB_LANG_TAGS):
+        if season.x and (season.x in AVAIL_SEASON_LANG_SUFFIXES):
             cf.x = season.x
             if naming_dict[SUFFIX_VAR]:
                 logger.warning(f'Overwrite file suffix with the base/default language suffix "{default_dict[SUFFIX_VAR]}".')
@@ -338,7 +338,7 @@ def stageClassificationName(season: Season, logger:logging.Logger):
 
     for i, cf in enumerate(cfs):
         if not cf.f:
-            l, t, i1, i2, n = cf.l, cf.c, cf.i1, cf.i2, cf.n
+            l, t, i1, i2, n = cf.l, cf.c, cf.i1, cf.i2, cf.s
 
             if i2:
                 m2 = max(1, len(str(max_index[f'{l}//{t}//{i1}']).split('.')[0]))
@@ -368,7 +368,7 @@ def stageClassificationName(season: Season, logger:logging.Logger):
                 temp = '{tn}' + '{i1}' + ('_' if i2 else '') + '{i2}'
                 temp +=  (('' if n.startswith('(') else '_') if n else '') + '{nt}'
 
-            cf.c, cf.i1, cf.i2, cf.n, cf.f = '', '', '', '', temp.format(tn=t, i1=i1, i2=i2, nt=n)
+            cf.c, cf.i1, cf.i2, cf.s, cf.f = '', '', '', '', temp.format(tn=t, i1=i1, i2=i2, nt=n)
 
 
 

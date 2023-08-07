@@ -164,7 +164,7 @@ MAX_DIFF_MEAN : int = 1
 
 #* others --------------------------------------------------------------------------------------------------------------
 
-# this is the show name that will be applied when the program didn't correctly catch your mistake of forgetting filling any showname for VND. This should never appear on your hard disk - but if you see it, please fill a bug report.
+# this is the show name that will be applied when the program didn't correctly catch your mistake of forgetting filling any title for VND. This should never appear on your hard disk - but if you see it, please fill a bug report.
 FALLBACK_TITLE = '1145141919810'
 
 #* don't touch below --------------------------------------------------------------------------------------------------

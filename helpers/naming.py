@@ -139,14 +139,14 @@ def splitGroupTags(chars: str, clean: bool = True, remove_empty: bool = True) ->
 
 def cmpCoreFileNaming(a: hc.CF, b: hc.CF) -> list[bool]:
     ret = [False] * 10
-    if a.g == b.g: ret[0] = True
-    if a.t == b.t: ret[1] = True
-    if a.l == b.l: ret[2] = True
-    if a.c == b.c: ret[3] = True
-    if a.i1 == b.i1: ret[4] = True
-    if a.i2 == b.i2: ret[5] = True
-    if a.n == b.n: ret[6] = True
-    if a.f == b.f: ret[7] = True
-    if a.x == b.x: ret[8] = True
-    if a.e == b.e: ret[9] = True
+    if a.g == b.g: ret[0] = True    # compare group name
+    if a.t == b.t: ret[1] = True    # compare title
+    if a.l == b.l: ret[2] = True    # compare location
+    if a.c == b.c: ret[3] = True    # compare classification
+    if a.i1 == b.i1: ret[4] = True  # compare main index
+    if a.i2 == b.i2: ret[5] = True  # compare sub index
+    if a.s == b.s: ret[6] = True    # compare note
+    if a.f == b.f: ret[7] = True    # compare full description
+    if a.x == b.x: ret[8] = True    # compare suffix
+    if a.e == b.e: ret[9] = True    # compare extension
     return ret

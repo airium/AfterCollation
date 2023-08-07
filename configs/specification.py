@@ -32,12 +32,12 @@ https://www.tsdm39.net/forum.php?mod=viewthread&tid=841501'''
 # these are whitelisted
 # NOTE don't adjust the orders in these LANG_TAGS
 # it will change the function behavior in `chkSuffix()`
-AVAIL_JPN_LANG_TAGS : list[str] = ['jp', 'JP', 'jpn', 'JPN', 'Jpn']
-AVAIL_CHS_LANG_TAGS : list[str] = ['sc', 'SC', 'chs', 'CHS', 'Chs']
-AVAIL_CHT_LANG_TAGS : list[str] = ['tc', 'TC', 'cht', 'CHT', 'Cht']
-AVAIL_SUB_LANG_TAGS : list[str] = AVAIL_JPN_LANG_TAGS + AVAIL_CHS_LANG_TAGS + AVAIL_CHT_LANG_TAGS
-AVAIL_ASS_LANG_TAGS : list[str] = ['sc', 'tc', 'chs', 'cht', 'sc&jp', 'tc&jp', 'chs&jpn', 'cht&jpn']
-AVAIL_VID_LANG_TAGS : list[str] = ['sc', 'tc', 'chs', 'cht']
+AVAIL_JPN_LANG_SUFFIXES : list[str] = ['jp', 'JP', 'jpn', 'JPN', 'Jpn']
+AVAIL_CHS_LANG_SUFFIXES : list[str] = ['sc', 'SC', 'chs', 'CHS', 'Chs']
+AVAIL_CHT_LANG_SUFFIXES : list[str] = ['tc', 'TC', 'cht', 'CHT', 'Cht']
+AVAIL_LANG_SUFFIXES : list[str] = AVAIL_JPN_LANG_SUFFIXES + AVAIL_CHS_LANG_SUFFIXES + AVAIL_CHT_LANG_SUFFIXES
+AVAIL_SEASON_LANG_SUFFIXES : list[str] = AVAIL_CHS_LANG_SUFFIXES + AVAIL_CHT_LANG_SUFFIXES
+AVAIL_FILE_LANG_SUFFIXES : list[str] = ['sc', 'tc', 'chs', 'cht', 'sc&jp', 'tc&jp', 'chs&jpn', 'cht&jpn']
 
 # allowed file extensions under 'Scans'
 ALL_EXTS_IN_SCANS = tuple('jpg jpeg webp'.split())

@@ -1,6 +1,5 @@
 import logging
 import itertools
-from pathlib import Path
 
 from helpers.season import Season
 from helpers.corefile import CoreFile
@@ -17,12 +16,20 @@ __all__ = [
     'chkSeason',
     'chkSeasonFiles',
     'chkSeasonNaming',
-    'chkSeasonPerNamingField',
-    'chkSeasonNaming',
+    'chkSeasonNamingPerFile',
+    'chkSeasonNamingCorrelation',
+    'chkSeasonNamingGlobally',
     'chkNamingDependency',
     'chkFinalNamingConflict',
-    'chkCorrelatedNaming',
     ]
+
+
+
+
+def chkSeason(season: Season, logger: logging.Logger) -> bool:
+    if not chkSeasonFiles(season, logger): return False
+    if not chkSeasonNaming(season, logger): return False
+    return True
 
 
 
@@ -39,57 +46,135 @@ def chkSeasonFiles(inp: Season|list[CoreFile], logger: logging.Logger):
 
 
 
-def chkCorrelatedNaming(season: Season, logger: logging.Logger) -> bool:
+def chkSeasonNaming(season: Season, logger: logging.Logger) -> bool:
+    '''
+    Do leveled naming checks.
+    If used in VNE, the naming fields should be already auto-filled through `doAutoIndexing()`.
+
+    #! as a general function, dont assume the naming fields has been cleaned through `cleanNamingDicts()`.
+    #! since it will be not only used in VNE but also in VNR.
+    '''
+    # local-only naming check
+    if not chkSeasonNamingPerFile(season, logger): return False
+    # mid-level naming check
+    if not chkSeasonNamingCorrelation(season, logger): return False
+    # global-level naming and sanity check
+    if not chkSeasonNamingGlobally(season, logger): return False
+    return True
+
+
+
+
+def chkSeasonNamingPerFile(season: Season, logger: logging.Logger) -> bool:
+    '''Local only naming check.'''
+
+    ok = True
+
+    logger.info('Checking the naming of season root dir ...')
+    ok = ok if chkGrpTag(season.g, logger) else False
+    ok = ok if chkTitle(season.t, logger) else False
+    ok = ok if chkSuffix(season.x, logger) else False
+
+    for cf in season.cfs:
+
+        logger.info(f'Checking the naming of file with CRC32 0x{cf.crc32} ...')
+        ok = ok if chkGrpTag(cf.g, logger) else False
+        ok = ok if chkTitle(cf.t, logger) else False
+        ok = ok if chkLocation(cf.l, logger) else False
+        ok = ok if chkClassification(cf.c, logger) else False
+        ok = ok if chkIndex(cf.i1, cf.i2, logger) else False
+        ok = ok if chkSupplementDesp(cf.s, logger) else False
+        ok = ok if chkCustomisedDesp(cf.f, logger) else False
+        ok = ok if chkSuffix(cf.x, logger) else False
+
+    return ok
+
+
+
+
+def chkSeasonNamingCorrelation(season: Season, logger: logging.Logger) -> bool:
 
     ok = True
     cfs = season.cfs
+    for i, cf in enumerate(cfs):
+        logger.debug(f'Checking for {cf.e}/0x{cf.src} ...')
 
-    for i, info in enumerate(cfs):
-        logger.debug(f'Checking for "{info.src}"...')
+        match cf.e:
 
-        # counterpart check
-        if info.e.endswith('mka'):
-            found_counterpart = False
-            for j, info2 in enumerate(cfs):
-                # mka counterpart requires [:9] all
-                if (info2.e == 'mkv') and all(cmpCoreFileNaming(info, info2)[:9]):
-                    found_counterpart = True
-                    break
-            if not found_counterpart:
-                logger.warning(f'Found dangling MKA having no counterpart MKV ("{info.crc}").')
-                ok = False
+            case 'mka': #* ---------------------------------------------------------------------------------------------
+                mkv_partners : list[CoreFile] = []
+                for ccf in (cfs[:i] + cfs[i+1:]):
+                    if all(cmpCoreFileNaming(cf, ccf)[:9]): # MKA partner matches at [:9] (before ext)
+                        if ccf.ext == 'mkv':
+                            mkv_partners.append(ccf)
+                        #? any other?
 
-        if info.e == 'ass':
-            found_counterpart = False
-            for j, info2 in enumerate(cfs):
-                # ass counterpart requires [:8] at custom (ex. suffix)
-                if (info2.e == 'mkv') and all(cmpCoreFileNaming(info, info2)[:8]):
-                    found_counterpart = True
-                    break
-            if not found_counterpart:
-                logger.warning('Found dangling ASS having no counterpart MKV.')
-                ok = False
+                #! each MKA should have 1 and only 1 MKV partner
+                if len(mkv_partners) == 0:
+                    logger.error(f'Found dangling MKA 0x{cf.crc32} having no partner video.')
+                    ok = False
+                if len(mkv_partners) >= 2:
+                    logger.error(f'Found >1 partner MKV for the ASS 0x{cf.crc32}.')
+                    ok = False
 
-        if info.e == 'flac':
-            found_counterpart = False
-            for j, info2 in enumerate(cfs):
-                # flac counterpart only requires [:4] at typename
-                # because we can have one [Menu].flac but multi [Menu01~4].png
-                if (info2.e == 'png') and all(cmpCoreFileNaming(info, info2)[:4]):
-                    found_counterpart = True
-                    break
-            if not found_counterpart:
-                logger.warning('Found dangling FLAC having no counterpart PNG.')
-                ok = False
+            case 'ass': #* ---------------------------------------------------------------------------------------------
 
-    # TODO: stopped the user if an invalid refernce is found
+                vid_partners : list[CoreFile] = []
+                ass_peers : list[CoreFile] = []
+                for ccf in (cfs[:i] + cfs[i+1:]):
+                    if all(cmpCoreFileNaming(cf, ccf)[:8]): # ASS partner matches at [:8] (before suffix)
+                        if ccf.ext in VNx_VID_EXTS:
+                            vid_partners.append(ccf)
+                        elif ccf.ext in VNx_SUB_EXTS:
+                            ass_peers.append(ccf)
+                        #? any other?
+
+                #! each ASS should have 1 and only 1 video partner
+                if len(vid_partners) == 0:
+                    logger.error(f'Found dangling ASS 0x{cf.crc32} having no counterpart video.')
+                    ok = False
+                if len(vid_partners) >= 2:
+                    logger.error(f'Found >1 partner videos for the ASS 0x{cf.crc32}.')
+                    ok = False
+
+                #! if there are >1 ASS partners for the same video, they should have different suffixes
+                for ass_peer in ass_peers:
+                    if ass_peer.x == cf.x:
+                        logger.error(f'Found peer ASS 0x{ass_peer.crc32} with the same suffix {cf.x}.')
+                        ok = False
+
+            case 'flac': #* --------------------------------------------------------------------------------------------
+
+                png_partners : list[CoreFile] = []
+                for ccf in (cfs[:i] + cfs[i+1:]):
+                    # flac partner matches at [:4] (at classification)
+                    # because we can reuse "[Menu].flac" for multi "[Menu01~4].png"
+                    if all(cmpCoreFileNaming(cf, ccf)[:4]):
+                        if ccf.ext == 'png':
+                            png_partners.append(ccf)
+                        #? any other?
+
+                #! each FLAC should have at least
+                if len(png_partners) == 0:
+                    logger.error(f'Found dangling FLAC 0x{cf.crc32} having no partner PNG.')
+                    ok = False
+                if len(png_partners) >= 2:
+                    logger.info(f'Possibly {len(png_partners)} PNGs are reusing the FLAC 0x{cf.crc32}. Take care.')
+
     # TODO: warn that naming reference refers to another reference
     return ok
 
 
 
 
-def chkSeasonGlobalNaming(season: Season, logger: logging.Logger):
+def chkSeasonNamingGlobally(season: Season, logger: logging.Logger):
+
+    #! check suffix
+
+
+
+
+
 
     num_vid = len([cf for cf in season.cfs if ((cf.l == '') and (cf.e in VNx_VID_EXTS))])
     num_ass = len([cf for cf in season.cfs if ((cf.l == '') and (cf.e in VNx_SUB_EXTS))])
@@ -161,54 +246,6 @@ def chkFinalNamingConflict(season: Season, logger: logging.Logger) -> bool:
         for j, j_name, j_crc32 in zip(itertools.count(), names[i + 1:], crc32s[i + 1:]):
             if i_name == j_name:
                 ok = False
-                logger.error(
-                    f'Found naming conflict between files with CRC32 0x{i_crc32} vs 0x{j_crc32} '
-                    f'(possibly at CSV line {i+2} and {i+j+2}).'
-                    )
-
+                logger.error(f'Found naming conflict between files with CRC32 0x{i_crc32} vs 0x{j_crc32} '
+                             f'(possibly at CSV line {i+2} and {i+j+2}).')
     return ok
-
-
-
-
-def chkSeasonPerNamingField(season: Season, logger: logging.Logger) -> bool:
-
-    ok = True
-
-    ok = ok if chkGrpTag(season.g, logger) else False
-    ok = ok if chkTitle(season.t, logger) else False
-    ok = ok if chkSuffix(season.x, logger) else False
-
-    for cf in season.cfs:
-        ok = ok if chkGrpTag(cf.g, logger) else False
-        ok = ok if chkTitle(cf.t, logger) else False
-        ok = ok if chkLocation(cf.l, logger) else False
-        ok = ok if chkTypeName(cf.c, logger) else False
-        ok = ok if chkIndex(cf.i1, cf.i2, logger) else False
-        ok = ok if chkNote(cf.n, logger) else False
-        ok = ok if chkCustom(cf.f, logger) else False
-        ok = ok if chkSuffix(cf.x, logger) else False
-
-    return ok
-
-
-
-
-def chkSeasonNaming(season: Season, logger: logging.Logger) -> bool:
-    if not chkSeasonPerNamingField(season, logger): return False
-    if not chkCorrelatedNaming(season, logger): return False
-    if not chkSeasonGlobalNaming(season, logger): return False
-
-    return True
-
-
-
-    return True, default, ret_infos
-
-
-
-
-def chkSeason(season: Season, logger: logging.Logger) -> bool:
-    if not chkSeasonNaming(season, logger): return False
-    if not chkSeasonFiles(season, logger): return False
-    return True
