@@ -39,7 +39,8 @@ def chkNamingDicts(default_dict: dict[str, str], naming_dicts: list[dict[str, st
     logger.info('Checking the csv content ...')
 
     try:
-        paths = [default_dict[FULLPATH_VAR]] + [d[FULLPATH_VAR] for d in naming_dicts]
+        output_path = default_dict[FULLPATH_VAR]
+        input_paths = [d[FULLPATH_VAR] for d in naming_dicts]
 
         #! 1. there must be at least one file specified
         if not naming_dicts:
@@ -47,12 +48,13 @@ def chkNamingDicts(default_dict: dict[str, str], naming_dicts: list[dict[str, st
             raise NamingDraftError
 
         #! 2. all files should have a path specified (except the default)
-        for i, path in enumerate(paths[1:], start=3):
+        for i, path in enumerate(input_paths, start=3):  # TODO: 3 is incorrect if the base not used or not the first
             if not path:
                 logger.error(f'Missing file path at possibly line {i}.')
                 raise NamingDraftError
 
-        # #! 3. no invalid characters should exist in the path
+        #! 3. no invalid characters should exist in the path
+        #! disabled since this is not necessary on Linux/MacOS, it's ok if only accessible
         # all_path_chars_valid = True
         # for path in paths:
         #     if any((c in path) for c in INVALID_FILENAME_CHARS):
@@ -62,9 +64,9 @@ def chkNamingDicts(default_dict: dict[str, str], naming_dicts: list[dict[str, st
         #     logger.error('Rejected the naming draft. Stopping ...')
         #     raise NamingDraftError
 
-        #! 4. all files should be valid and exist
+        #! 4. all files should exist
         all_files_exists = True
-        for path in paths[1:]:
+        for path in input_paths:
             try:
                 if not Path(path).is_file():
                     logger.error(f'File not found: "{path}".')
@@ -76,12 +78,12 @@ def chkNamingDicts(default_dict: dict[str, str], naming_dicts: list[dict[str, st
             raise NamingDraftError
 
         #! 5. the default path should be an existing file
-        if Path(paths[0]).is_file():
+        if Path(output_path).is_file():
             logger.error('The default output dir exists as a file.')
             raise NamingDraftError
 
         #! 6. there is no identical path
-        all_paths = [Path(p).resolve().as_posix() for p in paths]
+        all_paths = [Path(p).resolve().as_posix() for p in input_paths]
         if len(set(all_paths)) != len(all_paths):
             logger.error('Found identical paths.')
             raise NamingDraftError
@@ -110,11 +112,12 @@ def chkNamingDicts(default_dict: dict[str, str], naming_dicts: list[dict[str, st
                 all_found = False
         if not all_found: raise NamingDraftError
 
-        #! 10 there is a default title, or all files have their own title
-        titles = [default_dict[TITLE_VAR]] + [d[TITLE_VAR] for d in naming_dicts]
-        if not titles[0] and not all(titles[1:]):
-            logger.error('Missing title. You should set a base/default title, or set each title for all files.')
-            raise NamingDraftError
+        #! 10. there is a default title, or all files have their own title
+        default_title = default_dict[TITLE_VAR]
+        perfile_titles = [d[TITLE_VAR] for d in naming_dicts]
+        if not default_title and not all(perfile_titles):
+            logger.warning('Missing title. You should set a base/default title, or set each title for all files.')
+            # raise NamingDraftError #! this is no longer considered unacceptable
 
     except NamingDraftError:
         logger.error('Rejected the naming draft. Stopping ...')

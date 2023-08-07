@@ -38,16 +38,16 @@ def cleanNamingDicts(default_dict:dict[str, str], naming_dicts:list[dict[str, st
     Unacceptable characters are silently removed, so the program and the use wont be bothered handling them.
     '''
 
-    logger.debug('PreClean: ' + ('|'.join(f'{k}={v}' for k, v in default_dict.items())))
+    logger.debug('PreClean: ' + ('|'.join(default_dict.values())))
     default_dict[FULLPATH_VAR] = normInputPath(default_dict[FULLPATH_VAR])
     default_dict[GRPTAG_VAR] = normFullGroupTag(default_dict[GRPTAG_VAR])
     default_dict[TITLE_VAR] = normTitle(default_dict[TITLE_VAR])
     default_dict[SUFFIX_VAR] = normFullSuffix(default_dict[SUFFIX_VAR])
-    logger.debug('AftClean: ' + ('|'.join(f'{k}={v}' for k, v in default_dict.items())))
+    logger.debug('AftClean: ' + ('|'.join(default_dict.values())))
 
     for naming_dict in naming_dicts:
 
-        logger.debug('PreClean: ' + ('|'.join(f'{k}={v}' for k, v in naming_dict.items())))
+        logger.debug('PreClean: ' + ('|'.join(naming_dict.values())))
         naming_dict[FULLPATH_VAR] = normInputPath(naming_dict[FULLPATH_VAR])
         naming_dict[CRC32_VAR] = rmInvalidChars(naming_dict[CRC32_VAR])
         naming_dict[GRPTAG_VAR] = normFullGroupTag(naming_dict[GRPTAG_VAR])
@@ -59,7 +59,7 @@ def cleanNamingDicts(default_dict:dict[str, str], naming_dicts:list[dict[str, st
         naming_dict[SUPPLEMENT_VAR] = normDescription(naming_dict[SUPPLEMENT_VAR])
         naming_dict[CUSTOM_VAR] = normDescription(naming_dict[CUSTOM_VAR])
         naming_dict[SUFFIX_VAR] = normFullSuffix(naming_dict[SUFFIX_VAR])
-        logger.debug('AftClean: ' + ('|'.join(f'{k}={v}' for k, v in naming_dict.items())))
+        logger.debug('AftClean: ' + ('|'.join(naming_dict.values())))
 
 
 
