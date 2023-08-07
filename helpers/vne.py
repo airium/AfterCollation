@@ -1,6 +1,6 @@
 import shutil
 import logging
-
+import itertools
 from pathlib import Path
 from functools import partial
 from multiprocessing import Pool
@@ -64,7 +64,12 @@ def cleanNamingDicts(default_dict:dict[str, str], naming_dicts:list[dict[str, st
 
 
 
-def applyNamingDicts(season:Season, default_dict:dict[str, str], naming_dicts:list[dict[str, str]], logger:logging.Logger):
+def applyNamingDicts(
+    season: Season,
+    default_dict: dict[str, str],
+    naming_dicts: list[dict[str, str]],
+    logger: logging.Logger
+    ):
     '''
     Do a plain copy from the user input (VND.csv) to our internal data structure (Season).
     However, we will fill some empty fields with default values if not specified.
@@ -83,7 +88,7 @@ def applyNamingDicts(season:Season, default_dict:dict[str, str], naming_dicts:li
         grptags = [naming_dict[GRPTAG_VAR] for naming_dict in naming_dicts]
         if all(grptags):
             season.g = max(set(grptags), key=grptags.count)
-            logger.info(f'Found empty base/default group tag but this is filled for each file. '
+            logger.info('Found empty base/default group tag but this is filled for each file. '
                         f'The program assumed the most common "{season.g}" as the title for the root dir. '
                         'You should better recheck this.')
         else:
@@ -96,35 +101,51 @@ def applyNamingDicts(season:Season, default_dict:dict[str, str], naming_dicts:li
         titles = [naming_dict[TITLE_VAR] for naming_dict in naming_dicts]
         if any(titles):
             season.t = max(set(titles), key=titles.count)
-            logger.info(f'Found empty base/default show name but this is filled for each file. '
+            logger.info('Found empty base/default show name but this is filled for each file. '
                         f'The program assumed the most common "{season.t}" as the show name for the root dir. '
                         'You should better recheck this.')
         else:
             season.t = FALLBACK_TITLE
-            logger.info(f'Found empty base/default show name everywhere. The program cannot guess this for you, so filled it with a mystery value.')
+            logger.info('Found empty base/default show name everywhere. '
+                        'The program cannot guess this for you, so filled it with a mystery value.')
 
     season.x = default_dict[SUFFIX_VAR]
     # season.dst = default_dict[FULLPATH_VAR]
 
-    for cf, naming_dict in zip(cfs, naming_dicts):
+    for i, cf, naming_dict in zip(itertools.count(), cfs, naming_dicts):
         logger.info(f'Applying naming plan for "{cf.crc}" ...')
 
         cf.g = naming_dict[GRPTAG_VAR] if naming_dict[GRPTAG_VAR] else season.g
         if cf.g != season.g:
-            logger.warning('Using non-default group name.')
+            logger.warning('Using non-default group tag.')
 
         cf.t = naming_dict[TITLE_VAR] if naming_dict[TITLE_VAR] else season.t
         if cf.t != season.t:
-            logger.warning('Using non-default show name.')
+            logger.warning('Using non-default title.')
 
-        if naming_dict[CUSTOM_VAR] and (
-            any((naming_dict[CLASSIFY_VAR], naming_dict[IDX1_VAR], naming_dict[IDX2_VAR], naming_dict[SUPPLEMENT_VAR]))):
-            logger.warning('Found using customised name. Will clear typename, main/sub index and note fields.')
-        cf.f = naming_dict[CUSTOM_VAR] if naming_dict[CUSTOM_VAR] else ''
-        cf.c = '' if cf.f else naming_dict[CLASSIFY_VAR]
-        cf.i1 = '' if cf.f else naming_dict[IDX1_VAR]
-        cf.i2 = '' if cf.f else naming_dict[IDX2_VAR]
-        cf.s = '' if cf.f else naming_dict[SUPPLEMENT_VAR]
+        if naming_dict[CUSTOM_VAR]:
+            if m := re.match(CRC32_CSV_PATTERN, naming_dict[CUSTOM_VAR]):
+                crc32 = m.group('crc32').lower()
+                for ref_cf in (cfs[:i] + cfs[i+1:]):
+                    if ref_cf.crc32.lower() == crc32:
+                        cf.depends = ref_cf
+                        logger.info(f'Set file 0x{cf.crc32} to copy/link the naming of file 0x{ref_cf.crc32}.')
+                        break
+                if not cf.depends:
+                    logger.error(f'Failed to find the appointed file 0x{crc32} to copy/link the naming from.')
+            else:
+                if any((naming_dict[CLASSIFY_VAR],
+                        naming_dict[IDX1_VAR],
+                        naming_dict[IDX2_VAR],
+                        naming_dict[SUPPLEMENT_VAR])):
+                    logger.warning('Found using customised description. '
+                                   'Will clear classification, main/sub index and supplement fields.')
+                cf.f = naming_dict[CUSTOM_VAR]
+        else:
+            cf.c = naming_dict[CLASSIFY_VAR]
+            cf.i1 = naming_dict[IDX1_VAR]
+            cf.i2 = naming_dict[IDX2_VAR]
+            cf.s = naming_dict[SUPPLEMENT_VAR]
 
         cf.l = STD_SPS_DIRNAME if (cf.c and not naming_dict[LOCATION_VAR]) else ''
 
@@ -136,7 +157,7 @@ def applyNamingDicts(season:Season, default_dict:dict[str, str], naming_dicts:li
         if season.x and (season.x in AVAIL_SEASON_LANG_SUFFIXES):
             cf.x = season.x
             if naming_dict[SUFFIX_VAR]:
-                logger.warning(f'Overwrite file suffix with the base/default language suffix "{default_dict[SUFFIX_VAR]}".')
+                logger.warning(f'Overridden suffix with the base/default language suffix "{default_dict[SUFFIX_VAR]}".')
         # #! there is a missing case above: root is missing language tag, but videos have language tags
         # #! since the default_dict will be disposed after this function and wont get checked afterwards
         # #! we need to catch it now
