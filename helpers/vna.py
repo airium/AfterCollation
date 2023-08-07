@@ -70,7 +70,7 @@ def loadVNANamingFile(vna_file:Path|None, logger:logging.Logger) -> tuple[dict, 
         return {}, []
 
     try:
-        default_dict : dict[str, str] = {}
+        default_dict : dict[str, str] = {var: '' for var in VNA_ALL_DICT.values()}
         naming_dicts : list[dict[str, str]] = []
         for data_dict in data_dicts:
             #* default dict ------------------------------------------
@@ -83,7 +83,7 @@ def loadVNANamingFile(vna_file:Path|None, logger:logging.Logger) -> tuple[dict, 
                     break
             if is_base_dict: continue
             #* per file dict -----------------------------------------
-            naming_dict : dict[str, str] = {}
+            naming_dict : dict[str, str] = {var: '' for var in VNA_ALL_DICT.values()}
             for k, v in VNA_PERSISTENT_DICT.items():
                 naming_dict[v] = data_dict.get(k, '')
             for k, v in VNA_USER_DICT.items():

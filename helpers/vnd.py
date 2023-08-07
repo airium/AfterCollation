@@ -72,7 +72,7 @@ def loadVNDNaming(vnd_csv:Path, logger:logging.Logger) -> tuple[dict[str, str], 
     csv_dicts = unquotFields4CSV(csv_dicts)
 
     try:
-        default_dict : dict[str, str] = {}
+        default_dict : dict[str, str] = {var: '' for var in VND_ALL_DICT.values()}
         naming_dicts : list[dict[str, str]] = []
         for csv_dict in csv_dicts:
             #* default dict ------------------------------------------
@@ -85,7 +85,7 @@ def loadVNDNaming(vnd_csv:Path, logger:logging.Logger) -> tuple[dict[str, str], 
                     break
             if is_base_dict: continue
             #* per file dict -----------------------------------------
-            naming_dict : dict[str, str] = {}
+            naming_dict : dict[str, str] = {var: '' for var in VND_ALL_DICT.values()}
             for k, v in VND_PERSISTENT_DICT.items():
                 naming_dict[v] = csv_dict.get(k, '')
             for k, v in VND_USER_DICT.items():
