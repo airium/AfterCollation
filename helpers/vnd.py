@@ -1,6 +1,6 @@
-import logging
 import itertools
 from pathlib import Path
+from logging import Logger
 
 from configs import *
 from utils import *
@@ -11,8 +11,9 @@ from helpers.corefile import CF
 
 
 __all__ = [
-    'toVNDNamingDicts',
-    'loadVNDNaming',
+    'toVndCsvDicts',
+    'readVndCSV',
+    'writeVndCsv',
     'doEarlyNamingGuess',
     'guessNamingFieldsFromSimpleFilename',
     'guessNamingFields4ASS',
@@ -23,24 +24,21 @@ __all__ = [
 
 
 
-def toVNDNamingDicts(cfs:list[CF], logger:logging.Logger) -> list[dict[str, str]]:
+def toVndCsvDicts(cfs: list[CF], logger: Logger) -> list[dict[str, str]]:
     ret = []
 
     for cf in cfs:
-        d : dict[str, str] = dict()
 
-        for k, v in VND_FULL_DICT.items():
-            d[k] = ''
+        d: dict[str, str] = {}
+        d.update({k: '' for k in VND_FULL_DICT.keys()})
+        d.update({k: getattr(cf, v) for k, v in VND_USER_DICT.items()})
 
         d[FULLPATH_CN] = cf.src
         d[CRC32_CN] = cf.crc32
+        d[QLABEL_CN] = cf.qlabel
+        d[QLABEL_CN] = cf.tlabel
 
-        for k, v in VND_USER_DICT.items():  # user fields
-            # these keys may be already filled from VNA
-            d[k] = getattr(cf, v, '')
-
-        # the following keys are just for presenting mediainfo
-        # they have no usage in later stages
+        # the following keys are just for presenting mediainfo in CSV, having no usage in later stages
         d[DURATION_CN] = cf.fmtGeneralDuration()
         d[FILESIZE_CN] = cf.fmtFileSize()
         d[EXTENSION_CN] = cf.ext
@@ -51,8 +49,7 @@ def toVNDNamingDicts(cfs:list[CF], logger:logging.Logger) -> list[dict[str, str]
         d[TR_TEXT_CN] = '／'.join(cf.digestTextTracksInfo())
         d[TR_MENU_CN] = '／'.join(cf.digestMenuTracksInfo())
 
-        d[QLABEL_CN] = cf.qlabel
-        d[QLABEL_CN] = cf.tlabel
+        logger.debug(f'Added: {"|".join(d.keys())}.')
 
         ret.append(d)
 
@@ -61,55 +58,67 @@ def toVNDNamingDicts(cfs:list[CF], logger:logging.Logger) -> list[dict[str, str]
 
 
 
-def loadVNDNaming(vnd_csv:Path, logger:logging.Logger) -> tuple[dict[str, str], list[dict[str, str]]]:
+def readVndCSV(vnd_csv_path: Path, logger: Logger) -> tuple[dict[str, str], list[dict[str, str]]]:
 
-    logger.info(f'Loading "{vnd_csv}" ...')
+    logger.debug(f'Loading "{vnd_csv_path}" ...')
 
-    if not vnd_csv or not vnd_csv.is_file():
+    if not vnd_csv_path or not vnd_csv_path.is_file():
         return {}, []
 
-    success, csv_dicts = readCSV(vnd_csv)
+    success, csv_dicts = readCSV(vnd_csv_path)
     if not success:
-        logger.error(f'Failed to read "{vnd_csv}".')
+        logger.error(f'Failed to read "{vnd_csv_path}".')
         return {}, []
     csv_dicts = unquotFields4CSV(csv_dicts)
 
     try:
-        default_dict : dict[str, str] = {var: '' for var in VND_FULL_DICT.values()}
-        naming_dicts : list[dict[str, str]] = []
+        base_naming_dict: dict[str, str] = {var: '' for var in VND_FULL_DICT.values()}
+        file_naming_dicts: list[dict[str, str]] = []
         for csv_dict in csv_dicts:
-            #* default dict ------------------------------------------
-            is_base_dict = False
-            for k, v in csv_dict.items():
-                if v == BASE_LINE_LABEL:
-                    for kk, vv in VND_BASE_LINE_USER_DICT.items():
-                        default_dict[vv] = csv_dict.get(kk, '')
-                    is_base_dict = True
-                    break
-            if is_base_dict: continue
-            #* per file dict -----------------------------------------
-            naming_dict : dict[str, str] = {var: '' for var in VND_FULL_DICT.values()}
-            for k, v in VND_PERSISTENT_DICT.items():
-                naming_dict[v] = csv_dict.get(k, '')
-            for k, v in VND_USER_DICT.items():
-                naming_dict[v] = csv_dict.get(k, '')
-            naming_dicts.append(naming_dict)
-
-        enables = toEnabledList([naming_dict[ENABLE_VAR] for naming_dict in naming_dicts])
-        enabled_naming_dicts = list(itertools.compress(naming_dicts, enables))
-        if len(naming_dicts) != len(enabled_naming_dicts):
-            logger.info(f'Enabled {len(enabled_naming_dicts)} out of {len(naming_dicts)} files in the naming plan.')
+            if any(v == BASE_LINE_LABEL for v in csv_dict.values()):
+                #* default dict --------------------------------------------------------------------
+                #! dont use get() as we want to assert csv_dict has all VND_FULL_DICT.keys()
+                base_naming_dict.update({v: csv_dict[k] for k, v in VND_FULL_DICT.items()})
+            else:
+                #* per file dict -------------------------------------------------------------------
+                naming_dict: dict[str, str] = {}
+                naming_dict.update({var: '' for var in VND_FULL_DICT.values()})
+                #! dont use get() as we want to assert csv_dict has all VND_FULL_DICT.keys()
+                naming_dict.update({v: csv_dict[k] for k, v in VND_FULL_DICT.items()})
+                file_naming_dicts.append(naming_dict)
+        enables = toEnabledList([naming_dict[ENABLE_VAR] for naming_dict in file_naming_dicts])
+        enabled_naming_dicts = list(itertools.compress(file_naming_dicts, enables))
+        if len(file_naming_dicts) != len(enabled_naming_dicts):
+            logger.info(f'Loaded "{vnd_csv_path}" with {len(enabled_naming_dicts)}/{len(file_naming_dicts)} files.')
+        else:
+            logger.info(f'Loaded "{vnd_csv_path}".')
     except:
-        logger.error(f'Failed to load data from "{vnd_csv}".')
+        logger.error(f'Failed to load data from "{vnd_csv_path}".')
         return {}, []
 
-    logger.info(f'Loaded data from "{vnd_csv}".')
-    return default_dict, enabled_naming_dicts
+    return base_naming_dict, enabled_naming_dicts
 
 
 
 
-def guessNamingFieldsFromSimpleFilename(cf:CF, logger:logging.Logger):
+def writeVndCsv(
+    csv_path: Path, base_csv_dict: dict[str, str], file_csv_dicts: list[dict[str, str]], logger: Logger
+    ) -> bool:
+
+    logger.debug(f'Writing VND csv ...')
+    csv_dicts = quotFields4CSV([base_csv_dict] + file_csv_dicts)
+    if not writeCSV(csv_path, csv_dicts):
+        logger.error(f'Failed to save "{csv_path}".')
+        return False
+    else:
+        logger.info(f'Saved to "{csv_path}".')
+        return True
+
+
+
+
+
+def guessNamingFieldsFromSimpleFilename(cf:CF, logger:Logger):
     '''Sometimes the video may be already simply named. Let's try our luck.'''
 
     filename = m.group('stem') if (m := re.match(GENERIC_FILENAME, cf.path.name)) else ''
@@ -134,7 +143,7 @@ def guessNamingFieldsFromSimpleFilename(cf:CF, logger:logging.Logger):
 
 
 
-def guessNamingFields4ASS(cf:CF, logger:logging.Logger):
+def guessNamingFields4ASS(cf:CF, logger:Logger):
     '''We should be able to guess the eposide index and the language suffix if lucky.'''
 
     #* firstly let's try to get the info from filename
@@ -187,7 +196,7 @@ def guessNamingFields4ASS(cf:CF, logger:logging.Logger):
 
 
 
-def guessNamingFields4ARC(cf:CF, logger:logging.Logger):
+def guessNamingFields4ARC(cf:CF, logger:Logger):
     filenames = getArchiveFilelist(cf.path)
     has_png, has_font = False, False
     for filename in filenames:
@@ -202,7 +211,7 @@ def guessNamingFields4ARC(cf:CF, logger:logging.Logger):
 
 
 
-def guessNamingFields4MKA(mka:CF, cfs:list[CF], logger:logging.Logger):
+def guessNamingFields4MKA(mka:CF, cfs:list[CF], logger:Logger):
 
     candidates = [cf for cf in cfs if (cf.e == 'mkv' and matchTime(mka.duration, cf.duration))]
     if len(candidates) == 1:
@@ -211,7 +220,7 @@ def guessNamingFields4MKA(mka:CF, cfs:list[CF], logger:logging.Logger):
 
 
 
-def doEarlyNamingGuess(cfs:list[CF], logger:logging.Logger):
+def doEarlyNamingGuess(cfs:list[CF], logger:Logger):
     '''We can actually guess very few fields at VND, but try it.'''
 
     for i, cf in enumerate(cfs):

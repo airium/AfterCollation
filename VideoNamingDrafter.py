@@ -23,7 +23,7 @@ def main(input_dir: Path, vna_file: Path|None = None):
     vna_base_naming_dict, vna_file_naming_dicts = loadVNANamingFile(vna_file, logger)
 
     paths = listVNxFilePaths(input_dir, logger)
-    cfs = toCoreFileObjs(paths, logger, mp=getCRC32MultiProc(paths, logger))
+    cfs = toCoreFilesWithTqdm(paths, logger, mp=getCRC32MultiProc(paths, logger))
     cmpCfCRC32(cfs, findCRC32InFilenames(paths), logger)
     if ENABLE_FILE_CHECKING_IN_VND: chkSeasonFiles(cfs, logger)
 
@@ -33,23 +33,15 @@ def main(input_dir: Path, vna_file: Path|None = None):
     # so we cannot use file_naming_dicts for copyNamingFromVNA()
     doEarlyNamingGuess(cfs, logger)
     copyNamingFromVNA(cfs, vna_file_naming_dicts, logger)
-    file_naming_dicts = toVNDNamingDicts(cfs, logger)
+    file_csv_dicts = toVndCsvDicts(cfs, logger)
 
     # don't forget to update the default dict from VNA, which is not updated in fillFieldsFromVNA()
     # NOTE leave useful fields as '' to notify the user that they can fill it
-    base_naming_dict = dict(zip(file_naming_dicts[0].keys(), itertools.repeat(BASE_LINE_LABEL)))
-    for k in VND_BASE_LINE_USER_DICT.keys():
-        base_naming_dict[k] = ''
-    for k, v in VNA_BASE_LINE_USER_DICT.items():
-        base_naming_dict[k] = vna_base_naming_dict.get(v, '')
+    base_csv_dict = {k: BASE_LINE_LABEL for k in VND_FULL_DICT.keys()}
+    base_csv_dict.update({k: '' for k in VND_BASE_LINE_USER_DICT.keys()})
+    base_csv_dict.update({k: vna_base_naming_dict.get(v, '') for k, v in VNA_BASE_LINE_USER_DICT.items()})
 
-    logger.info(f'Preparing to generate the naming proposal file ...')
-    csv_path = input_dir.parent.joinpath(f'VND-{TIMESTAMP}.csv')
-    csv_dicts = quotFields4CSV([base_naming_dict] + file_naming_dicts)
-    if not writeCSV(csv_path, csv_dicts):
-        logger.error(f'Failed to save the naming proposal to "{csv_path}".')
-    else:
-        logger.info(f'The naming proposal is saved to "{csv_path}".')
+    writeVndCsv(input_dir.parent.joinpath(f'VND-{TIMESTAMP}.csv'), base_csv_dict, file_csv_dicts, logger)
 
 
 
