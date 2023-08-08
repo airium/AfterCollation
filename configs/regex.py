@@ -1,14 +1,10 @@
 import re
 from re import compile as rc
 
-
-
-BASIC_CRC32_PATTERN = rc(r'^(?P<crc32>[0-9a-f]{8})$', re.IGNORECASE)
-CRC32_IN_FILENAME_PATTERN = rc(r'\[(?P<crc32>[0-9a-f]{8})\]', re.IGNORECASE)
-CRC32_CSV_PATTERN = rc(r'^(0x)?(?P<crc32>[0-9a-f]{8})$', re.IGNORECASE)
-
-
-
+CRC32_BASIC_REGEX = rc(r'(0x)?(?P<crc32>[0-9a-f]{8})', re.IGNORECASE)
+CRC32_STRICT_REGEX = rc(r'^(?P<crc32>[0-9a-f]{8})$', re.IGNORECASE)
+CRC32_FILENAME_REGEX = rc(r'\[(?P<crc32>[0-9a-f]{8})\]', re.IGNORECASE)
+CRC32_CSV_FIELD_REGEX = rc(r'^(0x)?(?P<crc32>[0-9a-f]{8})$', re.IGNORECASE)
 
 GENERIC_FILENAME = rc(r'^(?P<m2ts_idx>[0-9]{5})?(?P<stem>.*[^]])(\[(?P<crc32>[0-9a-f]{8})\])?\.(mkv|mka|mp4|flac|png|ass|7z|zip|rar)$', re.IGNORECASE)
 EXPECTED_SIMPLE_NAME = rc(r'^(?P<typename>[^0-9]*)[ -]*(?P<idx>[0-9]*(\.[1-9])?)[ -]*(?P<note>.*)$')
@@ -20,10 +16,32 @@ VNA_CONFS_FILENAME_PATTERN = rc(r'^VNA-[0-9]{6}-[0-9]{6}\.(csv|json|yaml)$')
 VND_TABLE_FILENAME_PATTERN = rc(r'^VND-[0-9]{6}-[0-9]{6}\.csv$')
 VNR_TABLE_FILENAME_PATTERN = rc(r'^VNR-[0-9]{6}-[0-9]{6}\.csv$')
 
+VCBS_SERIES_ROOT_DIRNAME_PATTERN = rc(
+    r'^'
+    r'\[(?P<g>[^]]+)\]'
+    r'(?P<t>[^[]+)'
+    r'$'
+    , re.IGNORECASE)
+VCBS_SEASON_ROOT_DIRNAME_PATTERN = rc(
+    r'^'
+    r'\[(?P<g>[^]]+)\]'
+    r'(?P<t>[^[]+)'
+    r'\[(?P<qlabel>[^]]*[0-9]{3}p)\]'
+    r'(\[(?P<x>[^0-9][^]]*)\])?'
+    r'$'
+    , re.IGNORECASE)
+VCBS_COREFILE_FILENAME_PATTERN = rc(
+    r'^'
+    r'\[(?P<g>[^]]+)\]'
+    r'(?P<t>[^[]+)'
+    r'(\[(?P<d>[^]]+)\])?'
+    r'(\[(?P<qlabel>[^]]*[0-9]{3}p)\]'
+    r'\[(?P<tlabel>(x264|x265)(_[2-9]?(flac|aac|ac3|dts))*)\])?'
+    r'((?P<b>\[)?(\.)?(?P<x>(?(b)[^]]+|[^.]*))\]?)?'
+    r'\.(?P<e>mkv|mka|mp4|flac|png|ass|7z|zip|rar)'
+    r'$'
+    , re.IGNORECASE)
 
-# TODO [^0-9[\]] is not robust for misclabel
-VCBS_SERIES_ROOT_DIRNAME_PATTERN = rc(r'^\[(?P<grptag>.*(VCB-Studio|VCB-S).*)\] (?P<title>[^\[\]]+)( \[(?P<misclabel>[^0-9[\]])\])?$')
-VCBS_SEASON_ROOT_DIRNAME_PATTERN = rc(r'^\[(?P<grptag>.*(VCB-Studio|VCB-S).*)\] (?P<title>[^\[\]]+) \[(?P<qlabel>[^\]]*[0-9]{3}p)\](\[(?P<misclabel>[^0-9[\]])\])?$')
 VOLUME_NAME_PATTERN = rc(r'^(?P<pre>.*)(?P<idx>[0-9]{1,3})(?P<aft>[^0-9]*)$')
 OKE_FILESTEM_PATTERN = rc(r'^(?P<idx1>[0-9]{5})[ -]*(?P<idx2>[0-9]*) *(\[(?P<crc32>[0-9a-zA-Z]{8})\])?$')
 STD_CHAP_TXT_PATTERN = rc(r'((?P<lang>[a-z]{2}):)?(?P<text>Chapter (?P<idx>[0-9]{2,3}))')
@@ -44,6 +62,7 @@ CATALOG_MULTIDISC_PATTERN = rc(r'(?P<catalog>.+[0-9])(~[0-9]{1,3}|-([1-9]|0[1-9]
 # NOTE try to find both '012. XXXX.EXT' and '012.EXT' where the latter is not a rare mistake
 FRONT_INDEXED_TRACKNAME_PATTERN = rc(r'(?P<idx>[0-9]{1,3})((?P<dot>\.)?(?P<space> )?(?P<trname>.*)|)\.(?P<ext>flac|mp3|m4a)')
 FILENAME_IN_CUE_PATTERN = rc(r'(FILE "(?P<filename>.+\.flac)" WAVE)')
+
 
 # some albums may lack yymmdd, the only general pattern is the format suffix
 ALBUM_DIR_MIN_PATTERN = rc(r'^.+\((flac|aac|mp3)((\+[a-z0-9]{1,4})*)\)$')
