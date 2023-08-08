@@ -15,9 +15,70 @@ COMMON_SUBS_LANGS = ('ja', 'en')
 
 # video naming commons
 COMMON_GRP_NAMES = (
-    'VCB-Studio','Airota', 'SweetSub', 'Nekomoe kissaten', 'DMG', 'SumiSora', 'UHA-WINGS', 'BeanSub',
-    'XKsub', 'MakiYuu', 'EnkanRec', 'SBSUB', 'MakariHoshiyume', 'Kamigami', 'Liuyun', 'FZSD', 'Pussub',
-    'Mabors-Sub', 'KTXP', 'philosophy-raws', 'mawen1250')
+    # sorted by the number of occurrences in filenames
+    'VCB-Studio',        # 41977
+    'Nekomoe kissaten',  # 5989
+    'Airota',            # 2631
+    'DMG',               # 1971
+    'SweetSub',          # 1471
+    'UHA-WINGS',         # 1402
+    'Kamigami',          # 1373
+    'Liuyun',            # 874
+    'FZSD',              # 807
+    'KTXP',              # 718
+    'BeanSub',           # 624
+    'MakariHoshiyume',   # 603
+    'VCB-S',             # 572
+    'ANK-Raws',          # 502
+    'MH',                # 448
+    'Mabors',            # 397
+    'Hakugetsu',         # 356
+    'XKsub',             # 285
+    'DHR',               # 283
+    'SumiSora',          # 269
+    'NEOQSW',            # 243
+    'EnkanRec',          # 243
+    'Pussub',            # 234
+    'Nyamazing',         # 221
+    'LoliHouse',         # 209
+    'RATH',              # 203
+    'FreeSub',           # 187
+    'philosophy-raws',   # 146
+    'YYDM',              # 146
+    'AI-Raws',           # 135
+    'YUI-7',             # 128
+    'T.H.X',             # 126
+    'LoveEcho',          # 112
+    'MMZY-Sub',          # 92
+    'YlbudSub',          # 68
+    'FLsnow',            # 60
+    'Shirokoi',          # 60
+    'DMG-Sub',           # 58
+    'TUcaptions',        # 53
+    'Lemonade',          # 51
+    'TSDM',              # 48
+    'SBSUB',             # 48
+    'Ylbud-Sub',         # 43
+    'Makino House',      # 42
+    'PCSUB',             # 40
+    'Mabors-Sub',        # 21
+    'MakiYuu',           # 21
+    'Maho.sub',          # 18
+    'Eupho',             # 15
+    'NijigakuSub',       # 15
+    # 'PLF',               # 14
+    'MLSUB',             # 13
+    # 'KNA-Subs',          # 12
+    'FZsub',             # 9
+    'KimiUsofans Sub',   # 9
+    # 'LBS',               # 7
+    # 'Nanjo-Sub',         # 1
+    'Xeon-Raw',          # 1
+    # 'ARM-Raw',           # 1
+    # 'Nyasama',           # 1
+    'mawen1250',
+    )
+
 COMMON_VIDEO_LOCATIONS : list[str] = ['', 'SPs']
 COMMON_TYPENAME : list[str] = [
     '',

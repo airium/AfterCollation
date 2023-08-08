@@ -2,9 +2,10 @@ import string
 
 TAG_SPLITTER = '&'
 
+
 # these are the set of characters considered safe in each naming part
 #! though they are not 100% safe
-SAFE_G_CHARS = string.ascii_letters + string.digits + ' -'
+SAFE_G_CHARS = ' -.7ABCDEFGHIKLMNOPQRSTUVWXYZabcdefghijklmnoprstuvwyz'
 SAFE_T_CHARS = string.ascii_letters + string.digits + ' ,.-~？!@'
 SAFE_L_CHARS = string.ascii_letters +                 ' '
 SAFE_C_CHARS = string.ascii_letters +                 ' _&'
@@ -13,7 +14,7 @@ SAFE_X_CHARS = string.ascii_letters
 
 # these characters are rarely used in naming but allowed, so give a warning
 # WARN_CHARS = "`^!#$%&',;._+-=~@()[]{} ？＜＞"
-WARN_G_CHARS = '.'
+WARN_G_CHARS = 'Jqx012345689'
 WARN_T_CHARS = '\';_+='
 WARN_L_CHARS = '()' + string.digits
 WARN_C_CHARS = '()' + string.digits
