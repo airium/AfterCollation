@@ -11,14 +11,16 @@ from configs import *
 import helpers.season as hs
 from .formatter import *
 
+import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
 from pymediainfo import Track
 
 
 __all__ = [
     'CF',
     'CoreFile',
-    'getCoreFile',
-    'getCoreFileList',
+    'toCoreFiles',
+    'toCoreFilesWithTqdm',
     ]
 
 
@@ -67,6 +69,9 @@ class CoreFile:
             self.__audio_samples = pickAudioSamples(self.path)
 
         self.__logger: logging.Logger|None = logger
+
+        self.__qlabel: str|None = None
+        self.__tlabel: str|None = None
 
         # attach the naming fields of variable names to this instance
         for v in VNA_USER_DICT.values():
@@ -217,7 +222,7 @@ class CoreFile:
     @property
     def f(self) -> str:
         if self.depends: return self.depends.f
-        return getattr(self, CUSTOM_VAR, '')
+        return getattr(self, FULLDESP_VAR, '')
 
     @f.setter
     def f(self, v: str) -> None:
@@ -225,7 +230,7 @@ class CoreFile:
         self.i1 = ''
         self.i2 = ''
         self.s = ''
-        setattr(self, CUSTOM_VAR, v)
+        setattr(self, FULLDESP_VAR, v)
 
     @property
     def x(self) -> str:
@@ -394,12 +399,14 @@ class CoreFile:
     @property
     def qlabel(self) -> str:
         if self.depends: return self.depends.qlabel
-        return fmtQualityLabel(self, self.logger)
+        if self.__qlabel is None: self.__qlabel = fmtQualityLabel(self, self.logger)
+        return self.__qlabel
 
     @property
     def tlabel(self) -> str:
         if self.depends: return self.depends.tlabel
-        return fmtTrackLabel(self, self.logger)
+        if self.__tlabel is None: self.__tlabel = fmtTrackLabel(self, self.logger)
+        return self.__tlabel
 
     def updateFromVNA(self, vna_config: dict[str, str]) -> None:
         for k, v in VNA_USER_DICT.items():
@@ -558,28 +565,60 @@ CF = CoreFile
 
 
 
-def getCoreFile(path: Path, **kwargs: Any) -> CoreFile:
-    return CoreFile(path, **kwargs)
+def toCoreFiles(
+    paths: list[str]|list[Path],
+    logger: logging.Logger,
+    init_crc32: bool = True,
+    init_audio_samples: bool = False,
+    mp: int = NUM_IO_JOBS
+    ) -> list[CF]:
 
-
-
-
-def getCoreFileList(paths: list[Path], kwargs: dict|list[dict] = {}, mp: int = NUM_IO_JOBS) -> list[CoreFile]:
-
-    if isinstance(kwargs, dict):
-        kwargs = [kwargs] * len(paths)
-
+    logger.info(f'Loading files with {mp} workers ...')
+    paths = [Path(path) for path in paths]
     if mp > 1:
-        ret = []
-        pool = Pool(mp)
-        for path, kwarg in zip(paths, kwargs):
-            ret.append(pool.apply_async(CoreFile, (path, ), kwarg))
-        pool.close()
-        pool.join()
-        ret = [r.get() for r in ret]
+        with Pool(mp) as pool:
+            ret = []
+            kwargs = {'init_crc32': init_crc32, 'init_audio_samples': init_audio_samples}
+            for path in paths:
+                ret.append(pool.apply_async(CoreFile, kwds=kwargs))
+            pool.close()
+            pool.join()
+        cfs = [r.get() for r in ret]
     else:
-        ret = []
-        for path, kwarg in zip(paths, kwargs):
-            ret.append(CoreFile(path, **kwarg))
+        cfs = []
+        for path in paths:
+            cfs.append(CF(path, init_crc32=init_crc32))
+    return cfs
 
-    return ret
+
+
+
+def toCoreFilesWithTqdm(
+    paths: list[str]|list[Path],
+    logger: logging.Logger,
+    init_crc32: bool = True,
+    init_audio_samples: bool = False,
+    mp: int = NUM_IO_JOBS
+    ) -> list[CF]:
+
+    logger.info(f'Loading files with {mp} workers ...')
+    paths = [Path(path) for path in paths]
+    with logging_redirect_tqdm([logger]):
+        pbar = tqdm.tqdm(total=len(paths), desc='Loading', unit='file', ascii=True, dynamic_ncols=True)
+        if mp > 1:
+            with Pool(mp) as pool:
+                ret = []
+                callback = lambda _: pbar.update(1)
+                kwargs = {'init_crc32': init_crc32, 'init_audio_samples': init_audio_samples}
+                for path in paths:
+                    ret.append(pool.apply_async(CoreFile, kwds=kwargs, callback=callback))
+                pool.close()
+                pool.join()
+            cfs = [r.get() for r in ret]
+        else:
+            cfs = []
+            for path in paths:
+                cfs.append(CF(path=path, init_crc32=init_crc32, init_audio_samples=init_audio_samples))
+                pbar.update(1)
+        pbar.close()
+    return cfs
