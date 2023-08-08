@@ -1,12 +1,11 @@
 import re
-import logging
 import itertools
 from pathlib import Path
+from logging import Logger
 
-from helpers.corefile import CF
-from utils.ffmpegutils import *
-from utils.webputils import *
+from utils import *
 from configs import *
+from helpers.corefile import CF
 
 
 __all__ = ['chkImage', 'chkScansImage', 'chkImageTracks', 'cmpImageContent']
@@ -14,7 +13,7 @@ __all__ = ['chkImage', 'chkScansImage', 'chkImageTracks', 'cmpImageContent']
 
 
 
-def chkImage(cf:CF, logger:logging.Logger, decode:bool=True) -> bool:
+def chkImage(cf: CF, logger: Logger, decode: bool = True) -> bool:
 
     if cf.ext not in COMMON_IMAGE_EXTS:
         logger.info('The input file is not an image file.')
@@ -34,8 +33,8 @@ def chkImage(cf:CF, logger:logging.Logger, decode:bool=True) -> bool:
     expected_format = EXTS2FORMATS.get(cf.ext)
     if not expected_format:
         logger.error(f'Unhandled image file extension "{cf.ext}".')
-    if expected_format != cf.gtr.format:
-        logger.error(f'The actual media format "{cf.gtr.format}" mismatched file extension "{cf.ext}".')
+    if expected_format != cf.format:
+        logger.error(f'The actual media format "{cf.format}" mismatched file extension "{cf.ext}".')
         return False
 
     #* check decoding ******************************************************************************
@@ -48,7 +47,7 @@ def chkImage(cf:CF, logger:logging.Logger, decode:bool=True) -> bool:
 
 
 
-def chkScansImage(cf:CF, temp_dir:Path|None, logger:logging.Logger, decode:bool=True):
+def chkScansImage(cf:CF, temp_dir:Path|None, logger:Logger, decode:bool=True):
 
     if not chkImage(cf, logger, decode=decode): return
 
@@ -59,7 +58,7 @@ def chkScansImage(cf:CF, temp_dir:Path|None, logger:logging.Logger, decode:bool=
     else: work_file = cf.path
 
     match cf.ext:
-        #* webp ********************************************************************************************************
+    #* webp ********************************************************************************************************
         case 'webp':
             ret = tstDwebp(f'{work_file.as_posix()}')
             # NOTE don't decode the raw ret['stderr'], it may contain unknown encoding difficult to determine
@@ -104,7 +103,7 @@ def chkScansImage(cf:CF, temp_dir:Path|None, logger:logging.Logger, decode:bool=
 
 
 
-def chkImageTracks(cf:CF, logger:logging.Logger, decode:bool=True):
+def chkImageTracks(cf:CF, logger:Logger, decode:bool=True):
 
     if cf.ext not in COMMON_IMAGE_EXTS:
         logger.error(f'The file is not a known file type with image.')
@@ -121,7 +120,7 @@ def chkImageTracks(cf:CF, logger:logging.Logger, decode:bool=True):
 
 
 
-def cmpImageContent(input1:CF|list[CF], input2:CF|list[CF], logger:logging.Logger):
+def cmpImageContent(input1:CF|list[CF], input2:CF|list[CF], logger:Logger):
 
     if isinstance(input1, CF): input1 = [input1]
     if isinstance(input2, CF): input2 = [input2]

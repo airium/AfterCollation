@@ -1,15 +1,13 @@
 import os
-import random
-import logging
 import difflib
 import itertools
 from pathlib import Path
-from multiprocessing import Pool
+from logging import Logger
 
 from utils import *
-from helpers import *
 from configs import *
 from .image import *
+from helpers.corefile import CF
 
 import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
@@ -20,7 +18,7 @@ __all__ = ['chkScansNaming', 'chkScansFiles']
 
 
 
-def chkScansNaming(scans_dir:Path, logger:logging.Logger):
+def chkScansNaming(scans_dir:Path, logger:Logger):
     '''
     Check the naming of the scans folder.
 
@@ -155,7 +153,7 @@ def chkScansNaming(scans_dir:Path, logger:logging.Logger):
 
 
 
-def chkScansFiles(files:list[Path], temp_dir:Path|None, logger:logging.Logger):
+def chkScansFiles(files:list[Path], temp_dir:Path|None, logger:Logger):
 
     if DEBUG: assert all(file.is_file() for file in files)
 
