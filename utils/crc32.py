@@ -4,7 +4,7 @@ import zlib
 from pathlib import Path
 from functools import partial
 from multiprocessing import Pool
-from configs.regex import CRC32_IN_FILENAME_PATTERN, BASIC_CRC32_PATTERN
+from configs.regex import CRC32_FILENAME_REGEX, CRC32_STRICT_REGEX
 
 
 
@@ -63,7 +63,7 @@ def getCRC32List(paths:list[Path], mp:int=1, prefix:str='', read_size:int=16*2**
 
 def findCRC32InFilename(inp:str|Path) -> str:
     name = inp.name if isinstance(inp, Path) else inp
-    if m := re.findall(CRC32_IN_FILENAME_PATTERN, name):
+    if m := re.findall(CRC32_FILENAME_REGEX, name):
         return m[-1]
     return ''
 
@@ -90,9 +90,9 @@ def cmpCRC32(*, actuals:str|list[str], expects:str|list[str]) -> bool|list[bool]
 
     ret : list[bool] = []
     for (actual, expects) in zip(actuals, expects):
-        if not actual or not re.match(BASIC_CRC32_PATTERN, actual):
+        if not actual or not re.match(CRC32_STRICT_REGEX, actual):
             ret.append(False)
-        elif not expects or not re.match(BASIC_CRC32_PATTERN, expects):
+        elif not expects or not re.match(CRC32_STRICT_REGEX, expects):
             ret.append(False)
         else:
             ret.append(actual.lower() == expects.lower())

@@ -20,7 +20,7 @@ def main(csv_path: Path):
     logger = initLogger(log_path := csv_path.parent.joinpath(f'VNE-{TIMESTAMP}.log'))
     logger.info(f'Using VideoNamingExecutor (VNE) of AfterCollation {AC_VERSION}')
 
-    base_naming_dict, file_naming_dicts = loadVNDNaming(csv_path, logger)
+    base_naming_dict, file_naming_dicts = readVndCSV(csv_path, logger)
     cleanNamingDicts(base_naming_dict, file_naming_dicts, logger)
     if not chkNamingDicts(base_naming_dict, file_naming_dicts, logger): return
 
@@ -31,18 +31,18 @@ def main(csv_path: Path):
     mp = getCRC32MultiProc(src_file_paths, logger)
 
     (season := Season()).dst_parent = dst_parent_dir.as_posix()
-    season.add(toCoreFileObjs(src_file_paths, logger, mp=mp))
+    season.add(toCoreFilesWithTqdm(src_file_paths, logger, mp=mp))
     cmpCfCRC32(season.cfs, [naming_info[CRC32_VAR] for naming_info in file_naming_dicts], logger)
     applyNamingDicts(season, base_naming_dict, file_naming_dicts, logger)
     doAutoIndexing(season, logger)
     chkSeasonNaming(season, logger)
-    stageClassificationName(season, logger)
+    composeFullDesp(season, logger)
     chkNamingDependency(season, logger)
     if ENABLE_FILE_CHECKING_IN_VNE:
         if not chkSeasonFiles(season, logger): return
     if not chkFinalNamingConflict(season, logger): return
     logNamingSummary(base_naming_dict, file_naming_dicts, season, logger)
-    if not doNaming(season, hl, logger): return
+    if not doFilePlacement(season, hl, logger): return
 
 
 

@@ -121,12 +121,12 @@ def logMusicSummary(root: Path, ais: list[AlbumInfo], logger: logging.Logger):
 def logNamingSummary(base_dict:dict[str, str], naming_dicts: list[dict[str, str]], season:Season, logger: logging.Logger):
 
     logger.info(f'Naming Summary ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓')
-    logger.info(f'crc32      (ext): |U|s|e|r|I|n|p|u|t| -> |P|r|o|g|r|a|m|O|u|t|p|u|t|')
+    logger.info(f'crc32      (ext) : |U|s|e|r|I|n|p|u|t| -> |P|r|o|g|r|a|m|O|u|t|p|u|t|')
 
     g = base_dict[GRPTAG_VAR]
     s = base_dict[TITLE_VAR]
     x = base_dict[SUFFIX_VAR]
-    logger.info(f'season dir      : |{g}|{s}|{x}| -> |{season.g}|{season.t}|{season.x}|')
+    logger.info(f'season dir       : |{g}|{s}|{x}| -> |{season.g}|{season.t}|{season.x}|')
 
     lines: list[tuple[dict[str, str], CoreFile]] = []
     cfs = season.cfs[:]

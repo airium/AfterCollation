@@ -3,13 +3,13 @@ from __future__ import annotations
 import re
 from typing import Any
 from pathlib import Path
+from logging import Logger
 from multiprocessing import Pool
 
-import logging
 from utils import *
 from configs import *
-import helpers.season as hs
 from .formatter import *
+import helpers.season as hs
 
 import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
@@ -43,7 +43,7 @@ class CoreFile:
         depends: CoreFile|None = None,
         init_crc32: bool = False,
         init_audio_samples: bool = False,
-        logger: logging.Logger|None = None,
+        logger: Logger|None = None,
         ) -> None:
 
         if not (path := Path(path).resolve()).is_file():
@@ -68,7 +68,7 @@ class CoreFile:
         if init_audio_samples and self.has_audio and ENABLE_AUDIO_SAMPLES_IN_VNA:
             self.__audio_samples = pickAudioSamples(self.path)
 
-        self.__logger: logging.Logger|None = logger
+        self.__logger: Logger|None = logger
 
         self.__qlabel: str|None = None
         self.__tlabel: str|None = None
@@ -121,11 +121,11 @@ class CoreFile:
         self.__depends = depends
 
     @property
-    def logger(self) -> logging.Logger|None:
+    def logger(self) -> Logger|None:
         return self.__logger
 
     @logger.setter
-    def logger(self, logger: logging.Logger|None) -> None:
+    def logger(self, logger: Logger|None) -> None:
         self.__logger = logger
 
     @property
@@ -567,7 +567,7 @@ CF = CoreFile
 
 def toCoreFiles(
     paths: list[str]|list[Path],
-    logger: logging.Logger,
+    logger: Logger,
     init_crc32: bool = True,
     init_audio_samples: bool = False,
     mp: int = NUM_IO_JOBS
@@ -595,7 +595,7 @@ def toCoreFiles(
 
 def toCoreFilesWithTqdm(
     paths: list[str]|list[Path],
-    logger: logging.Logger,
+    logger: Logger,
     init_crc32: bool = True,
     init_audio_samples: bool = False,
     mp: int = NUM_IO_JOBS
@@ -609,9 +609,10 @@ def toCoreFilesWithTqdm(
             with Pool(mp) as pool:
                 ret = []
                 callback = lambda _: pbar.update(1)
-                kwargs = {'init_crc32': init_crc32, 'init_audio_samples': init_audio_samples}
+                kwargs = {'path': '', 'init_crc32': init_crc32, 'init_audio_samples': init_audio_samples}
                 for path in paths:
-                    ret.append(pool.apply_async(CoreFile, kwds=kwargs, callback=callback))
+                    (kwds := kwargs.copy())['path'] = path
+                    ret.append(pool.apply_async(CoreFile, kwds=kwds, callback=callback))
                 pool.close()
                 pool.join()
             cfs = [r.get() for r in ret]

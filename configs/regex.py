@@ -63,6 +63,7 @@ CATALOG_MULTIDISC_PATTERN = rc(r'(?P<catalog>.+[0-9])(~[0-9]{1,3}|-([1-9]|0[1-9]
 FRONT_INDEXED_TRACKNAME_PATTERN = rc(r'(?P<idx>[0-9]{1,3})((?P<dot>\.)?(?P<space> )?(?P<trname>.*)|)\.(?P<ext>flac|mp3|m4a)')
 FILENAME_IN_CUE_PATTERN = rc(r'(FILE "(?P<filename>.+\.flac)" WAVE)')
 
+FULL_DESP_REGEX = rc(r'^(?P<c>[^0-9]*)?(v[2-9])?[ _]*(?P<i1>[0-9]{0,3})(v[2-9])?[ _]*(?P<i2>[0-9]{0,2})(v[2-9])?[ _]*(?P<s>.*)?$')
 
 # some albums may lack yymmdd, the only general pattern is the format suffix
 ALBUM_DIR_MIN_PATTERN = rc(r'^.+\((flac|aac|mp3)((\+[a-z0-9]{1,4})*)\)$')

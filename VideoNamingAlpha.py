@@ -49,17 +49,17 @@ def main(input_dir: Path):
             pool.close()
             pool.join()
         pbar.close()
-        vna_full_dicts: list[dict[str, str]] = [r.get() for r in ret]
+        vna_csv_dicts: list[dict[str, str]] = [r.get() for r in ret]
 
-    vna_base_dict = dict(zip(vna_full_dicts[0].keys(), itertools.repeat(BASE_LINE_LABEL)))
-    vna_base_dict.update({k: '' for k in VNA_BASE_LINE_USER_DICT.keys()})
-    vna_full_dicts = [vna_base_dict] + vna_full_dicts
+    vna_base_csv_dict = {k: BASE_LINE_LABEL for k in VNA_FULL_DICT.keys()}
+    vna_base_csv_dict.update({k: '' for k in VNA_BASE_LINE_USER_DICT.keys()})
+    vna_full_csv_dicts = [vna_base_csv_dict] + vna_csv_dicts
 
     for ext in VNA_OUTPUT_EXTS:
         if config.get(ext, False):
             out_file = input_dir.parent.joinpath(f'VNA-{TIMESTAMP}.{ext}')
             print(f'Generating pre-encoding instruction sheet at "{out_file}"...')
-            working_list = quotFields4CSV(vna_full_dicts) if ext == 'csv' else vna_full_dicts
+            working_list = quotFields4CSV(vna_full_csv_dicts) if ext == 'csv' else vna_full_csv_dicts
             if not globals()[f'listM2TS2{ext.upper()}'](out_file, working_list):
                 print(f'! Failed to write {out_file}.')
 

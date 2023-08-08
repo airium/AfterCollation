@@ -36,7 +36,7 @@ def toVndCsvDicts(cfs: list[CF], logger: Logger) -> list[dict[str, str]]:
         d[FULLPATH_CN] = cf.src
         d[CRC32_CN] = cf.crc32
         d[QLABEL_CN] = cf.qlabel
-        d[QLABEL_CN] = cf.tlabel
+        d[TLABEL_CN] = cf.tlabel
 
         # the following keys are just for presenting mediainfo in CSV, having no usage in later stages
         d[DURATION_CN] = cf.fmtGeneralDuration()
@@ -49,7 +49,7 @@ def toVndCsvDicts(cfs: list[CF], logger: Logger) -> list[dict[str, str]]:
         d[TR_TEXT_CN] = '／'.join(cf.digestTextTracksInfo())
         d[TR_MENU_CN] = '／'.join(cf.digestMenuTracksInfo())
 
-        logger.debug(f'Added: {"|".join(d.keys())}.')
+        logger.debug(f'Added: {"|".join(d.values())}.')
 
         ret.append(d)
 

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import re
-import logging
 import itertools
 from pathlib import Path
+from logging import Logger
 from concurrent.futures import ProcessPoolExecutor
 
 import helpers.corefile as hc
@@ -13,7 +13,7 @@ from configs.specification import STD_BKS_DIRNAME, STD_CDS_DIRNAME
 from configs.user import ENABLE_MULTI_PROC_IF_UNSURE, NUM_IO_JOBS
 from configs.runtime import VNx_ALL_EXTS
 from configs.debug import DEBUG
-from configs.regex import BASIC_CRC32_PATTERN
+from configs.regex import CRC32_STRICT_REGEX
 
 import ssd_checker
 
@@ -22,6 +22,7 @@ __all__ = [
     'toEnabledList',
     'cmpCfCRC32',
     'printCliNotice',
+    'printCheckerEnding',
     'filterOutCDsScans',
     'isSSD',
     'getCRC32MultiProc',
@@ -56,7 +57,7 @@ def toEnabledList(values:list[str]|tuple[str]) -> list[bool]:
 
 
 
-def cmpCfCRC32(cfs:hc.CF|list[hc.CF], expects:str|list[str], logger:logging.Logger, pass_not_recorded:bool=False) -> bool:
+def cmpCfCRC32(cfs:hc.CF|list[hc.CF], expects:str|list[str], logger:Logger, pass_not_recorded:bool=False) -> bool:
 
     if isinstance(cfs, hc.CF): cfs = [cfs]
     if isinstance(expects, str): expects = [expects]
@@ -82,7 +83,7 @@ def cmpCfCRC32(cfs:hc.CF|list[hc.CF], expects:str|list[str], logger:logging.Logg
             logger.warning(f'No recorded CRC32 to verify "{cf_path}" (0x{cf_crc32}).')
             if not pass_not_recorded: ok = False
             continue
-        if not re.match(BASIC_CRC32_PATTERN, exp_crc32):
+        if not re.match(CRC32_STRICT_REGEX, exp_crc32):
             logger.error(f'The recorded CRC32 "{exp_crc32}" is malformed.')
             ok = False
             continue
@@ -94,12 +95,28 @@ def cmpCfCRC32(cfs:hc.CF|list[hc.CF], expects:str|list[str], logger:logging.Logg
 
 
 
-def printCliNotice(usage_txt:str, paths:list|tuple):
+def printCliNotice(usage_txt: str, paths: list|tuple):
     print(usage_txt)
     print()
     print('Please check your input:')
     for i, path in enumerate(paths):
         print(f'{i+1:03d}: "{path}"')
+
+
+
+
+def printCheckerEnding(log_path: str, logger: Logger|None = None):
+
+    printer = logger.info if logger else print
+
+    printer('')
+    printer('NEXT:')
+    printer(f'View the log: "{log_path}"')
+    printer('For ERROR, you should now start fixing them.')
+    printer('For WARNING, you should make sure they do not matter.')
+    printer('Some INFO may still contain a notice, dont skip them too fast.')
+    printer('')
+
 
 
 
@@ -116,7 +133,7 @@ def filterOutCDsScans(inp:list[Path]):
 
 
 
-def isSSD(path:Path, logger:logging.Logger|None=None) -> bool:
+def isSSD(path:Path, logger:Logger|None=None) -> bool:
     try:
         ret = ssd_checker.is_ssd(path.resolve().as_posix())
         if logger: logger.debug(f'Found SSD "{path}"' if ret else f'Found HDD "{path}"')
@@ -132,7 +149,7 @@ def isSSD(path:Path, logger:logging.Logger|None=None) -> bool:
 
 
 
-def getCRC32MultiProc(paths:Path|list[Path], logger:logging.Logger|None=None) -> int:
+def getCRC32MultiProc(paths:Path|list[Path], logger:Logger|None=None) -> int:
     if isinstance(paths, Path): paths = [paths]
     futures = []
     with ProcessPoolExecutor(NUM_IO_JOBS) as exe:
@@ -147,7 +164,7 @@ def getCRC32MultiProc(paths:Path|list[Path], logger:logging.Logger|None=None) ->
 
 
 
-def listVNxFilePaths(path:Path, logger:logging.Logger) -> list[Path]:
+def listVNxFilePaths(path:Path, logger:Logger) -> list[Path]:
 
     logger.info(f'Locating all required media files ...')
 

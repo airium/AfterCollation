@@ -7,14 +7,15 @@ from .subtitle import *
 from .scans import *
 from .misc import *
 
-from .formatter import *
-from .corefile import *
-
 from .naming import *
-from .error import *
+from .formatter import *
+from .parser import *
 
+from .corefile import *
 from .season import *
 from .series import *
+
+from .error import *
 
 # NOTICE
 # This module should only contain functions that:
