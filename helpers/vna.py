@@ -70,7 +70,7 @@ def loadVNANamingFile(vna_file:Path|None, logger:logging.Logger) -> tuple[dict, 
         return {}, []
 
     try:
-        default_dict : dict[str, str] = {var: '' for var in VNA_ALL_DICT.values()}
+        default_dict : dict[str, str] = {var: '' for var in VNA_FULL_DICT.values()}
         naming_dicts : list[dict[str, str]] = []
         for data_dict in data_dicts:
             #* default dict ------------------------------------------
@@ -83,7 +83,7 @@ def loadVNANamingFile(vna_file:Path|None, logger:logging.Logger) -> tuple[dict, 
                     break
             if is_base_dict: continue
             #* per file dict -----------------------------------------
-            naming_dict : dict[str, str] = {var: '' for var in VNA_ALL_DICT.values()}
+            naming_dict : dict[str, str] = {var: '' for var in VNA_FULL_DICT.values()}
             for k, v in VNA_PERSISTENT_DICT.items():
                 naming_dict[v] = data_dict.get(k, '')
             for k, v in VNA_USER_DICT.items():
@@ -184,12 +184,12 @@ def guessVolNumsFromPaths(paths:list[Path], parent:Path|None=None, logger:loggin
 
 def toVNAFullDict(m2ts_path:Path, assumed_vol:str, input_dir:Path) -> dict[str, str]:
     cf : CoreFile = CoreFile(m2ts_path, init_crc32=False, init_audio_samples=ENABLE_AUDIO_SAMPLES_IN_VNA)
-    vna_full_dict = dict(zip(VNA_ALL_DICT.keys(), itertools.repeat('')))
+    vna_full_dict = dict(zip(VNA_FULL_DICT.keys(), itertools.repeat('')))
     vna_full_dict[VNA_PATH_CN] = m2ts_path.relative_to(input_dir).as_posix()
     vna_full_dict[VNA_M2TS_VOL_CN] = assumed_vol
     vna_full_dict[VNA_M2TS_IDX_CN] = m2ts_path.stem
     vna_full_dict[DURATION_CN] = cf.fmtGeneralDuration()
-    vna_full_dict[TRACKCOMP_CN] = cf.fmtTrackTypeCounts()
+    vna_full_dict[TR_COMP_CN] = cf.fmtTrackTypeCounts()
     vna_full_dict[VNA_VID_FPS_CN] = cf.fmtFpsInfo()
     vna_full_dict[VNA_AUDIO_SAMPLES_CN] = cf.audio_samples
     return vna_full_dict

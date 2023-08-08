@@ -149,7 +149,7 @@ def logNamingSummary(base_dict:dict[str, str], naming_dicts: list[dict[str, str]
         i1 = naming_dict[IDX1_VAR]
         i2 = naming_dict[IDX2_VAR]
         n = naming_dict[SUPPLEMENT_VAR]
-        c = naming_dict[CUSTOM_VAR]
+        c = naming_dict[FULLDESP_VAR]
         x = naming_dict[SUFFIX_VAR]
         logger.info(
             f'0x{cf.crc} ({cf.e}) : '

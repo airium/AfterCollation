@@ -29,7 +29,7 @@ def toVNDNamingDicts(cfs:list[CF], logger:logging.Logger) -> list[dict[str, str]
     for cf in cfs:
         d : dict[str, str] = dict()
 
-        for k, v in VND_ALL_DICT.items():
+        for k, v in VND_FULL_DICT.items():
             d[k] = ''
 
         d[FULLPATH_CN] = cf.src
@@ -44,12 +44,15 @@ def toVNDNamingDicts(cfs:list[CF], logger:logging.Logger) -> list[dict[str, str]
         d[DURATION_CN] = cf.fmtGeneralDuration()
         d[FILESIZE_CN] = cf.fmtFileSize()
         d[EXTENSION_CN] = cf.ext
-        d[CONTAINER_CN] = cf.format
-        d[TRACKCOMP_CN] = cf.fmtTrackTypeCountsWithOrder()
+        d[FORMAT_CN] = cf.format
+        d[TR_COMP_CN] = cf.fmtTrackTypeCountsWithOrder()
         d[TR_VIDEO_CN] = '／'.join(cf.digestVideoTracksInfo())
         d[TR_AUDIO_CN] = '／'.join(cf.digestAudioTracksInfo())
         d[TR_TEXT_CN] = '／'.join(cf.digestTextTracksInfo())
         d[TR_MENU_CN] = '／'.join(cf.digestMenuTracksInfo())
+
+        d[QLABEL_CN] = cf.qlabel
+        d[QLABEL_CN] = cf.tlabel
 
         ret.append(d)
 
@@ -72,7 +75,7 @@ def loadVNDNaming(vnd_csv:Path, logger:logging.Logger) -> tuple[dict[str, str], 
     csv_dicts = unquotFields4CSV(csv_dicts)
 
     try:
-        default_dict : dict[str, str] = {var: '' for var in VND_ALL_DICT.values()}
+        default_dict : dict[str, str] = {var: '' for var in VND_FULL_DICT.values()}
         naming_dicts : list[dict[str, str]] = []
         for csv_dict in csv_dicts:
             #* default dict ------------------------------------------
@@ -85,7 +88,7 @@ def loadVNDNaming(vnd_csv:Path, logger:logging.Logger) -> tuple[dict[str, str], 
                     break
             if is_base_dict: continue
             #* per file dict -----------------------------------------
-            naming_dict : dict[str, str] = {var: '' for var in VND_ALL_DICT.values()}
+            naming_dict : dict[str, str] = {var: '' for var in VND_FULL_DICT.values()}
             for k, v in VND_PERSISTENT_DICT.items():
                 naming_dict[v] = csv_dict.get(k, '')
             for k, v in VND_USER_DICT.items():

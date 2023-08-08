@@ -6,147 +6,153 @@ Dont touch these variables unless you know what you are doing.
 #* CSV fields exchange table -------------------------------------------------------------------------------------------
 # these fields define the variable names saved internally
 
-BASE_LINE_LABEL = '勿填此格'
+#! VNA/VND/VNE recognise the base/default line of naming config by any fields with this text in it
+BASE_LINE_LABEL = '此格不填'
 
-# these fields are used in dedicated in VNA
-VNA_PATH_CN,                    VNA_PATH_VAR = 'M2TS路径',   'vna_m2ts_path'
-VNA_M2TS_VOL_CN,            VNA_M2TS_VOL_VAR = 'VOL卷号',    'vna_volume_idx'
-VNA_M2TS_IDX_CN,            VNA_M2TS_IDX_VAR = 'M2TS序号',   'vna_m2ts_idx'
-VNA_SCRIPT_CN,                VNA_SCRIPT_VAR = '使用脚本',   'vna_script'
-VNA_COMMENT_CN,              VNA_COMMENT_VAR = '其它备注',   'vna_comment'
-VNA_AUDIO_SAMPLES_CN,  VNA_AUDIO_SAMPLES_VAR = '音频摘要',   'vna_audio_samples'
-VNA_VID_FPS_CN,              VNA_VID_FPS_VAR = '视频帧率',   'vna_video_fps'
+# general csv titles and internal variable names for VNA/VND/VNE/VNR
+FULLPATH_CN,      FULLPATH_VAR = '完整路径', 'vn_fullpath'
+CRC32_CN,            CRC32_VAR = 'CRC32', 'vn_crc32'
+DURATION_CN,      DURATION_VAR = '时长', 'vn_duration'
+FILESIZE_CN,      FILESIZE_VAR = '大小', 'vn_filesize'
+EXTENSION_CN,    EXTENSION_VAR = '文件后缀', 'vn_fileext'
+FORMAT_CN,          FORMAT_VAR = '实际格式', 'vn_container'
+TR_COMP_CN,        TR_COMP_VAR = '轨道组成', 'vn_trackcomp'
+TR_VIDEO_CN,      TR_VIDEO_VAR = '视频轨道', 'vn_video_tracks'
+TR_AUDIO_CN,      TR_AUDIO_VAR = '音频轨道', 'vn_audio_tracks'
+TR_TEXT_CN,        TR_TEXT_VAR = '图形字幕', 'vn_text_tracks'
+TR_MENU_CN,        TR_MENU_VAR = '章节菜单', 'vn_menu_tracks'
+GRPTAG_CN,          GRPTAG_VAR = '组名', 'vn_grptag'
+TITLE_CN,            TITLE_VAR = '片名', 'vn_title'
+LOCATION_CN,      LOCATION_VAR = '位置', 'vn_location'
+CLASSIFY_CN,      CLASSIFY_VAR = '内容类型', 'vn_classification'
+IDX1_CN,              IDX1_VAR = '主序号', 'vn_idx1'
+IDX2_CN,              IDX2_VAR = '副序号', 'vn_idx2'
+SUPPLEMENT_CN,  SUPPLEMENT_VAR = '补充说明', 'vn_supplement'
+FULLDESP_CN,      FULLDESP_VAR = '自定义名称', 'vn_fulldesp'
+SUFFIX_CN,          SUFFIX_VAR = '后缀', 'vn_suffix'
+ENABLE_CN,          ENABLE_VAR = '启用?', 'vn_enabled'
+QLABEL_CN,          QLABEL_VAR = '画质标签', 'vn_qlabel'
+TLABEL_CN,          TLABEL_VAR = '轨道标签', 'vn_tlabel'
 
-# these fields are used in dedicated in VNR
+# dedicated used between VNA/VND
+VNA_PATH_CN,                    VNA_PATH_VAR = 'M2TS路径', 'vna_m2ts_path'
+VNA_M2TS_VOL_CN,            VNA_M2TS_VOL_VAR = 'M2TS卷号', 'vna_volume_idx'
+VNA_M2TS_IDX_CN,            VNA_M2TS_IDX_VAR = 'M2TS序号', 'vna_m2ts_idx'
+VNA_SCRIPT_CN,                VNA_SCRIPT_VAR = '使用脚本', 'vna_script'
+VNA_COMMENT_CN,              VNA_COMMENT_VAR = '其它备注', 'vna_comment'
+VNA_AUDIO_SAMPLES_CN,  VNA_AUDIO_SAMPLES_VAR = '音频摘要', 'vna_audio_samples'
+VNA_VID_FPS_CN,              VNA_VID_FPS_VAR = '视频帧率', 'vna_video_fps'
+
+# dedicated used in VNR
 VNR_GRP_IDX_CN,       VNR_GRP_IDX_VAR = '主分组', 'vnr_main_grouping'
 VNR_SUBGRP_IDX_CN, VNR_SUBGRP_IDX_VAR = '子分组', 'vnr_sub_grouping'
 
-# these fields are generally used in VNx scripts
-FULLPATH_CN,      FULLPATH_VAR = '完整路径',   'vn_fullpath'
-CRC32_CN,            CRC32_VAR = 'CRC32',      'vn_crc32'
-DURATION_CN,      DURATION_VAR = '时长',       'vn_duration'
-FILESIZE_CN,      FILESIZE_VAR = '大小',       'vn_filesize'
-EXTENSION_CN,    EXTENSION_VAR = '文件后缀',   'vn_fileext'
-CONTAINER_CN,    CONTAINER_VAR = '实际格式',   'vn_container'
-TRACKCOMP_CN,    TRACKCOMP_VAR = '轨道组成',   'vn_trackcomp'
-TR_VIDEO_CN,      TR_VIDEO_VAR = '视频轨道',   'vn_video_tracks'
-TR_AUDIO_CN,      TR_AUDIO_VAR = '音频轨道',   'vn_audio_tracks'
-TR_TEXT_CN,        TR_TEXT_VAR = '图形字幕',   'vn_text_tracks'
-TR_MENU_CN,        TR_MENU_VAR = '章节菜单',   'vn_menu_tracks'
-GRPTAG_CN,          GRPTAG_VAR = '组名',       'vn_grptag'
-TITLE_CN,            TITLE_VAR = '片名',       'vn_title'
-LOCATION_CN,      LOCATION_VAR = '位置',       'vn_location'
-CLASSIFY_CN,      CLASSIFY_VAR = '内容类型',   'vn_classification'
-IDX1_CN,              IDX1_VAR = '主序号',     'vn_idx1'
-IDX2_CN,              IDX2_VAR = '副序号',     'vn_idx2'
-SUPPLEMENT_CN,  SUPPLEMENT_VAR = '补充说明',   'vn_supplement'
-CUSTOM_CN,          CUSTOM_VAR = '自定义名称', 'vn_customised_desp'
-SUFFIX_CN,          SUFFIX_VAR = '后缀',       'vn_suffix'
-ENABLE_CN,          ENABLE_VAR = '启用?',      'vn_enabled'
-
 #* CSV fields the their order ------------------------------------------------------------------------------------------
 # these are the field order to be shown in CSV files
-# NOTE dont change the order unless you know what you are doing
 
-VNA_ALL_DICT = {
-    VNA_PATH_CN: VNA_PATH_VAR,
-    VNA_M2TS_VOL_CN: VNA_M2TS_VOL_VAR,
-    VNA_M2TS_IDX_CN: VNA_M2TS_IDX_VAR,
-    DURATION_CN: DURATION_VAR,
-    TRACKCOMP_CN: TRACKCOMP_VAR,
-    VNA_VID_FPS_CN: VNA_VID_FPS_VAR,
-    VNA_SCRIPT_CN: VNA_SCRIPT_VAR,
-    VNA_COMMENT_CN: VNA_COMMENT_VAR,
-    CLASSIFY_CN: CLASSIFY_VAR,
-    IDX1_CN: IDX1_VAR,
-    IDX2_CN: IDX2_VAR,
-    CUSTOM_CN: CUSTOM_VAR,
-    GRPTAG_CN: GRPTAG_VAR,
-    TITLE_CN: TITLE_VAR,
-    VNA_AUDIO_SAMPLES_CN: VNA_AUDIO_SAMPLES_VAR,
+#! dont change the order unless you know what you are doing
+VNA_FULL_DICT = {
+    VNA_PATH_CN:            VNA_PATH_VAR,
+    VNA_M2TS_VOL_CN:        VNA_M2TS_VOL_VAR,
+    VNA_M2TS_IDX_CN:        VNA_M2TS_IDX_VAR,
+    DURATION_CN:            DURATION_VAR,
+    TR_COMP_CN:             TR_COMP_VAR,
+    VNA_VID_FPS_CN:         VNA_VID_FPS_VAR,
+    VNA_SCRIPT_CN:          VNA_SCRIPT_VAR,
+    VNA_COMMENT_CN:         VNA_COMMENT_VAR,
+    CLASSIFY_CN:            CLASSIFY_VAR,
+    IDX1_CN:                IDX1_VAR,
+    IDX2_CN:                IDX2_VAR,
+    FULLDESP_CN:            FULLDESP_VAR,
+    GRPTAG_CN:              GRPTAG_VAR,
+    TITLE_CN:               TITLE_VAR,
+    VNA_AUDIO_SAMPLES_CN:   VNA_AUDIO_SAMPLES_VAR,
 }
 
-VND_ALL_DICT = {
+#! dont change the order unless you know what you are doing
+VND_FULL_DICT = {
     # VNX_CSV_PERSISTENT_KEY_DICT: these fields are always saved in CSV
-
-    FULLPATH_CN: FULLPATH_VAR,
-    CRC32_CN: CRC32_VAR,
+    FULLPATH_CN:            FULLPATH_VAR,
+    CRC32_CN:               CRC32_VAR,
     # VNX_USER_FIELDS_NAMING_DICT: these fields are to be input from the user
-    GRPTAG_CN: GRPTAG_VAR,
-    TITLE_CN: TITLE_VAR,
-    LOCATION_CN: LOCATION_VAR,
-    CLASSIFY_CN: CLASSIFY_VAR,
-    IDX1_CN: IDX1_VAR,
-    IDX2_CN: IDX2_VAR,
-    SUPPLEMENT_CN: SUPPLEMENT_VAR,
-    CUSTOM_CN: CUSTOM_VAR,
-    SUFFIX_CN: SUFFIX_VAR,
-    ENABLE_CN: ENABLE_VAR,
+    GRPTAG_CN:              GRPTAG_VAR,
+    TITLE_CN:               TITLE_VAR,
+    LOCATION_CN:            LOCATION_VAR,
+    CLASSIFY_CN:            CLASSIFY_VAR,
+    IDX1_CN:                IDX1_VAR,
+    IDX2_CN:                IDX2_VAR,
+    SUPPLEMENT_CN:          SUPPLEMENT_VAR,
+    FULLDESP_CN:            FULLDESP_VAR,
+    SUFFIX_CN:              SUFFIX_VAR,
+    ENABLE_CN:              ENABLE_VAR,
     # the following fields are just for presenting mediainfo
     # they have no usage in later stages
-    DURATION_CN: DURATION_VAR,
-    FILESIZE_CN: FILESIZE_VAR,
-    EXTENSION_CN: EXTENSION_VAR,
-    CONTAINER_CN: CONTAINER_VAR,
-    TRACKCOMP_CN: TRACKCOMP_VAR,
-    TR_VIDEO_CN: TR_VIDEO_VAR,
-    TR_AUDIO_CN: TR_AUDIO_VAR,
-    TR_TEXT_CN: TR_TEXT_VAR,
-    TR_MENU_CN: TR_MENU_VAR,
+    DURATION_CN:            DURATION_VAR,
+    FILESIZE_CN:            FILESIZE_VAR,
+    EXTENSION_CN:           EXTENSION_VAR,
+    FORMAT_CN:              FORMAT_VAR,
+    TR_COMP_CN:             TR_COMP_VAR,
+    TR_VIDEO_CN:            TR_VIDEO_VAR,
+    TR_AUDIO_CN:            TR_AUDIO_VAR,
+    TR_TEXT_CN:             TR_TEXT_VAR,
+    TR_MENU_CN:             TR_MENU_VAR,
+    QLABEL_CN:              QLABEL_VAR,
+    TLABEL_CN:              TLABEL_VAR,
 }
 
-# if change, also change the order in `read/writeCSV4VNR()`
+#! dont change the order unless you know what you are doing
+#! if change, also change the order in `read/writeCSV4VNR()`
 VNR_ALL_DICT = {
-    VNR_GRP_IDX_CN: VNR_GRP_IDX_VAR,
-    VNR_SUBGRP_IDX_CN: VNR_SUBGRP_IDX_VAR,
-    ENABLE_CN: ENABLE_VAR,
-    FULLPATH_CN: FULLPATH_VAR,
+    VNR_GRP_IDX_CN:         VNR_GRP_IDX_VAR,
+    VNR_SUBGRP_IDX_CN:      VNR_SUBGRP_IDX_VAR,
+    ENABLE_CN:              ENABLE_VAR,
+    FULLPATH_CN:            FULLPATH_VAR,
 }
 
 #* sub fields ----------------------------------------------------------------------------------------------------------
 # NOTE dont change the order unless you know what you are doing
 
 VNA_BASE_LINE_USER_DICT = {
-    GRPTAG_CN: GRPTAG_VAR,
-    TITLE_CN: TITLE_VAR,
+    GRPTAG_CN:              GRPTAG_VAR,
+    TITLE_CN:               TITLE_VAR,
 }
 # 'presistent' means they are automatically in VNA but to be used in VND
 VNA_PERSISTENT_DICT = {
-    VNA_M2TS_VOL_CN: VNA_M2TS_VOL_VAR,
-    VNA_M2TS_IDX_CN: VNA_M2TS_IDX_VAR,
-    VNA_AUDIO_SAMPLES_CN: VNA_AUDIO_SAMPLES_VAR,
+    VNA_M2TS_VOL_CN:        VNA_M2TS_VOL_VAR,
+    VNA_M2TS_IDX_CN:        VNA_M2TS_IDX_VAR,
+    VNA_AUDIO_SAMPLES_CN:   VNA_AUDIO_SAMPLES_VAR,
 }
 VNA_USER_DICT = {
-    CLASSIFY_CN: CLASSIFY_VAR,
-    IDX1_CN: IDX1_VAR,
-    IDX2_CN: IDX2_VAR,
-    CUSTOM_CN: CUSTOM_VAR,
-    GRPTAG_CN: GRPTAG_VAR,
-    TITLE_CN: TITLE_VAR,
+    CLASSIFY_CN:            CLASSIFY_VAR,
+    IDX1_CN:                IDX1_VAR,
+    IDX2_CN:                IDX2_VAR,
+    FULLDESP_CN:            FULLDESP_VAR,
+    GRPTAG_CN:              GRPTAG_VAR,
+    TITLE_CN:               TITLE_VAR,
 }
 
 VND_BASE_LINE_USER_DICT = {
-    FULLPATH_CN: FULLPATH_VAR,
-    GRPTAG_CN: GRPTAG_VAR,
-    TITLE_CN: TITLE_VAR,
-    SUFFIX_CN: SUFFIX_VAR,
+    FULLPATH_CN:            FULLPATH_VAR,
+    GRPTAG_CN:              GRPTAG_VAR,
+    TITLE_CN:               TITLE_VAR,
+    SUFFIX_CN:              SUFFIX_VAR,
 }
 # 'presistent' means they are automatically created in VND but to be used in VNE
 VND_PERSISTENT_DICT = {
-    FULLPATH_CN: FULLPATH_VAR,
-    CRC32_CN: CRC32_VAR,
+    FULLPATH_CN:            FULLPATH_VAR,
+    CRC32_CN:               CRC32_VAR,
 }
 VND_USER_DICT = {
-    GRPTAG_CN: GRPTAG_VAR,
-    TITLE_CN: TITLE_VAR,
-    LOCATION_CN: LOCATION_VAR,
-    CLASSIFY_CN: CLASSIFY_VAR,
-    IDX1_CN: IDX1_VAR,
-    IDX2_CN: IDX2_VAR,
-    SUPPLEMENT_CN: SUPPLEMENT_VAR,
-    CUSTOM_CN: CUSTOM_VAR,
-    SUFFIX_CN: SUFFIX_VAR,
-    ENABLE_CN: ENABLE_VAR,
+    GRPTAG_CN:              GRPTAG_VAR,
+    TITLE_CN:               TITLE_VAR,
+    LOCATION_CN:            LOCATION_VAR,
+    CLASSIFY_CN:            CLASSIFY_VAR,
+    IDX1_CN:                IDX1_VAR,
+    IDX2_CN:                IDX2_VAR,
+    SUPPLEMENT_CN:          SUPPLEMENT_VAR,
+    FULLDESP_CN:            FULLDESP_VAR,
+    SUFFIX_CN:              SUFFIX_VAR,
+    ENABLE_CN:              ENABLE_VAR,
 }
 
 #TODO add relation assert here to ensure vnx dicts are consistent
