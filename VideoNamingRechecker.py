@@ -18,24 +18,24 @@ def main2doStandardCheck(input_dir: Path):
     logger.info(f'Using VideoNamingRechecker (VNR) of AfterCollation {AC_VERSION}')
     logger.info(f'Mode: do standard checking of naming and files for "{input_dir}".')
 
-    subdirs = listDir(input_dir, rglob=False)
-    subfiles = listDir(input_dir, rglob=False)
+    ds = listDir(input_dir, rglob=False)
+    fs = listDir(input_dir, rglob=False)
+    match bool(ds), bool(fs):
+        case False, False:
+            logger.error(f'Cannot check empty "{input_dir}".')
+        case True, False:
+            logger.info('Series checking has not been pushed. Separately check the seasons instead.')
+            # if series := fromSeriesDir(input_dir, logger): chkSeries(series, logger)
+            # else: logger.error(f'Not a valid series dir "{input_dir}".')
+        case _, True:
+            if season := fromSeasonDir(input_dir, logger):
+                chkSeason(season, logger)
+                composeFullDesp(season, logger)
+                cmpDstNaming(season, logger)
+            else:
+                logger.error(f'Not a valid season dir "{input_dir}".')
 
-    if not subdirs and not subfiles:
-        logger.error(f'Cannot check empty dir "{input_dir}".')
-    # NOTE we just assume so, this is not robust however
-    elif subdirs and not subdirs:
-        chkSeriesNaming(input_dir, logger)
-    else:
-        chkSeasonNaming(input_dir, logger)
-
-    logger.info('')
-    logger.info('NEXT:')
-    logger.info(f'View the log "{log_path}".')
-    logger.info(f'For any ERROR, you should now start fixing them.')
-    logger.info(f'For any WARNING, you should make sure they do not matter.')
-    logger.info(f'Some INFO may still contain a notice, do not skip them too fast.')
-    logger.info('')
+    printCheckerEnding(log_path.as_posix(), logger)
 
 
 
