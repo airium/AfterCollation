@@ -53,7 +53,7 @@ def parseCoreFileName(path: PurePath, logger: Logger|None = None, location: str|
         naming_dict[GRPTAG_VAR] = g if (g := names['g']) else ''
         naming_dict[TITLE_VAR] = t if (t := names['t']) else ''
         naming_dict[LOCATION_VAR] = location if location else ''
-        naming_dict[FULLDESP_VAR] = d if (d := names['d']) else ''
+        naming_dict[FULLDESP_VAR] = f if (f := names['f']) else ''
         naming_dict[SUFFIX_VAR] = x if (x := names['x']) else ''
         naming_dict[QLABEL_VAR] = q if (q := names['qlabel']) else ''
         naming_dict[TLABEL_VAR] = t if (t := names['tlabel']) else ''

@@ -56,7 +56,7 @@ def normSingleGroupTag(chars: str) -> str:
     '''Whitelist-based group name cleaner.'''
     chars = rmInvalidChars(chars)
     chars = ''.join([c for c in chars if c in VALID_G_CHARS])
-    chars = chars.lstrip(INVALID_LEADING_CHARS).rstrip(INVALID_ENDING_CHARS)
+    chars = chars.lstrip(INVALID_NAMING_LEADING_CHARS).rstrip(INVALID_NAMING_ENDING_CHARS)
     return chars
 
 
@@ -67,7 +67,7 @@ def normFullGroupTag(chars: str) -> str:
     parts = [normSingleGroupTag(p) for p in chars.split(TAG_SPLITTER)]
     parts = [p for p in parts if p]
     chars = TAG_SPLITTER.join(parts)
-    return chars.lstrip(INVALID_LEADING_CHARS).rstrip(INVALID_ENDING_CHARS)
+    return chars.lstrip(INVALID_NAMING_LEADING_CHARS).rstrip(INVALID_NAMING_ENDING_CHARS)
 
 
 
@@ -76,7 +76,7 @@ def normTitle(chars: str) -> str:
     '''Whitelist-based title cleaner.'''
     chars = rmInvalidChars(chars)
     chars = ''.join([c for c in chars if c in VALID_T_CHARS]).strip()
-    return chars.lstrip(INVALID_LEADING_CHARS).rstrip(INVALID_ENDING_CHARS)
+    return chars.lstrip(INVALID_NAMING_LEADING_CHARS).rstrip(INVALID_NAMING_ENDING_CHARS)
 
 
 
@@ -100,7 +100,7 @@ def normFullLocation(chars: str) -> str:
     parts = [p for p in parts if p]
     #! need to keep the initial '/' if it exists, used to enforce placing at the root
     chars = ('/' if chars[0] == '/' else '') + '/'.join(parts)
-    return chars.lstrip(INVALID_LEADING_CHARS).rstrip(INVALID_ENDING_CHARS)
+    return chars.lstrip(INVALID_PATH_LEADING_CHARS).rstrip(INVALID_PATH_ENDING_CHARS)
 
 
 
@@ -109,7 +109,7 @@ def normClassification(chars: str) -> str:
     '''Whitelist-based classification cleaner.'''
     chars = rmInvalidChars(chars)
     chars = ''.join([c for c in chars if c in VALID_C_CHARS]).strip()
-    return chars.lstrip(INVALID_LEADING_CHARS).rstrip(INVALID_ENDING_CHARS)
+    return chars.lstrip(INVALID_NAMING_LEADING_CHARS).rstrip(INVALID_NAMING_ENDING_CHARS)
 
 
 
@@ -118,7 +118,7 @@ def normDescription(chars: str) -> str:
     '''Whitelist-based description cleaner.'''
     chars = rmInvalidChars(chars)
     chars = ''.join([c for c in chars if c in VALID_F_CHARS]).strip()
-    return chars.lstrip(INVALID_LEADING_CHARS).rstrip(INVALID_ENDING_CHARS)
+    return chars.lstrip(INVALID_NAMING_LEADING_CHARS).rstrip(INVALID_NAMING_ENDING_CHARS)
 
 
 
@@ -129,7 +129,7 @@ def normDecimal(chars: str) -> str:
     chars = ''.join([c for c in chars if c in '01234567890.'])
     parts = [p for p in chars.split('.') if p]
     chars = '.'.join(chars.split('.')[:2])
-    return chars.lstrip(INVALID_LEADING_CHARS).rstrip(INVALID_ENDING_CHARS)
+    return chars.lstrip(INVALID_NAMING_LEADING_CHARS).rstrip(INVALID_NAMING_ENDING_CHARS)
 
 
 
@@ -146,7 +146,7 @@ def normFullSuffix(chars: str) -> str:
     parts = [normSingleSuffix(p) for p in chars.split(TAG_SPLITTER)]
     parts = [p for p in parts if p]
     chars = TAG_SPLITTER.join(parts).strip(string.whitespace + TAG_SPLITTER)
-    return chars.lstrip(INVALID_LEADING_CHARS).rstrip(INVALID_ENDING_CHARS)
+    return chars.lstrip(INVALID_NAMING_LEADING_CHARS).rstrip(INVALID_NAMING_ENDING_CHARS)
 
 
 
