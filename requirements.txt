@@ -1,6 +1,7 @@
 ass
 ass-parser
 ass-tag-parser
+bencoder
 beautifulsoup4
 ffmpeg-python
 fonttools
