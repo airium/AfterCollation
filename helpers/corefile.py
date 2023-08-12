@@ -74,9 +74,7 @@ class CoreFile:
         self.__tlabel: str|None = None
 
         # attach the naming fields of variable names to this instance
-        for v in VNA_USER_DICT.values():
-            setattr(self, v, '')
-        for v in VND_USER_DICT.values():
+        for v in COREFILE_DICT.values():
             setattr(self, v, '')
 
     #* built-in methods override ---------------------------------------------------------------------------------------
@@ -372,7 +370,7 @@ class CoreFile:
         ret = []
         for menu_track in self.menu_tracks:
             menu_dict = menu_track.to_data()
-            matches = [re.match(MEDIAINFO_CHAPTER_PATTERN, k) for k in menu_dict.keys()]
+            matches = [re.match(LIBMEDIAINFO_CHAPTER_REGEX, k) for k in menu_dict.keys()]
             matches = [[int(_) for _ in m.groups()] for m in matches if m]
             matches = [(3600000 * m[0] + 60000 * m[1] + m[2]) for m in matches if len(m) == 3]
             ret.append(matches)
@@ -408,13 +406,10 @@ class CoreFile:
         if self.__tlabel is None: self.__tlabel = fmtTrackLabel(self, self.logger)
         return self.__tlabel
 
-    def updateFromVNA(self, vna_config: dict[str, str]) -> None:
-        for k, v in VNA_USER_DICT.items():
-            setattr(self, v, vna_config.get(v, ''))
-
-    def updateFromVND(self, vnd_config: dict[str, str]) -> None:
-        for k, v in VND_USER_DICT.items():
-            setattr(self, v, vnd_config.get(v, ''))
+    def updateFromNamingDict(self, naming_dict: dict[str, str]) -> None:
+        for var in COREFILE_DICT.values():
+            if naming := naming_dict.get(var):
+                setattr(self, var, naming)
 
     def copyNaming(self, cf: CF):
         self.l = cf.l
@@ -538,7 +533,7 @@ class CoreFile:
         menu_infos = []
         for t in self.menu_tracks:
             d = t.to_data()
-            keys = [k for k in d.keys() if re.match(MEDIAINFO_CHAPTER_PATTERN, k)]
+            keys = [k for k in d.keys() if re.match(LIBMEDIAINFO_CHAPTER_REGEX, k)]
             info = []
             info += [d[keys[0]][:2]] if self.format == 'matroska' else ''
             info += [f'{len(keys)}']

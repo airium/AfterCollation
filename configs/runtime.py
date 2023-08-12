@@ -155,6 +155,19 @@ VND_USER_DICT = {
     ENABLE_CN:              ENABLE_VAR,
 }
 
+COREFILE_DICT = {
+    GRPTAG_CN:              GRPTAG_VAR,
+    TITLE_CN:               TITLE_VAR,
+    LOCATION_CN:            LOCATION_VAR,
+    CLASSIFY_CN:            CLASSIFY_VAR,
+    IDX1_CN:                IDX1_VAR,
+    IDX2_CN:                IDX2_VAR,
+    SUPPLEMENT_CN:          SUPPLEMENT_VAR,
+    FULLDESP_CN:            FULLDESP_VAR,
+    SUFFIX_CN:              SUFFIX_VAR,
+}
+
+
 #TODO add relation assert here to ensure vnx dicts are consistent
 
 #* file extension vs expected format -----------------------------------------------------------------------------------
