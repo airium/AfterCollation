@@ -11,9 +11,9 @@ from helpers.corefile import CF
 
 
 __all__ = [
-    'toVndCsvDicts',
+    'toVNDTableDicts',
     'readVndCSV',
-    'writeVndCsv',
+    'writeVNDTable',
     'doEarlyNamingGuess',
     'guessNamingFieldsFromSimpleFilename',
     'guessNamingFields4ASS',
@@ -24,7 +24,7 @@ __all__ = [
 
 
 
-def toVndCsvDicts(cfs: list[CF], logger: Logger) -> list[dict[str, str]]:
+def toVNDTableDicts(cfs: list[CF], logger: Logger) -> list[dict[str, str]]:
     ret = []
 
     for cf in cfs:
@@ -101,7 +101,7 @@ def readVndCSV(vnd_csv_path: Path, logger: Logger) -> tuple[dict[str, str], list
 
 
 
-def writeVndCsv(
+def writeVNDTable(
     csv_path: Path, base_csv_dict: dict[str, str], file_csv_dicts: list[dict[str, str]], logger: Logger
     ) -> bool:
 
@@ -117,33 +117,42 @@ def writeVndCsv(
 
 
 
+def guessNamingFieldsFromSimpleFilename(cf: CF, logger: Logger):
+    '''Sometimes the video may be already simply named. Let's try our luck.
 
-def guessNamingFieldsFromSimpleFilename(cf:CF, logger:Logger):
-    '''Sometimes the video may be already simply named. Let's try our luck.'''
+    It should now be able to process something like:
+    "(01234)?(-012)? (NAMING)? ([01abcdef])?.(mkv|mka|mp4|flac|png|ass|7z|zip|rar)"
+    where (01234) is optionally the m2ts index and [01abcdef] is optionally crc32
+    where NAMING should be like: abcd 012.45 abcd1234 e.g. NCOP 02 EP03
+    Allowed spacing includes: space, dash, underscore
+    '''
 
-    filename = m.group('stem') if (m := re.match(GENERIC_FILENAME, cf.path.name)) else ''
-    if not filename:
-        logger.debug(f'Got nothing from "{cf.path.name}".')
+    effective_stem = m.group('stem') if (m := re.match(UNNAMED_TRANSCODED_FILENAME_REGEX, cf.path.name)) else ''
+    if not effective_stem:
+        logger.debug(f'Failed to match.')
         return
-    filename = filename.strip().strip('.-_').strip()
+    effective_stem = effective_stem.strip(string.whitespace + '.-_')
 
     # TODO use VideoNamingCopier API to handle this
-    if any(c in filename for c in '[]()'):
-        logger.debug(f'Complex named file detected "{cf.path.name}".')
+    if any(c in effective_stem for c in '[]()'):
+        logger.debug(f'Complex filename.')
         return
 
-    if match := re.match(EXPECTED_SIMPLE_NAME, filename):
-        typename, idx, note = match.group('typename'), match.group('idx'), match.group('note')
-        if typename: cf.c = typename.strip().strip('.-_').strip()
-        if idx: cf.i1 = idx.strip().strip('.-_').strip()
-        if (typename or idx) and note: cf.s = note.strip().strip('.-_').strip()
-        # NOTE there is no need to fill in the location fields
-        # if a typename is detected, VNE will automatically place it under SPs if location is empty
+    if match := re.match(EXPECTED_SIMPLE_FILESTEM_REGEX, effective_stem):
+        c, i1, s = match.group('c'), match.group('i1'), match.group('s')
+        logger.debug(f'Guessed: "{c=}|{i1=}|{s=}".')
+
+        if c: cf.c = c.strip(string.whitespace + '.-_')
+        if i1: cf.i1 = i1  # i1 is clean from the regex
+        if s: cf.s = s.strip(string.whitespace + '.-_')
+
+    else:
+        logger.debug('BUG: Failed to match the stem pattern in guessing.')
 
 
 
 
-def guessNamingFields4ASS(cf:CF, logger:Logger):
+def guessNamingFields4ASS(cf: CF, logger: Logger):
     '''We should be able to guess the eposide index and the language suffix if lucky.'''
 
     #* firstly let's try to get the info from filename
@@ -155,10 +164,10 @@ def guessNamingFields4ASS(cf:CF, logger:Logger):
     filename_lang_tag = filename_lang_tag if filename_lang_tag else ''
     filename_ep_idx = filename_ep_idx if filename_ep_idx else ''
     langs = toUniformLangTags(filename_lang_tag)
-    if not langs: # if got no valid language tag from filename, then try its parent dirname
+    if not langs:  # if got no valid language tag from filename, then try its parent dirname
         langs = toUniformLangTags(cf.path.parent.name)
         if langs:
-            filename_lang_tag = cf.path.parent.name # overwrite the one found in filename
+            filename_lang_tag = cf.path.parent.name  # overwrite the one found in filename
 
     #* eposide naming can be done now
 
@@ -184,9 +193,11 @@ def guessNamingFields4ASS(cf:CF, logger:Logger):
     if lang_detected:
         if langs and not (lang_detected in langs):
             #! this means the detected lang differs from the one in filename - dont fill anything
-            logger.warning(f'The detected language "{lang_detected}" differs from that in filename '
-                           f'{cf.path.parent.name}/{cf.path.name}". '
-                           f'The naming guesser wont fill in the language suffix for you.')
+            logger.warning(
+                f'The detected language "{lang_detected}" differs from that in filename '
+                f'{cf.path.parent.name}/{cf.path.name}". '
+                f'The naming guesser wont fill in the language suffix for you.'
+                )
         else:
             # NOTE use un-normalized `lang_in_filename` as this may be the expectation of the fansub groups
             # TODO normalize the field so the user wont get an error message in VNE
@@ -196,11 +207,11 @@ def guessNamingFields4ASS(cf:CF, logger:Logger):
 
 
 
-def guessNamingFields4ARC(cf:CF, logger:Logger):
+def guessNamingFields4ARC(cf: CF, logger: Logger):
     filenames = getArchiveFilelist(cf.path)
     has_png, has_font = False, False
     for filename in filenames:
-        if filename.lower().endswith(VNx_IMG_EXTS): has_png = True
+        if filename.lower().endswith(VNX_IMG_EXTS): has_png = True
         if filename.lower().endswith(COMMON_FONT_EXTS): has_font = True
         if has_png and has_font: break
     if has_png and not has_font:
@@ -211,31 +222,33 @@ def guessNamingFields4ARC(cf:CF, logger:Logger):
 
 
 
-def guessNamingFields4MKA(mka:CF, cfs:list[CF], logger:Logger):
+def guessNamingFields4MKA(mka: CF, cfs: list[CF], logger: Logger):
 
     candidates = [cf for cf in cfs if (cf.e == 'mkv' and matchTime(mka.duration, cf.duration))]
+    #? how can we discriminate multiple mka if they have the same duration?
     if len(candidates) == 1:
         mka.f = candidates[0].crc32
 
 
 
 
-def doEarlyNamingGuess(cfs:list[CF], logger:Logger):
+def doEarlyNamingGuess(cfs: list[CF], logger: Logger):
     '''We can actually guess very few fields at VND, but try it.'''
 
     for i, cf in enumerate(cfs):
+        logger.debug(f'Guessing naming fields for "{cf.path}" ...')
         match cf.ext:
             case 'mkv'|'mp4':
                 guessNamingFieldsFromSimpleFilename(cf, logger)
             case 'mka':
                 guessNamingFieldsFromSimpleFilename(cf, logger)
-                guessNamingFields4MKA(cf, cfs[:i] + cfs[i+1:], logger)
+                guessNamingFields4MKA(cf, cfs[:i] + cfs[i + 1:], logger)
             case 'flac':
                 guessNamingFieldsFromSimpleFilename(cf, logger)
                 cf.l = STD_SPS_DIRNAME
-            case 'ass': # we can guess ass lang suffix at VND
+            case 'ass':  # we can guess ass lang suffix at VND
                 guessNamingFields4ASS(cf, logger)
             case '7z'|'zip'|'rar':
                 guessNamingFields4ARC(cf, logger)
             case _:
-                logger.error(f'Got "{cf.ext}" but "{VNx_ALL_EXTS=}".')
+                logger.error(f'Got "{cf.ext}" but "{VNX_ALL_EXTS=}".')

@@ -104,6 +104,7 @@ def readVNANamingFile(vna_file: Path|None, logger: logging.Logger) -> tuple[dict
                 #* per file dict -------------------------------------------------------------------
                 file_naming_dict: dict[str, str] = {}
                 file_naming_dict.update({var: '' for var in VNA_FULL_DICT.values()})
+                #! it's safe to use get() as we wont overwrite anything
                 file_naming_dict.update({v: data_dict.get(k, '') for k, v in VNA_FULL_DICT.items()})
                 file_naming_dicts.append(file_naming_dict)
     except:
@@ -149,7 +150,7 @@ def copyFileNamingFromVNA(cfs: list[CoreFile], file_naming_dicts: list[dict[str,
             vna_vol_idx = file_naming_dict.get(VNA_M2TS_VOL_VAR)
             vna_m2ts_idx = file_naming_dict.get(VNA_M2TS_IDX_VAR)
             cf_vol_num = cf_vol_num
-            cf_m2ts_idx = m.group('m2ts_idx') if (m := re.match(OKE_FILESTEM_PATTERN, cf.path.stem)) else None
+            cf_m2ts_idx = m.group('m2ts_idx') if (m := re.match(STRICT_TRANSCODED_FILESTEM_REGEX, cf.path.stem)) else None
             if cf_vol_num and cf_m2ts_idx and vna_vol_idx and vna_m2ts_idx:
                 if (int(cf_vol_num) == int(vna_vol_idx)) and (int(cf_m2ts_idx) == int(vna_m2ts_idx)):
                     cf.updateFromNamingDict(file_naming_dict)
