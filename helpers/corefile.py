@@ -8,6 +8,7 @@ from multiprocessing import Pool
 
 from utils import *
 from configs import *
+from .naming import *
 from .formatter import *
 import helpers.season as hs
 
@@ -44,25 +45,21 @@ class CoreFile:
         init_crc32: bool = False,
         init_audio_samples: bool = False,
         logger: Logger|None = None,
-        ) -> None:
+        **kwargs: Any,
+        ):
 
         if not (path := Path(path).resolve()).is_file():
-            raise FileNotFoundError(f'The file "{self.path}" is missing to init CoreFile instance.')
+            raise FileNotFoundError(f'Cannot find the file "{self.path}" to init a CoreFile instance.')
         self.__path: Path = path
-
-        # once the path is validated, init mediainfo
         self.__mediainfo: MediaInfo = getMediaInfo(path)
 
         self.__season: hs.Season|None = season
-        if season:  # hook each other
-            season.add(self, hook=True)  # dont hook here as this CoreFile has not been init - hook will fail
-            # self.__season = season
+        if season: season.add(self, hook=True)
 
         self.__depends: CoreFile|None = depends
 
         self.__crc32: str = ''
-        if init_crc32:
-            self.__crc32 = getCRC32(self.path, prefix='', pass_not_found=False) if init_crc32 else ''
+        if init_crc32: self.__crc32 = getCRC32(self.path, prefix='', pass_not_found=False) if init_crc32 else ''
 
         self.__audio_samples: str = ''
         if init_audio_samples and self.has_audio and ENABLE_AUDIO_SAMPLES_IN_VNA:
@@ -70,12 +67,11 @@ class CoreFile:
 
         self.__logger: Logger|None = logger
 
-        self.__qlabel: str|None = None
-        self.__tlabel: str|None = None
+        self.__cached_qlabel: str|None = None
+        self.__cached_tlabel: str|None = None
 
-        # attach the naming fields of variable names to this instance
-        for v in COREFILE_DICT.values():
-            setattr(self, v, '')
+        if kwargs: self.updateFromNamingDict(kwargs)
+        if kwargs and logger: logger.debug('Unused kwargs: ' + ('|'.join(f'{k}={v}' for k, v in kwargs.items())))
 
     #* built-in methods override ---------------------------------------------------------------------------------------
 
@@ -85,10 +81,20 @@ class CoreFile:
     def __getstate__(self) -> dict:
         return self.__dict__
 
-    def __setstate__(self, state: dict) -> None:
+    def __setstate__(self, state: dict):
         self.__dict__.update(state)
 
-    #* access init parameters ------------------------------------------------------------------------------------------
+    #* access logger ---------------------------------------------------------------------------------------------------
+
+    @property
+    def logger(self) -> Logger|None:
+        return self.__logger
+
+    @logger.setter
+    def logger(self, logger: Logger|None):
+        self.__logger = logger
+
+    #* input -----------------------------------------------------------------------------------------------------------
 
     @property
     def path(self) -> Path:
@@ -102,12 +108,35 @@ class CoreFile:
     def srcname(self) -> str:
         return self.__path.name
 
+    #* output ----------------------------------------------------------------------------------------------------------
+
     @property
-    def season(self) -> hs.Season|None:
+    def name(self) -> str:
+        g = f'[{self.g}]'
+        t = self.t
+        f = f'[{f}]' if (f := self.f) else ''  #! not every file has this field
+        ql = f'[{q}]' if (q := self.qlabel) else ''
+        tl = f'[{t}]' if (t := self.tlabel) else ''
+        x = (f'.{self.x}' if (self.e in VNX_SUB_EXTS) else f'[{self.x}]') if self.x else ''
+        e = self.e
+        return f'{g} {t} {f}{ql}{tl}{x}.{e}'.strip(string.whitespace + '/\\')
+
+    @property
+    def dst(self) -> str:
+        relative_path = f'{self.l}/{self.name}'.strip(string.whitespace + '/\\')
+        if self.__season:
+            return (Path(self.__season.dst) / relative_path).as_posix()
+        else:
+            return relative_path
+
+    #* parent and depends ----------------------------------------------------------------------------------------------
+
+    @property
+    def parent(self) -> hs.Season|None:
         return self.__season
 
-    @season.setter
-    def season(self, season: hs.Season|None) -> None:
+    @parent.setter
+    def parent(self, season: hs.Season|None):
         self.__season = season
 
     @property
@@ -115,16 +144,10 @@ class CoreFile:
         return self.__depends
 
     @depends.setter
-    def depends(self, depends: CoreFile|None) -> None:
+    def depends(self, depends: CoreFile|None):
         self.__depends = depends
 
-    @property
-    def logger(self) -> Logger|None:
-        return self.__logger
-
-    @logger.setter
-    def logger(self, logger: Logger|None) -> None:
-        self.__logger = logger
+    #* crc32 -----------------------------------------------------------------------------------------------------------
 
     @property
     def crc32(self) -> str:
@@ -136,130 +159,126 @@ class CoreFile:
         return self.crc32
 
     @property
-    def audio_samples(self) -> str:
-        if not ENABLE_AUDIO_SAMPLES_IN_VNA: return ''
-        if not self.has_audio: return ''
-        if not self.__audio_samples: self.__audio_samples = pickAudioSamples(self.path)
-        return self.__audio_samples
+    def recorded_crc32(self) -> str:
+        return getattr(self, CRC32_VAR)
 
-    #* shotcut access to naming fields ---------------------------------------------------------------------------------
+    #* shortcut access to naming fields ---------------------------------------------------------------------------------
 
     # naming fields
     @property
     def g(self) -> str:
         if self.depends: return self.depends.g
-        if ret := getattr(self, GRPTAG_VAR, ''):
-            return ret
-        if self.__season:
-            return self.__season.g
-        return STD_GRPTAG
+        if g := getattr(self, GRPTAG_VAR): return g
+        if self.parent: return self.parent.g
+        if STD_GRPTAG: return STD_GRPTAG
+        raise ValueError('No group tag is set.')
 
     @g.setter
-    def g(self, v: str) -> None:
-        setattr(self, GRPTAG_VAR, v)
+    def g(self, grptag: str):
+        setattr(self, GRPTAG_VAR, normFullGroupTag(grptag))
 
     @property
     def t(self) -> str:
         if self.depends: return self.depends.t
-        if ret := getattr(self, TITLE_VAR, ''):
-            return ret
-        if self.__season:
-            return self.__season.t
-        return FALLBACK_TITLE
+        if t := getattr(self, TITLE_VAR): return t
+        if self.parent: return self.parent.t
+        if FALLBACK_TITLE: return FALLBACK_TITLE
+        raise ValueError('No title is set.')
 
     @t.setter
-    def t(self, v: str) -> None:
-        setattr(self, TITLE_VAR, v)
+    def t(self, title: str):
+        setattr(self, TITLE_VAR, normTitle(title))
 
     @property
     def l(self) -> str:
         if self.depends: return self.depends.l
-        return getattr(self, LOCATION_VAR, '')
+        return getattr(self, LOCATION_VAR)
 
     @l.setter
-    def l(self, v: str) -> None:
-        setattr(self, LOCATION_VAR, v)
+    def l(self, location: str):
+        setattr(self, LOCATION_VAR, normFullLocation(location))
 
     @property
     def c(self) -> str:
         if self.depends: return self.depends.c
-        return getattr(self, CLASSIFY_VAR, '')
+        return getattr(self, CLASSIFY_VAR)
 
     @c.setter
-    def c(self, v: str) -> None:
-        if self.depends: self.depends.c = v
-        setattr(self, CLASSIFY_VAR, v)
+    def c(self, classification: str):
+        if self.depends: self.depends.c = classification
+        setattr(self, CLASSIFY_VAR, normClassification(classification))
 
     @property
     def i1(self) -> str:
         if self.depends: return self.depends.i1
-        return getattr(self, IDX1_VAR, '')
+        return getattr(self, IDX1_VAR)
 
     @i1.setter
-    def i1(self, v: str) -> None:
-        setattr(self, IDX1_VAR, v)
+    def i1(self, index: str):
+        setattr(self, IDX1_VAR, normDecimal(index))
 
     @property
     def i2(self) -> str:
         if self.depends: return self.depends.i2
-        return getattr(self, IDX2_VAR, '')
+        return getattr(self, IDX2_VAR)
 
     @i2.setter
-    def i2(self, v: str) -> None:
-        setattr(self, IDX2_VAR, v)
+    def i2(self, index: str):
+        setattr(self, IDX2_VAR, normDecimal(index))
 
     @property
     def s(self) -> str:
         if self.depends: return self.depends.s
-        return getattr(self, SUPPLEMENT_VAR, '')
+        return getattr(self, SUPPLEMENT_VAR)
 
     @s.setter
-    def s(self, v: str) -> None:
-        setattr(self, SUPPLEMENT_VAR, v)
+    def s(self, supplement: str):
+        setattr(self, SUPPLEMENT_VAR, normDescription(supplement))
 
     @property
     def f(self) -> str:
         if self.depends: return self.depends.f
-        return getattr(self, FULLDESP_VAR, '')
+        return getattr(self, FULLDESP_VAR)
 
     @f.setter
-    def f(self, v: str) -> None:
+    def f(self, full_description: str):
         self.t = ''
         self.i1 = ''
         self.i2 = ''
         self.s = ''
-        setattr(self, FULLDESP_VAR, v)
+        setattr(self, FULLDESP_VAR, normDescription(full_description))
 
     @property
     def x(self) -> str:
-        return getattr(self, SUFFIX_VAR, '')
+        return getattr(self, SUFFIX_VAR)
 
     @x.setter
-    def x(self, v: str) -> None:
-        setattr(self, SUFFIX_VAR, v)
+    def x(self, suffix: str):
+        setattr(self, SUFFIX_VAR, normFullSuffix(suffix))
 
     @property  # NOTE no setter for read-only extension
     def e(self) -> str:
         return self.ext
 
-    @property
-    def dstname(self) -> str:
-        grptag = f'[{self.g}]'
-        title = self.t
-        fullclass = f'[{f}]' if (f := self.f) else ''  #! not every file has this field
-        qlabel = f'[{q}]' if (q := self.qlabel) else ''
-        tlabel = f'[{t}]' if (t := self.tlabel) else ''
-        suffix = (f'.{self.x}' if (self.e in VNx_SUB_EXTS) else f'[{self.x}]') if self.x else ''
-        ext = self.e
-        return f'{grptag} {title} {fullclass}{qlabel}{tlabel}{suffix}.{ext}'.strip(string.whitespace + '/\\')
+    def updateFromNamingDict(self, naming_dict: dict[str, str]):
+        setattr(self, CRC32_VAR, naming_dict.pop(CRC32_VAR, ''))
+        setattr(self, GRPTAG_VAR, naming_dict.pop(GRPTAG_VAR, ''))
+        setattr(self, TITLE_VAR, naming_dict.pop(TITLE_VAR, ''))
+        setattr(self, LOCATION_VAR, naming_dict.pop(LOCATION_VAR, ''))
+        setattr(self, CLASSIFY_VAR, naming_dict.pop(CLASSIFY_VAR, ''))
+        setattr(self, IDX1_VAR, naming_dict.pop(IDX1_VAR, ''))
+        setattr(self, IDX2_VAR, naming_dict.pop(IDX2_VAR, ''))
+        setattr(self, SUPPLEMENT_VAR, naming_dict.pop(SUPPLEMENT_VAR, ''))
+        setattr(self, FULLDESP_VAR, naming_dict.pop(FULLDESP_VAR, ''))
+        setattr(self, SUFFIX_VAR, naming_dict.pop(SUFFIX_VAR, ''))
 
-    @property
-    def dst(self) -> str:
-        relative_path = f'{self.l}/{self.dstname}'.strip(string.whitespace + '/\\')
-        if self.__season:
-            return (Path(self.__season.dst) / relative_path).as_posix()
-        else:
-            return relative_path
+    def copyNaming(self, cf: CF):
+        self.l = cf.l
+        self.c = cf.c
+        self.i1 = cf.i1
+        self.i2 = cf.i2
+        self.s = cf.s
+        self.f = cf.f
 
     #* basic file info -------------------------------------------------------------------------------------------------
 
@@ -277,7 +296,7 @@ class CoreFile:
 
     @property
     def format(self) -> str:
-        return ret.lower() if (ret := self.gtr.format) else self.ext
+        return fmt.lower() if (fmt := self.gtr.format) else self.ext
 
     #* file type -------------------------------------------------------------------------------------------------------
 
@@ -295,18 +314,18 @@ class CoreFile:
 
     @property
     def is_image(self) -> bool:
-        return (self.ext in VNx_IMG_EXTS) and self.has_image
+        return (self.ext in VNX_IMG_EXTS) and self.has_image
 
     @property
     def is_ass(self) -> bool:
-        if self.ext not in VNx_SUB_EXTS: return False
+        if self.ext not in VNX_SUB_EXTS: return False
         #? this means the encoding of the ass file must be correct - is this intended?
         if not tstAssFile(self.path): return False
         return True
 
     @property
     def is_archive(self) -> bool:
-        if not self.ext in VNx_ARC_EXTS: return False
+        if not self.ext in VNX_ARC_EXTS: return False
         if not tstDecompressArchive(self.path): return False
         return True
 
@@ -325,7 +344,7 @@ class CoreFile:
         filenames = getArchiveFilelist(self.path)
         extensions = set(Path(f).suffix.lower().lstrip('.') for f in filenames)
         if not extensions: return False
-        if extensions.difference(VNx_IMG_EXTS): return False
+        if extensions.difference(VNX_IMG_EXTS): return False
         return True
 
     @property
@@ -352,6 +371,8 @@ class CoreFile:
     @property
     def has_other(self) -> bool:
         return bool(self.other_tracks)
+
+    #* mediainfo and contents ------------------------------------------------------------------------------------------
 
     @property
     def num_audio(self) -> int:
@@ -392,32 +413,28 @@ class CoreFile:
         if not self.has_duration: return 0
         return int(float(self.general_tracks[0].duration))  # the unit is ms
 
-    #* to interact with AC ---------------------------------------------------------------------------------------------
+    @property
+    def audio_samples(self) -> str:
+        if not ENABLE_AUDIO_SAMPLES_IN_VNA: return ''
+        if not self.has_audio: return ''
+        if not self.__audio_samples: self.__audio_samples = pickAudioSamples(self.path)
+        return self.__audio_samples
+
+    #* passive q/tlabels -----------------------------------------------------------------------------------------------
 
     @property
     def qlabel(self) -> str:
         if self.depends: return self.depends.qlabel
-        if self.__qlabel is None: self.__qlabel = fmtQualityLabel(self, self.logger)
-        return self.__qlabel
+        if self.__cached_qlabel == None: self.__cached_qlabel = fmtQualityLabel(self, self.logger)
+        return self.__cached_qlabel
 
     @property
     def tlabel(self) -> str:
         if self.depends: return self.depends.tlabel
-        if self.__tlabel is None: self.__tlabel = fmtTrackLabel(self, self.logger)
-        return self.__tlabel
+        if self.__cached_tlabel == None: self.__cached_tlabel = fmtTrackLabel(self, self.logger)
+        return self.__cached_tlabel
 
-    def updateFromNamingDict(self, naming_dict: dict[str, str]) -> None:
-        for var in COREFILE_DICT.values():
-            if naming := naming_dict.get(var):
-                setattr(self, var, naming)
-
-    def copyNaming(self, cf: CF):
-        self.l = cf.l
-        self.c = cf.c
-        self.i1 = cf.i1
-        self.i2 = cf.i2
-        self.s = cf.s
-        self.f = cf.f
+    #* formatter ----------------------------------------------------------------------------------------------------
 
     def fmtGeneralDuration(self) -> str:
         t = self.duration
@@ -433,9 +450,7 @@ class CoreFile:
         g, n = divmod(n, 1000**3)
         m, n = divmod(n, 1000**2)
         k, n = divmod(n, 1000**1)
-        return ((f'{g:_>2d}g' if g else '___') +
-                (f'{m:_>3d}m' if m else '____') +
-                (f'{k:_>3d}k' if k else '____') +
+        return ((f'{g:_>2d}g' if g else '___') + (f'{m:_>3d}m' if m else '____') + (f'{k:_>3d}k' if k else '____') +
                 (f'{n:_>3d}' if n else '___'))
 
     def fmtTrackTypeCounts(self) -> str:
@@ -474,7 +489,7 @@ class CoreFile:
             info = []
             # always shown info
             info += [f'{v}'.lower() if (v := t.format) else 'FORMAT?']
-            info += [f'{t.width}×{t.height}' + (f'{v}'.upper()[0] if (v := t.scan_type) else '')]  # progressive/interlaced
+            info += [f'{t.width}×{t.height}' + (f'{v}'.upper()[0] if (v := t.scan_type) else '')]
             info += [f'{t.frame_rate_mode}'.lower()]
             info += [f'{float(v):.2f}'] if (v := t.frame_rate) else ['FPS?']
             info += [f'{v}b'] if (v := t.bit_depth) else ['DEPTH?']

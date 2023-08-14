@@ -32,7 +32,7 @@ class Series:
         setattr(self, FULLPATH_VAR, kwargs.pop(FULLPATH_VAR, ''))  # self.dst_parent
         self.dst_parent = self.dst_parent  # clean and make the path posix
 
-        if logger: logger.debug('Unused kwargs: ' + ('|'.join(f'{k}={v}' for k, v in kwargs.items())))
+        if kwargs and logger: logger.debug('Unused kwargs: ' + ('|'.join(f'{k}={v}' for k, v in kwargs.items())))
 
     #* access logger ---------------------------------------------------------------------------------------------------
 
