@@ -20,7 +20,7 @@ class Series:
 
     def __init__(self, /, seasons: list[hs.Season]|None = None, logger: Logger|None = None, **kwargs: Any):
 
-        self.__seasons: list[hs.Season] = []
+        self.__seasons: set[hs.Season] = set()
         if seasons: self.add(seasons)
 
         self.__logger: Logger|None = logger
@@ -104,30 +104,19 @@ class Series:
 
     @property
     def seasons(self) -> list[hs.Season]:
-        return self.__seasons[:]  # return a shallow copy so the user cant mess with the internal list
+        return list(self.__seasons)
 
     def add(self, seasons: hs.Season|list[hs.Season], hook: bool = True):
         if isinstance(seasons, hs.Season):
             seasons = [seasons]
         for season in seasons:
-            match ((season in self.__seasons), bool(hook)):
-                case True, True:
-                    season.parent = self
-                case True, False:
-                    pass
-                case False, True:
-                    self.__seasons.append(season)
-                    season.parent = self
-                case False, False:
-                    self.__seasons.append(season)
+            self.__seasons.add(season)
+            if hook: season.parent = self
 
     def remove(self, seasons: hs.Season|list[hs.Season], unhook: bool = True):
         if isinstance(seasons, hs.Season):
             seasons = [seasons]
         for season in seasons:
-            for i, _season in enumerate(self.__seasons):
-                if _season is season:
-                    self.__seasons.pop(i)
-                    if unhook and season.parent == self:
-                        season.parent = None
-                    break
+            self.__seasons.discard(season)
+            if unhook and season.parent == self:
+                season.parent = None

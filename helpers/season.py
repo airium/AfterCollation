@@ -35,7 +35,7 @@ class Season:
         **kwargs: Any
         ):
 
-        self.__files: list[hc.CoreFile] = []
+        self.__files: set[hc.CoreFile] = set()
         if files: self.add(files)
 
         self.__series: hss.Series|None = series
@@ -168,36 +168,24 @@ class Season:
 
     @property
     def files(self) -> list[hc.CoreFile]:
-        return self.__files[:]
+        return list(self.__files)
 
     def add(self, files: hc.CoreFile|list[hc.CoreFile], hook: bool = True):
         self.__cached_qlabel = None  # need to re-generate the quality label if any file added
         if isinstance(files, hc.CoreFile):
             files = [files]
         for file in files:
-            match ((file in self.__files), bool(hook)):
-                case True, True:
-                    file.parent = self
-                case True, False:
-                    pass
-                case False, True:
-                    self.__files.append(file)
-                    file.parent = self
-                case False, False:
-                    self.__files.append(file)
+            self.__files.add(file)
+            if hook: file.parent = self
 
     def remove(self, files: hc.CoreFile|list[hc.CoreFile], unhook: bool = True):
         self.__cached_qlabel = None  # need to re-generate the quality label if any file removed
         if isinstance(files, hc.CoreFile):
             files = [files]
         for file in files:
-            for i, _file in enumerate(self.__files):
-                if _file is file:
-                    self.__files.pop(i)
-                    if unhook and file.parent == self:
-                        file.parent = None
-                    break
-
+            self.__files.discard(file)
+            if unhook and file.parent == self:
+                file.parent = None
 
 
 
