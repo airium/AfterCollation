@@ -29,11 +29,12 @@ class Series:
         setattr(self, GRPTAG_VAR, kwargs.pop(GRPTAG_VAR, ''))  # self.g
         setattr(self, TITLE_VAR, kwargs.pop(TITLE_VAR, ''))  # self.t
         setattr(self, SUFFIX_VAR, kwargs.pop(SUFFIX_VAR, ''))  # self.x
+        setattr(self, FULLPATH_VAR, kwargs.pop(FULLPATH_VAR, ''))  # self.dst_parent
         self.dst_parent = self.dst_parent  # clean and make the path posix
 
         if logger: logger.debug('Unused kwargs: ' + ('|'.join(f'{k}={v}' for k, v in kwargs.items())))
 
-    #* access init parameters ------------------------------------------------------------------------------------------
+    #* access logger ---------------------------------------------------------------------------------------------------
 
     @property
     def logger(self) -> Logger|None:
@@ -76,7 +77,7 @@ class Series:
         raise ValueError('No group tag is set.')
 
     @g.setter
-    def g(self, grptag: str) -> None:
+    def g(self, grptag: str):
         setattr(self, GRPTAG_VAR, normFullGroupTag(grptag))
 
     @property
@@ -88,7 +89,7 @@ class Series:
         raise ValueError('No title is set.')
 
     @t.setter
-    def t(self, title: str) -> None:
+    def t(self, title: str):
         setattr(self, TITLE_VAR, normTitle(title))
 
     @property
@@ -96,7 +97,7 @@ class Series:
         return getattr(self, SUFFIX_VAR)
 
     @x.setter
-    def x(self, suffix: str) -> None:
+    def x(self, suffix: str):
         setattr(self, SUFFIX_VAR, normFullSuffix(suffix))
 
     #* contained seasons -----------------------------------------------------------------------------------------------
@@ -105,7 +106,7 @@ class Series:
     def seasons(self) -> list[hs.Season]:
         return self.__seasons[:]  # return a shallow copy so the user cant mess with the internal list
 
-    def add(self, seasons: hs.Season|list[hs.Season], hook: bool = True) -> None:
+    def add(self, seasons: hs.Season|list[hs.Season], hook: bool = True):
         if isinstance(seasons, hs.Season):
             seasons = [seasons]
         for season in seasons:
@@ -120,14 +121,13 @@ class Series:
                 case False, False:
                     self.__seasons.append(season)
 
-    def remove(self, seasons: hs.Season|list[hs.Season], unhook: bool = True) -> None:
+    def remove(self, seasons: hs.Season|list[hs.Season], unhook: bool = True):
         if isinstance(seasons, hs.Season):
             seasons = [seasons]
         for season in seasons:
             for i, _season in enumerate(self.__seasons):
                 if _season is season:
                     self.__seasons.pop(i)
-                    if unhook:
-                        if season.parent == self:
-                            season.parent = None
+                    if unhook and season.parent == self:
+                        season.parent = None
                     break

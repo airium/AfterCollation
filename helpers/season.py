@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import itertools
 from typing import Any
-from pathlib import Path
+from pathlib import Path, PurePath
 from logging import Logger
-
 
 from utils import *
 from configs import *
@@ -12,7 +11,7 @@ from .parser import *
 from .naming import *
 from .misc import *
 import helpers.corefile as hc
-
+import helpers.series as hss
 
 
 __all__ = [
@@ -29,110 +28,53 @@ class Season:
     def __init__(
         self,
         /,
-        core_files: list[hc.CoreFile]|None = None,
-        quality_label: str|None = None,
+        files: list[hc.CoreFile]|None = None,
+        series: hss.Series|None = None,
+        quality: str|None = None,
         logger: Logger|None = None,
         **kwargs: Any
         ):
 
-        self.__cfs: list[hc.CoreFile] = []
-        if core_files:
-            self.add(core_files)
+        self.__files: list[hc.CoreFile] = []
+        if files: self.add(files)
 
-        self.__fixed_qlabel: str|None = quality_label if quality_label else None
-        if logger:
-            logger.info(f'Using fixed season quality label: "{quality_label}".')
+        self.__series: hss.Series|None = series
+
+        self.__fixed_qlabel: str|None = quality.strip() if quality else None
         self.__cached_qlabel: str|None = None
+        if logger: logger.info(f'Using fixed season quality label: "{quality}".')
 
         self.__logger: Logger|None = logger
 
         # attach the naming fields of variable names to this instance
-        for v in VND_BASE_LINE_USER_DICT.values():
-            setattr(self, v, kwargs.pop(v, ''))
-        self.dst_parent = self.dst_parent  # clean and make the path resolved
 
-        if logger:
-            logger.debug('Input leftover: ' + ('|'.join(f'{k}={v}' for k, v in kwargs.items())))
+        setattr(self, FULLPATH_VAR, kwargs.pop(FULLPATH_VAR, ''))  # self.dst_parent
+        setattr(self, GRPTAG_VAR, kwargs.pop(GRPTAG_VAR, ''))  # self.g
+        setattr(self, TITLE_VAR, kwargs.pop(TITLE_VAR, ''))  # self.t
+        setattr(self, SUFFIX_VAR, kwargs.pop(SUFFIX_VAR, ''))  # self.x
+        self.dst_parent = self.dst_parent  # clean and make the path posix
 
+        if logger: logger.debug('Unused kwargs: ' + ('|'.join(f'{k}={v}' for k, v in kwargs.items())))
 
-    #* access init parameters ------------------------------------------------------------------------------------------
-
-    @property
-    def cfs(self) -> list[hc.CoreFile]:
-        return self.__cfs
+    #* access logger ---------------------------------------------------------------------------------------------------
 
     @property
     def logger(self) -> Logger|None:
         return self.__logger
 
     @logger.setter
-    def logger(self, logger: Logger|None) -> None:
+    def logger(self, logger: Logger|None):
         self.__logger = logger
+
+    #* output ----------------------------------------------------------------------------------------------------------
 
     @property
     def dst_parent(self) -> str:
         return getattr(self, FULLPATH_VAR, '')
 
     @dst_parent.setter
-    def dst_parent(self, path: str|Path) -> None:
-        setattr(self, FULLPATH_VAR, Path(path).resolve().as_posix())
-
-    @property
-    def qlabel(self) -> str:
-        if self.__fixed_qlabel is not None:
-            return self.__fixed_qlabel
-        if self.__cached_qlabel is not None:
-            return self.__cached_qlabel
-        qlabels: list[str] = [cf.qlabel for cf in self.cfs if (cf.has_video and (cf.l in ('', '/')))]
-        if qlabels:
-            qlabel = max(qlabels, key=qlabels.count)
-        else:
-            qlabel = ''
-            if self.__logger:
-                self.__logger.warning('This season has no video at its root, so will have no quality label.')
-        self.__cached_qlabel = qlabel
-        return qlabel
-
-    @qlabel.setter
-    def qlabel(self, qlabel: str|None) -> None:
-        # TODO: do cleaning and checking for the input
-        self.__fixed_qlabel = qlabel
-        if (qlabel is not None) and self.__logger:
-            self.__logger.info(f'Using fixed season quality label: "{qlabel}".')
-
-    @property
-    def dst(self) -> str:
-        '''The full path to the proposed output season dir.'''
-        return Path(self.dst_parent).joinpath(self.dstname).as_posix()
-
-    #* shotcut access to naming fields ---------------------------------------------------------------------------------
-
-    @property
-    def g(self) -> str:
-        return ret if (ret := getattr(self, GRPTAG_VAR, '')) else STD_GRPTAG
-
-    @g.setter
-    def g(self, v: str) -> None:
-        # TODO: do cleaning and checking for the input
-        setattr(self, GRPTAG_VAR, v)
-
-    @property
-    def t(self) -> str:
-        return ret if (ret := getattr(self, TITLE_VAR, '')) else FALLBACK_TITLE
-
-    @t.setter
-    def t(self, v: str) -> None:
-        # TODO: do cleaning and checking for the input
-        setattr(self, TITLE_VAR, v)
-
-    @property
-    def x(self) -> str:
-        return getattr(self, SUFFIX_VAR, '')
-
-    @x.setter
-    def x(self, v: str) -> None:
-        # TODO: do cleaning and checking for the input
-        setattr(self, SUFFIX_VAR, v)
+    def dst_parent(self, path: str|PurePath):
+        setattr(self, FULLPATH_VAR, PurePath(path).as_posix())
 
     @property
     def dstname(self) -> str:
@@ -142,26 +84,118 @@ class Season:
         x = f'[{x}]' if (x := self.x) else ''
         return f'{g} {s} {q}'.strip(string.whitespace + '/\\')
 
+    @property
+    def dst(self) -> str:
+        '''The full path to the proposed output season dir.'''
+        return PurePath(self.dst_parent).joinpath(self.dstname).as_posix()
+
+    #* parent series ---------------------------------------------------------------------------------------------------
+
+    @property
+    def parent(self) -> hss.Series|None:
+        return self.__series
+
+    @parent.setter
+    def parent(self, series: hss.Series|None):
+        self.__series = series
+
+    #* shortcut access to naming fields --------------------------------------------------------------------------------
+
+    @property
+    def g(self) -> str:
+        if g := getattr(self, GRPTAG_VAR):
+            return g
+        if self.parent:
+            return self.parent.g
+        if STD_GRPTAG:
+            return STD_GRPTAG
+        raise ValueError('No group tag is set.')
+
+    @g.setter
+    def g(self, grptag: str):
+        # TODO: do cleaning and checking for the input
+        setattr(self, GRPTAG_VAR, normFullGroupTag(grptag))
+
+    @property
+    def t(self) -> str:
+        if t := getattr(self, TITLE_VAR):
+            return t
+        if self.parent:
+            return self.parent.t
+        if FALLBACK_TITLE:
+            return FALLBACK_TITLE
+        raise ValueError('No title is set.')
+
+    @t.setter
+    def t(self, title: str):
+        # TODO: do cleaning and checking for the input
+        setattr(self, TITLE_VAR, normTitle(title))
+
+    @property
+    def x(self) -> str:
+        return getattr(self, SUFFIX_VAR)
+
+    @x.setter
+    def x(self, suffix: str):
+        # TODO: do cleaning and checking for the input
+        setattr(self, SUFFIX_VAR, normFullSuffix(suffix))
+
     #* methods ---------------------------------------------------------------------------------------------------------
 
-    def add(self, cfs: hc.CoreFile|list[hc.CoreFile], hook: bool = True) -> None:
-        self.__cached_qlabel = None  # need to re-generate the quality label if any file added
-        if isinstance(cfs, hc.CoreFile):
-            cfs = [cfs]
-        for cf in cfs:
-            if not (cf in self.__cfs):
-                self.__cfs.append(cf)
-                if hook: cf.season = self
+    @property
+    def qlabel(self) -> str:
+        if self.__fixed_qlabel != None:
+            return self.__fixed_qlabel
+        if self.__cached_qlabel != None:
+            return self.__cached_qlabel
+        candidates: list[str] = [cf.qlabel for cf in self.files if (cf.has_video and (cf.l in ('', '/')))]
+        if candidates:
+            qlabel = max(candidates, key=candidates.count)
+        else:
+            qlabel = ''
+            if self.__logger:
+                self.__logger.warning('The season has no video at its root, so will have no quality label.')
+        self.__cached_qlabel = qlabel
+        return qlabel
 
-    def remove(self, cfs: hc.CoreFile|list[hc.CoreFile], unhook: bool = True) -> None:
+    @qlabel.setter
+    def qlabel(self, qlabel: str|None):
+        self.__fixed_qlabel = qlabel  # TODO: do cleaning and checking for the input
+        if (qlabel is not None) and self.__logger:
+            self.__logger.info(f'Using fixed season quality label: "{qlabel}".')
+
+    #* contained corefiles ---------------------------------------------------------------------------------------------
+
+    @property
+    def files(self) -> list[hc.CoreFile]:
+        return self.__files[:]
+
+    def add(self, files: hc.CoreFile|list[hc.CoreFile], hook: bool = True):
+        self.__cached_qlabel = None  # need to re-generate the quality label if any file added
+        if isinstance(files, hc.CoreFile):
+            files = [files]
+        for file in files:
+            match ((file in self.__files), bool(hook)):
+                case True, True:
+                    file.parent = self
+                case True, False:
+                    pass
+                case False, True:
+                    self.__files.append(file)
+                    file.parent = self
+                case False, False:
+                    self.__files.append(file)
+
+    def remove(self, files: hc.CoreFile|list[hc.CoreFile], unhook: bool = True):
         self.__cached_qlabel = None  # need to re-generate the quality label if any file removed
-        if isinstance(cfs, hc.CoreFile):
-            cfs = [cfs]
-        for cf in cfs:
-            for i, _cf in enumerate(self.__cfs):
-                if _cf is cf:
-                    self.__cfs.pop(i)
-                    if unhook: cf.season = None
+        if isinstance(files, hc.CoreFile):
+            files = [files]
+        for file in files:
+            for i, _file in enumerate(self.__files):
+                if _file is file:
+                    self.__files.pop(i)
+                    if unhook and file.parent == self:
+                        file.parent = None
                     break
 
 
@@ -180,7 +214,7 @@ def applyNamingDicts(
     #! Before calling this function, you should better call `cleanNamingDicts()` and `chkNamingDicts()` first.
     '''
 
-    cfs = season.cfs
+    cfs = season.files
     if DEBUG: assert len(cfs) == len(naming_dicts)
 
     logger.info('Applying naming plan ...')
@@ -272,7 +306,7 @@ def applyNamingDicts(
 
 def fromSeasonDir(season_dir: Path, logger: Logger) -> Season|None:
 
-    paths = filterOutCDsScans(listFile(season_dir, ext=VNx_ALL_EXTS, rglob=True))
+    paths = filterOutCDsScans(listFile(season_dir, ext=VNX_ALL_EXTS, rglob=True))
 
     default_dict: dict[str, str] = d if (d := parseSeasonDirName(season_dir, logger=logger)) else {}
     if not default_dict: return None
