@@ -55,7 +55,7 @@ class Series:
         setattr(self, FULLPATH_VAR, PurePath(path).as_posix())
 
     @property
-    def dstname(self) -> str:
+    def name(self) -> str:
         g = f'[{self.g}]'
         t = self.t
         x = f'[{x}]' if (x := self.x) else ''
@@ -64,7 +64,7 @@ class Series:
     @property
     def dst(self) -> str:
         '''The full path to the proposed output season dir.'''
-        return PurePath(self.dst_parent).joinpath(self.dstname).as_posix()
+        return PurePath(self.dst_parent).joinpath(self.name).as_posix()
 
     #* shortcut access to naming fields --------------------------------------------------------------------------------
 

@@ -77,17 +77,17 @@ class Season:
         setattr(self, FULLPATH_VAR, PurePath(path).as_posix())
 
     @property
-    def dstname(self) -> str:
+    def name(self) -> str:
         g = f'[{self.g}]'
         s = self.t
         q = f'[{q}]' if (q := self.qlabel) else ''
         x = f'[{x}]' if (x := self.x) else ''
-        return f'{g} {s} {q}'.strip(string.whitespace + '/\\')
+        return f'{g} {s} {q}{x}'.strip(string.whitespace + '/\\')
 
     @property
     def dst(self) -> str:
         '''The full path to the proposed output season dir.'''
-        return PurePath(self.dst_parent).joinpath(self.dstname).as_posix()
+        return PurePath(self.dst_parent).joinpath(self.name).as_posix()
 
     #* parent series ---------------------------------------------------------------------------------------------------
 
