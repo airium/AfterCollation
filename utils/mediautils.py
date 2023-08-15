@@ -8,6 +8,7 @@ from configs import *
 
 import ffmpeg # NOTE if using ffmpeg but numpy, place the functions in ffmpegutils.py
 import numpy as np
+import numpy.typing as npt
 import scipy.signal as sps
 
 
@@ -19,7 +20,7 @@ __all__ = ['readAudio',
 
 
 
-def readAudio(path: Path, id: str | int = 0, start: int = 0, length: int = 0) -> np.ndarray:
+def readAudio(path: Path, id: str | int = 0, start: int = 0, length: int = 0) -> npt.NDArray[np.int16]:
     '''
     Load the file from `path`
     Select audio track `id` and extract its first channel
@@ -109,7 +110,7 @@ def getMatchedSubSequence(list1, list2):
 
 
 
-def calcAudioOffset(a1:np.ndarray, a2:np.ndarray, start:int=0, length:int=1440000) -> tuple[int, int]:
+def calcAudioOffset(a1:npt.NDArray[np.int16], a2:npt.NDArray[np.int16], start:int=0, length:int=1440000) -> tuple[int, int]:
     '''
     Calculate the offset between 2 audio `ndarray` by samples within [start, start+length].
     Return the starting sample index.

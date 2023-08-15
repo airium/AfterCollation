@@ -61,13 +61,13 @@ def chkPGS(cf:CF, logger:logging.Logger):
 
 
 def chkAssFile(cf:CF, logger:logging.Logger):
-    if not tstAssFile(cf.path):
+    if (ass_obj := toAssFileObj(cf.path, test=True)):
+        for section in ass_obj.extra_sections:
+            logger.warning(f'Found unnecessary ASS section "{section.name}". '
+                           'Consider removing it using the standalone tools in the `scripts` folder.')
+    else:
         logger.error('The ASS file is invalid or of non-standard encoding.')
         return
-    ass_obj = toAssFileObj(cf.path)
-    for section in ass_obj.extra_sections:
-        logger.warning(f'Found unnecessary ASS section "{section.name}". '
-                       'Consider removing it using the standalone tools in the `scripts` folder.')
 
     # TODO add more ass content checking
 

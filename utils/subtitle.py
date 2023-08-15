@@ -39,8 +39,8 @@ def tstAssFile(path:Path, encoding='utf-8-sig'):
 
 
 
-def filterValidASSFiles(*path:Path, encoding:str='utf-8-sig') -> list[Path]:
-    return [p for p in path if tstAssFile(p, encoding=encoding)]
+def filterValidASSFiles(paths:list[Path], encoding:str='utf-8-sig') -> list[Path]:
+    return [p for p in paths if tstAssFile(p, encoding=encoding)]
 
 
 
@@ -54,10 +54,11 @@ def toAssFileObj(path:Path, encoding:str='utf-8-sig', test:bool=False) -> AssFil
 
 
 
-def toAssFileObjs(paths:list[Path], encoding:str|list[str]='utf-8-sig', test:bool=False) -> list[AssFile|None]:
+def toAssFileObjs(paths:list[Path], encoding:str|list[str]='utf-8-sig', test:bool=False) -> list[AssFile]:
     encodings = [encoding] * len(paths) if isinstance(encoding, str) else encoding
     assert len(paths) == len(encodings)
-    return [toAssFileObj(path, encoding=encoding, test=test) for path, encoding in zip(paths, encodings)]
+    assfiles = (toAssFileObj(path, encoding=encoding, test=test) for path, encoding in zip(paths, encodings))
+    return [obj for obj in assfiles if obj is not None]
 
 
 

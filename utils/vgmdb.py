@@ -1,5 +1,6 @@
 if __name__ == '__main__':
     from vgmdb3.vgmdb.parsers.search import fetch_page as fetch_search_page
+    from vgmdb3.vgmdb.parsers.search import parse_page as parse_search_page
     from vgmdb3.vgmdb.parsers.album import fetch_page as fetch_album_page
     from vgmdb3.vgmdb.parsers.album import parse_page as parse_album_page
     from configs import *

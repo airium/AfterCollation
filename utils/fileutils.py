@@ -32,13 +32,14 @@ __all__ = ['listFile',
 
 def listFile(*paths, ext:str|tuple|list[str]|None=None, rglob:bool=True, reduce:bool=True, sort:bool=True) -> list[Path]:
     paths = list(Path(Path(p).as_posix()) for p in paths)
-    ret_paths = []
+    ret_paths: list[Path] = []
     for p in paths:
         if p.is_file():
             ret_paths.append(p)
             continue
         if p.is_dir():
-            ret_paths += [f for f in p.rglob('*') if f.is_file()] if rglob else [f for f in p.glob('*') if f.is_file()]
+            glob_func = p.rglob if rglob else p.glob
+            ret_paths.extend(f for f in glob_func('*') if f.is_file())
     if ext:
         exts = (ext,) if isinstance(ext, str) else tuple(ext)
         ret_paths = [p for p in ret_paths if p.suffix.lower().endswith(exts)]
@@ -53,10 +54,11 @@ def listFile(*paths, ext:str|tuple|list[str]|None=None, rglob:bool=True, reduce:
 
 def listDir(*inp_paths, rglob:bool=True, reduce:bool=True, sort:bool=True) -> list[Path]:
     inp_paths = list(Path(Path(p).as_posix()) for p in inp_paths)
-    ret_paths = []
+    ret_paths: list[Path] = []
     for p in inp_paths:
         if p.is_dir():
-            ret_paths += [p] + [f for f in p.rglob('*') if f.is_dir()] if rglob else [f for f in p.glob('*') if f.is_dir()]
+            glob_func = p.rglob if rglob else p.glob
+            ret_paths += [p] + [f for f in glob_func('*') if f.is_dir()]
     if reduce:
         ret_paths = list(set(ret_paths))
     if sort:

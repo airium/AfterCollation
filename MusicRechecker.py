@@ -15,7 +15,7 @@ A processing log (MR-*.log) will be generated for later review.
 
 
 
-def main(root):
+def main(root: Path):
 
     log_path = root.parent.joinpath(f'MR-{TIMESTAMP}.log')
     logger = initLogger(log_path=log_path)
