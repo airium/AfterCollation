@@ -69,7 +69,7 @@ def chkFontArcDir(path:Path, logger:logging.Logger) -> bool:
     ok = True
     all_files = listFile(path)
     all_font_files = listFile(path, ext=COMMON_FONT_EXTS)
-    valid_font_files = getValidFontPaths(*all_font_files)
+    valid_font_files = getValidFontPaths(all_font_files)
 
     if len(all_files) != len(all_font_files):
         logger.error('The archive file contains non-FONT files.')

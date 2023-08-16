@@ -7,6 +7,7 @@ from utils.fileutils import listFile
 from configs.runtime import VNx_ALL_EXTS
 
 from bencoder import decode, encode
+from typing import cast
 
 
 filterout = ('cd', 'cds', 'scan', 'scans', 'hi-res', 'bk')
@@ -17,7 +18,7 @@ filterout = ('cd', 'cds', 'scan', 'scans', 'hi-res', 'bk')
 def worker(torrent: Path) -> list[str]:
 
     ret = []
-    content: dict = decode(torrent.read_bytes())
+    content = cast(dict, decode(torrent.read_bytes()))
 
     root = content[b'info'][b'name'].decode('utf-8')
 

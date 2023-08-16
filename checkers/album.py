@@ -435,10 +435,19 @@ def chkAlbumDirNaming(album_path: Path, logger: Logger) -> AlbumInfo:
             for non_idxed_file in (set(aud_files) - set(indexed_files)):
                 logger.warning(f'Not properly index-named audio file "{non_idxed_file.relative_to(album_path)}".')
 
-            indices : list[str] = [re.match(FRONT_INDEXED_TRACKNAME_PATTERN, f.name.lower()).group('idx') for f in indexed_files]
-            trnames : list[str] = [re.match(FRONT_INDEXED_TRACKNAME_PATTERN, f.name.lower()).group('trname') for f in indexed_files]
-            spaces : list[str] = [re.match(FRONT_INDEXED_TRACKNAME_PATTERN, f.name.lower()).group('space') for f in indexed_files]
-            dots : list[str] = [re.match(FRONT_INDEXED_TRACKNAME_PATTERN, f.name.lower()).group('dot') for f in indexed_files]
+            indices : list[str] = []
+            trnames : list[str] = []
+            spaces : list[str] = []
+            dots : list[str] = []
+            for f in indexed_files:
+                m = re.match(FRONT_INDEXED_TRACKNAME_PATTERN, f.name.lower())
+                if m:
+                    indices.append(m.group('idx'))
+                    trnames.append(m.group('trname'))
+                    spaces.append(m.group('space'))
+                    dots.append(m.group('dot'))
+                else:
+                    logger.error(f'Cannot parse the index and trackname of "{f.relative_to(album_path)}".')
 
             if DEBUG: assert all(idx.isdigit() for idx in indices)
             indices_int_set = set(int(idx) for idx in indices) # use set to deduplicate

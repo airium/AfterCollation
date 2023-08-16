@@ -410,7 +410,7 @@ def lookupVGMDB(album_info:AlbumInfo, logger):
 
     logger.info(f'Looking for "{album_info.root.name}" ...')
 
-    album_ids = set()
+    album_ids : set[str] = set()
     for catalog in album_info.catalogs:
         # XXXX1234~5 => XXXX1234
         # XXXX1234-1 XXXX1234-2 => XXXX1234
@@ -460,14 +460,14 @@ def lookupVGMDB(album_info:AlbumInfo, logger):
         logger.warning('Cannot find the album on VGMDB or inadequate info to search for it.')
         return
 
-    album_ids = sorted(album_ids)
+    sorted_album_ids = sorted(album_ids)
     if len(album_ids) > 1:
-        logger.info(f'Found more than {len(album_ids)} albums resided on VGMDB.')
+        logger.info(f'Found more than {len(sorted_album_ids)} albums resided on VGMDB.')
 
-    vgmdb_dicts = [info for info in [getVGMDBAlbumInfo(album_id) for album_id in album_ids] if info]
+    vgmdb_dicts = [info for info in [getVGMDBAlbumInfo(album_id) for album_id in sorted_album_ids] if info]
     if not vgmdb_dicts:
         logger.error('Failed to obtain the album info from VGMDB. Please check your network connection.')
-    if len(vgmdb_dicts) != len(album_ids):
+    if len(vgmdb_dicts) != len(sorted_album_ids):
         logger.warning(f'Failed to obtain some album info from VGMDB. Please check your network connection.')
 
     local_info = album_info

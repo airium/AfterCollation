@@ -2,6 +2,7 @@ from pathlib import Path
 from multiprocessing import Pool
 from configs import *
 from pymediainfo import MediaInfo
+from typing import cast
 
 
 __all__ = ['MI',
@@ -18,12 +19,7 @@ MI = MediaInfo
 
 
 def getMediaInfo(path:Path) -> MediaInfo:
-    '''
-    This is used to suppress the type mismatch warning.
-    MI.parse() only returns MediaInfo if `output=None`. Never str.
-    If we don't use this, python language server will warn us about the type mismatch !everywhere!.
-    '''
-    return MediaInfo.parse(path, output=None)
+    return cast(MediaInfo, MediaInfo.parse(path, output=None))
 
 
 
