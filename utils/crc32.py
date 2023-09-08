@@ -1,12 +1,9 @@
-
 import re
 import zlib
 from pathlib import Path
 from functools import partial
 from multiprocessing import Pool
-from configs.regex import CRC32_FILENAME_REGEX, CRC32_STRICT_REGEX
-
-
+from configs.regex import CRC32_IN_FILENAME_REGEX, CRC32_STRICT_REGEX
 
 
 __all__ = [
@@ -19,7 +16,7 @@ __all__ = [
 
 
 
-def getCRC32(path:Path|str, prefix:str='', read_size:int=16*2**20, pass_not_found:bool=False) -> str:
+def getCRC32(path: Path|str, prefix: str = '', read_size: int = 16 * 2**20, pass_not_found: bool = False) -> str:
     '''
     path:Path: the Path to the file
 
@@ -50,7 +47,7 @@ def getCRC32(path:Path|str, prefix:str='', read_size:int=16*2**20, pass_not_foun
 
 
 
-def getCRC32List(paths:list[Path], mp:int=1, prefix:str='', read_size:int=16*2**20) -> list[str]:
+def getCRC32List(paths: list[Path], mp: int = 1, prefix: str = '', read_size: int = 16 * 2**20) -> list[str]:
     mp = int(mp)
     if mp > 1:
         crc32s = list(Pool().map(partial(getCRC32, prefix=prefix, read_size=read_size), paths))
@@ -61,22 +58,22 @@ def getCRC32List(paths:list[Path], mp:int=1, prefix:str='', read_size:int=16*2**
 
 
 
-def findCRC32InFilename(inp:str|Path) -> str:
+def findCRC32InFilename(inp: str|Path) -> str:
     name = inp.name if isinstance(inp, Path) else inp
-    if m := re.findall(CRC32_FILENAME_REGEX, name):
+    if m := re.findall(CRC32_IN_FILENAME_REGEX, name):
         return m[-1]
     return ''
 
 
 
 
-def findCRC32InFilenames(inp:list[Path]|list[str]) -> list[str]:
+def findCRC32InFilenames(inp: list[Path]|list[str]) -> list[str]:
     return [findCRC32InFilename(p) for p in inp]
 
 
 
 
-def cmpCRC32(*, actuals:str|list[str], expects:str|list[str]) -> bool|list[bool]:
+def cmpCRC32(*, actuals: str|list[str], expects: str|list[str]) -> bool|list[bool]:
 
     is_str = False
     if isinstance(actuals, str):
@@ -88,7 +85,7 @@ def cmpCRC32(*, actuals:str|list[str], expects:str|list[str]) -> bool|list[bool]
     if len(actuals) != len(expects):
         raise ValueError('The actual and expected CRC32s have different length.')
 
-    ret : list[bool] = []
+    ret: list[bool] = []
     for (actual, expects) in zip(actuals, expects):
         if not actual or not re.match(CRC32_STRICT_REGEX, actual):
             ret.append(False)
