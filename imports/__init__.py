@@ -7,6 +7,7 @@ Low-level modules/utils must NEVER import the 'imports' package.
 High-level scripts must ONLY import from this 'imports' package.
 '''
 
+from langs import *
 from configs import *
 from .startup import *
 
@@ -16,7 +17,6 @@ chkDep()
 updatePATH(USER_PATHS)
 chkFFMPEG(FFMPEG_PATH)
 chkRAR(RAR_PATH)
-
 
 from .builtin import *
 from .thirdparty import *

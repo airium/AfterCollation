@@ -8,12 +8,15 @@ fonttools
 langdetect
 numpy
 py7zr
+pyzipper
 pymediainfo
 PySocks
 PyYAML
 rarfile
+cryptography
 requests
 scipy
 ssd-checker
 tqdm
 webptools
+lark
