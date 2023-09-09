@@ -1,0 +1,27 @@
+start: eac? date? title artists? edition? hires? fmts
+
+eac: "[" /EAC|XLD|Hi-Res/i "]" ws?
+
+date: "[" (yy | yy mm | yy mm dd) "]" ws?
+yy: /[901][0-9]|2[0-4]/
+mm: /0[1-9]|1[0-2]/
+dd: /0[1-9]|1[0-9]|2[0-9]|3[0-1]/
+
+title: (desp quot?)+ | quot (desp quot?)*
+desp: /[^／「｢([\])｣」]+/
+quot: /｢[^｢｣]+｣|「[^「」]+」/
+
+artists: "／" /(.(?!【.+(盤|版)】|\[.+(盤|版)\]|\[(16|24|32)bit|\((flac|aac|mp3|wv)))+./i ws?
+
+edition: /【(.+(盤|版))】|\[(.+(盤|版))\]/ ws?
+
+hires: "[" bits "bit_"i freq "kHz"i "]" ws?
+bits: /16|24|32/
+freq: /48|96|192|384/
+
+fmts: "(" aud ("+" aud)* ("+" img)* ("+" vid)* ")"
+aud: /flac|mp3|aac|wv/i
+img: /webp|jpg/i
+vid: /mkv/i
+
+ws: /\s/+

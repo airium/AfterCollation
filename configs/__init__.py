@@ -11,5 +11,5 @@ from .specification import *
 from .time import *
 from .user import *
 from .version import *
-
+from .parser import *
 from .debug import *
