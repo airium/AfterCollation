@@ -7,6 +7,7 @@ from logging import Logger
 from multiprocessing import Pool
 
 from utils import *
+from langs import *
 from configs import *
 from .naming import *
 from .formatter import *
@@ -49,7 +50,7 @@ class CoreFile:
         ):
 
         if not (path := Path(path).resolve()).is_file():
-            raise FileNotFoundError(f'Cannot find the file "{self.path}" to init a CoreFile instance.')
+            raise FileNotFoundError(CANT_FIND_SRC_FOR_COREFILE_1.format(path))
         self.__path: Path = path
         self.__mediainfo: MediaInfo = getMediaInfo(path)
 
@@ -62,7 +63,7 @@ class CoreFile:
         if init_crc32: self.__crc32 = getCRC32(self.path, prefix='', pass_not_found=False) if init_crc32 else ''
 
         self.__audio_samples: str = ''
-        if init_audio_samples and self.has_audio and ENABLE_AUDIO_SAMPLES_IN_VNA:
+        if init_audio_samples and self.has_audio and ENABLE_AUDIO_SAMPLES_IN_VA:
             self.__audio_samples = pickAudioSamples(self.path)
 
         self.__logger: Logger|None = logger
@@ -70,8 +71,9 @@ class CoreFile:
         self.__cached_qlabel: str|None = None
         self.__cached_tlabel: str|None = None
 
-        if kwargs: self.updateFromNamingDict(kwargs)
-        if kwargs and logger: logger.debug('Unused kwargs: ' + ('|'.join(f'{k}={v}' for k, v in kwargs.items())))
+        self.updateFromNamingDict(kwargs)
+
+        if kwargs and logger: logger.debug(UNUSED_KWARGS_1.format('|'.join(f'{k}:{v}' for (k, v) in kwargs.items())))
 
     #* built-in methods override ---------------------------------------------------------------------------------------
 
@@ -115,9 +117,9 @@ class CoreFile:
         g = f'[{self.g}]'
         t = self.t
         f = f'[{f}]' if (f := self.f) else ''  #! not every file has this field
-        ql = f'[{q}]' if (q := self.qlabel) else ''
-        tl = f'[{t}]' if (t := self.tlabel) else ''
-        x = (f'.{self.x}' if (self.e in VNX_SUB_EXTS) else f'[{self.x}]') if self.x else ''
+        ql = f'[{ql}]' if (ql := self.qlabel) else ''
+        tl = f'[{tl}]' if (tl := self.tlabel) else ''
+        x = (f'.{self.x}' if (self.e in VX_SUB_EXTS) else f'[{self.x}]') if self.x else ''
         e = self.e
         return f'{g} {t} {f}{ql}{tl}{x}.{e}'.strip(string.whitespace + '/\\')
 
@@ -171,7 +173,7 @@ class CoreFile:
         if g := getattr(self, GRPTAG_VAR): return g
         if self.parent: return self.parent.g
         if STD_GRPTAG: return STD_GRPTAG
-        raise ValueError('No group tag is set.')
+        raise ValueError(NOT_SET_GRPTAG_0)
 
     @g.setter
     def g(self, grptag: str):
@@ -183,7 +185,7 @@ class CoreFile:
         if t := getattr(self, TITLE_VAR): return t
         if self.parent: return self.parent.t
         if FALLBACK_TITLE: return FALLBACK_TITLE
-        raise ValueError('No title is set.')
+        raise ValueError(NOT_SET_TITLE_0)
 
     @t.setter
     def t(self, title: str):
@@ -233,7 +235,7 @@ class CoreFile:
 
     @s.setter
     def s(self, supplement: str):
-        setattr(self, SUPPLEMENT_VAR, normDescription(supplement))
+        setattr(self, SUPPLEMENT_VAR, normDesp(supplement))
 
     @property
     def f(self) -> str:
@@ -246,7 +248,7 @@ class CoreFile:
         self.i1 = ''
         self.i2 = ''
         self.s = ''
-        setattr(self, FULLDESP_VAR, normDescription(full_description))
+        setattr(self, FULLDESP_VAR, normDesp(full_description))
 
     @property
     def x(self) -> str:
@@ -271,6 +273,7 @@ class CoreFile:
         setattr(self, SUPPLEMENT_VAR, naming_dict.pop(SUPPLEMENT_VAR, ''))
         setattr(self, FULLDESP_VAR, naming_dict.pop(FULLDESP_VAR, ''))
         setattr(self, SUFFIX_VAR, naming_dict.pop(SUFFIX_VAR, ''))
+        setattr(self, ENABLE_VAR, naming_dict.pop(ENABLE_VAR, ''))
 
     def copyNaming(self, cf: CF):
         self.l = cf.l
@@ -314,25 +317,25 @@ class CoreFile:
 
     @property
     def is_image(self) -> bool:
-        return (self.ext in VNX_IMG_EXTS) and self.has_image
+        return (self.ext in VX_IMG_EXTS) and self.has_image
 
     @property
     def is_ass(self) -> bool:
-        if self.ext not in VNX_SUB_EXTS: return False
+        if self.ext not in VX_SUB_EXTS: return False
         #? this means the encoding of the ass file must be correct - is this intended?
         if not tstAssFile(self.path): return False
         return True
 
     @property
     def is_archive(self) -> bool:
-        if not self.ext in VNX_ARC_EXTS: return False
-        if not tstDecompressArchive(self.path): return False
+        if not self.ext in VX_ARC_EXTS: return False
+        if not tstArchive(self.path): return False
         return True
 
     @property
     def is_fonts_archive(self) -> bool:
         if not self.is_archive: return False
-        filenames = getArchiveFilelist(self.path)
+        filenames = getFileList(self.path)
         extensions = set(Path(f).suffix.lower().lstrip('.') for f in filenames)
         if not extensions: return False
         if extensions.difference(COMMON_FONT_EXTS): return False
@@ -341,10 +344,10 @@ class CoreFile:
     @property
     def is_image_archive(self) -> bool:
         if not self.is_archive: return False
-        filenames = getArchiveFilelist(self.path)
+        filenames = getFileList(self.path)
         extensions = set(Path(f).suffix.lower().lstrip('.') for f in filenames)
         if not extensions: return False
-        if extensions.difference(VNX_IMG_EXTS): return False
+        if extensions.difference(VX_IMG_EXTS): return False
         return True
 
     @property
@@ -415,7 +418,7 @@ class CoreFile:
 
     @property
     def audio_samples(self) -> str:
-        if not ENABLE_AUDIO_SAMPLES_IN_VNA: return ''
+        if not ENABLE_AUDIO_SAMPLES_IN_VA: return ''
         if not self.has_audio: return ''
         if not self.__audio_samples: self.__audio_samples = pickAudioSamples(self.path)
         return self.__audio_samples
@@ -583,7 +586,7 @@ def toCoreFiles(
     mp: int = NUM_IO_JOBS
     ) -> list[CF]:
 
-    logger.info(f'Loading files with {mp} workers ...')
+    logger.info(LOADING_WTIH_N_WORKERS_1.format(mp))
     paths = [Path(path) for path in paths]
     if mp > 1:
         with Pool(mp) as pool:
@@ -611,7 +614,7 @@ def toCoreFilesWithTqdm(
     mp: int = NUM_IO_JOBS
     ) -> list[CF]:
 
-    logger.info(f'Loading files with {mp} workers ...')
+    logger.info(LOADING_WTIH_N_WORKERS_1.format(mp))
     paths = [Path(path) for path in paths]
     with logging_redirect_tqdm([logger]):
         pbar = tqdm.tqdm(total=len(paths), desc='Loading', unit='file', ascii=True, dynamic_ncols=True)

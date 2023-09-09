@@ -19,20 +19,20 @@ __all__ = [
 
 
 
-def chkSeries(series:Series, logger:logging.Logger):
+def chkSeries(series: Series, logger: logging.Logger):
     chkSeriesFiles(series, logger)
     chkSeriesNaming(series, logger)
 
 
 
 
-def chkSeriesFiles(series:Series, logger:logging.Logger):
+def chkSeriesFiles(series: Series, logger: logging.Logger):
     pass
 
 
 
 
-def chkSeriesNaming(series:Series, logger:logging.Logger, check_sub_seasons:bool=True):
+def chkSeriesNaming(series: Series, logger: logging.Logger, check_sub_seasons: bool = True):
     pass
 
     # if not input_dir.is_dir():
@@ -77,15 +77,12 @@ def chkSeriesNaming(series:Series, logger:logging.Logger, check_sub_seasons:bool
     # for season_grptag in season_grptags:
     #     chkSeriesGroupTag(season_grptag, logger)
 
-
-
     # if series_title: logger.info(f'Found SERIES show name "{series_title}"')
     # if series_misclabel:
     #     if series_misclabel.lower() in AVAIL_SUB_LANG_TAGS:
     #         logger.info(f'Found SERIES language label "{series_misclabel}". Take care.')
     #     else:
     #         logger.info(f'Found SERIES non-language label "{series_misclabel}". Take more care.')
-
 
     # if check_sub_seasons:
     #     for season_dir in season_dirs:

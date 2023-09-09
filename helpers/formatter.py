@@ -5,6 +5,7 @@ from pathlib import Path
 
 from configs import *
 from utils import *
+from langs import *
 from .misc import *
 import helpers.corefile as hc
 
@@ -19,14 +20,14 @@ def fmtSeriesRootName(grp='', title='', suffix='') -> str:
 
 
 
+
 def fmtSeasonRootName(grp='', title='', quality='', suffix='') -> str:
     return SEASON_DIR_FMT.format(grp=grp, title=title, quality=quality, suffix=suffix).strip()
 
 
 
 
-
-def fmtQualityLabel(cf:hc.CF, logger:logging.Logger|None=None) -> str:
+def fmtQualityLabel(cf: hc.CF, logger: logging.Logger|None = None) -> str:
 
     # files without video track have no quality label
     if not cf.video_tracks: return ''
@@ -48,26 +49,26 @@ def fmtQualityLabel(cf:hc.CF, logger:logging.Logger|None=None) -> str:
         elif profile == 'FormatRange' and vtr.bit_depth == 10 and vtr.chroma_subsampling == '4:4:4':
             p = 'Ma444-10p'
         else:
-            if logger: logger.warning(f'Unhandled HEVC profile "{profile}".')
+            if logger: logger.warning(UNHANDLED_HEVC_PROFILE_1.format(profile))
     elif format == 'avc':
         if profile == 'High10':
             p = 'Hi10p'
         elif profile == 'High':
             p = ''
         elif profile == 'High4:4:4Predictive':
-            p = 'Hi444pp' #
+            p = 'Hi444pp'  #
         else:
-            if logger: logger.warning(f'Unhandled AVC profile "{profile}" during naming. Please report.')
+            if logger: logger.warning(UNHANDLED_AVC_PROFILE_1.format(profile))
     else:
-        if logger: logger.warning(f'Unhandled video format "{format}" during naming. Please report.')
+        if logger: logger.warning(UNHANDLED_VID_FMT_1.format(format))
 
-    st = 'i' if vtr.scan_type == 'Interlaced' else 'p' # actually we don't have any interlaced video
+    st = 'i' if vtr.scan_type == 'Interlaced' else 'p'  # actually we don't have any interlaced video
     return f'{p}_{h}{st}' if p else f'{h}{st}'
 
 
 
 
-def fmtTrackLabel(cf:hc.CF|MI, logger:logging.Logger|None=None) -> str:
+def fmtTrackLabel(cf: hc.CF|MI, logger: logging.Logger|None = None) -> str:
 
     if not cf.video_tracks: return ''
 
@@ -84,7 +85,7 @@ def fmtTrackLabel(cf:hc.CF|MI, logger:logging.Logger|None=None) -> str:
     elif n := tracks.pop('avc', 0):
         tlabel += (f'{n}x264' if n > 1 else f'x264')
     else:
-        raise ValueError # it should be impossible to reach here if return if not minfo.video_tracks
+        raise ValueError  # it should be impossible to reach here if return if not minfo.video_tracks
 
     if n := tracks.pop('flac', 0):
         tlabel += (f'_{n}flac' if n > 1 else f'_flac')
@@ -101,6 +102,6 @@ def fmtTrackLabel(cf:hc.CF|MI, logger:logging.Logger|None=None) -> str:
         tlabel += (f'_{n}dts' if n > 1 else f'_dts')
 
     for k in tracks.keys():
-        if logger: logger.warning(f'Unhandled v/a format "{k}". Please report')
+        if logger: logger.warning(UNHANDLED_FMT_1.format(k))
 
     return tlabel

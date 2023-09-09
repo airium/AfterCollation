@@ -10,12 +10,12 @@ __all__ = ['chkTextTracks', 'chkPGS', 'chkAssFile', 'cmpTextContent']
 
 
 
-def chkTextTracks(cf:CF, logger:logging.Logger):
+def chkTextTracks(cf: CF, logger: logging.Logger):
 
     if cf.ext not in COMMON_VIDEO_EXTS:
         logger.error(f'The file is not a known file type with text.')
         return
-    if cf.ext not in VNx_VID_EXTS:
+    if cf.ext not in VX_VID_EXTS:
         logger.warning(f'The text checker is not designed to check the file type "{cf.ext}".')
         return
     if not cf.has_text:
@@ -34,7 +34,7 @@ def chkTextTracks(cf:CF, logger:logging.Logger):
             case _:
                 logger.warning(f'Unhandled text track format "{text_track.format}".')
 
-    if (cf.ext in VNx_EXT_AUD_EXTS) and cf.text_tracks:
+    if (cf.ext in VX_EXT_AUD_EXTS) and cf.text_tracks:
         logger.warning('External audio track should not have subtitle track.')
     for i, text_track in enumerate(cf.text_tracks, start=1):
         # TODO: confirm PGS should be default or not
@@ -54,25 +54,27 @@ def chkTextTracks(cf:CF, logger:logging.Logger):
 
 
 
-def chkPGS(cf:CF, logger:logging.Logger):
+def chkPGS(cf: CF, logger: logging.Logger):
     logger.info('PGS checking inside a video file is not supported yet.')
 
 
 
 
-def chkAssFile(cf:CF, logger:logging.Logger):
+def chkAssFile(cf: CF, logger: logging.Logger):
     if not tstAssFile(cf.path):
         logger.error('The ASS file is invalid or of non-standard encoding.')
         return
     ass_obj = toAssFileObj(cf.path)
     for section in ass_obj.extra_sections:
-        logger.warning(f'Found unnecessary ASS section "{section.name}". '
-                       'Consider removing it using the standalone tools in the `scripts` folder.')
+        logger.warning(
+            f'Found unnecessary ASS section "{section.name}". '
+            'Consider removing it using the standalone tools in the `scripts` folder.'
+            )
 
     # TODO add more ass content checking
 
 
 
 
-def cmpTextContent(fi1:CF|list[CF], fi2:CF|list[CF], logger:logging.Logger):
+def cmpTextContent(fi1: CF|list[CF], fi2: CF|list[CF], logger: logging.Logger):
     logger.info('Text content comparison inside media files is not supported yet.')

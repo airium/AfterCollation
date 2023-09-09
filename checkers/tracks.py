@@ -15,12 +15,13 @@ from .fonts import *
 __all__ = [
     'chkFile',
     'chkTracks',
-    'chkContainer']
+    'chkContainer',
+    ]
 
 
 
 
-def chkFile(cf:CF, logger:logging.Logger):
+def chkFile(cf: CF, logger: logging.Logger):
 
     logger.info(f'Checking "{cf.path}" ...')
     if not chkContainer(cf, logger):
@@ -46,12 +47,12 @@ def chkFile(cf:CF, logger:logging.Logger):
         case '7z'|'zip'|'rar':
             chkArcFile(cf, logger)
         case _:
-            logger.error(f'Got "{cf.ext}" but {VNx_ALL_EXTS=}.')
+            logger.error(f'Got "{cf.ext}" but {VX_ALL_EXTS=}.')
 
 
 
 
-def chkTracks(cf:CF, logger:logging.Logger) -> bool:
+def chkTracks(cf: CF, logger: logging.Logger) -> bool:
 
     if not cf.tracks[1:]:
         logger.error('The file has no media tracks.')
@@ -83,7 +84,7 @@ def chkTracks(cf:CF, logger:logging.Logger) -> bool:
 
 
 
-def chkContainer(cf:CF, logger:logging.Logger) -> bool:
+def chkContainer(cf: CF, logger: logging.Logger) -> bool:
     expected_format = EXTS2FORMATS.get(cf.ext)
 
     if expected_format is None:

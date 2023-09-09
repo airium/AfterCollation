@@ -4,6 +4,7 @@ from typing import Any
 from pathlib import PurePath
 from logging import Logger
 
+from langs import *
 from configs import *
 from .naming import *
 import helpers.season as hs
@@ -32,7 +33,7 @@ class Series:
         setattr(self, FULLPATH_VAR, kwargs.pop(FULLPATH_VAR, ''))  # self.dst_parent
         self.dst_parent = self.dst_parent  # clean and make the path posix
 
-        if kwargs and logger: logger.debug('Unused kwargs: ' + ('|'.join(f'{k}={v}' for k, v in kwargs.items())))
+        if kwargs and logger: logger.debug(UNUSED_KWARGS_1.format('|'.join(f'{k}={v}' for k, v in kwargs.items())))
 
     #* access logger ---------------------------------------------------------------------------------------------------
 

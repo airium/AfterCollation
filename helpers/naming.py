@@ -4,8 +4,9 @@ import re
 from logging import Logger
 from pathlib import PurePath
 
+from utils import *
+from langs import *
 from configs import *
-from utils.chars import isDecimal
 import helpers.corefile as hc
 import helpers.season as hs
 
@@ -19,7 +20,7 @@ __all__ = [
     'normSingleLocation',
     'normFullLocation',
     'normClassification',
-    'normDescription',
+    'normDesp',
     'normDecimal',
     'normSingleSuffix',
     'normFullSuffix',
@@ -114,7 +115,7 @@ def normClassification(chars: str) -> str:
 
 
 
-def normDescription(chars: str) -> str:
+def normDesp(chars: str) -> str:
     '''Whitelist-based description cleaner.'''
     chars = rmInvalidChars(chars)
     chars = ''.join([c for c in chars if c in VALID_F_CHARS]).strip()
@@ -168,7 +169,7 @@ def cmpCoreFileNaming(a: hc.CF, b: hc.CF) -> list[bool]:
     if a.c == b.c: ret[3] = True  # compare classification
     if a.i1 == b.i1: ret[4] = True  # compare main index
     if a.i2 == b.i2: ret[5] = True  # compare sub index
-    if a.s == b.s: ret[6] = True  # compare note
+    if a.s == b.s: ret[6] = True  # compare supplementary description
     if a.f == b.f: ret[7] = True  # compare full description
     if a.x == b.x: ret[8] = True  # compare suffix
     if a.e == b.e: ret[9] = True  # compare extension
@@ -201,8 +202,8 @@ def cleanNamingDicts(default_dict: dict[str, str], naming_dicts: list[dict[str, 
         naming_dict[CLASSIFY_VAR] = normClassification(naming_dict[CLASSIFY_VAR])
         naming_dict[IDX1_VAR] = normDecimal(naming_dict[IDX1_VAR])
         naming_dict[IDX2_VAR] = normDecimal(naming_dict[IDX2_VAR])
-        naming_dict[SUPPLEMENT_VAR] = normDescription(naming_dict[SUPPLEMENT_VAR])
-        naming_dict[FULLDESP_VAR] = normDescription(naming_dict[FULLDESP_VAR])
+        naming_dict[SUPPLEMENT_VAR] = normDesp(naming_dict[SUPPLEMENT_VAR])
+        naming_dict[FULLDESP_VAR] = normDesp(naming_dict[FULLDESP_VAR])
         naming_dict[SUFFIX_VAR] = normFullSuffix(naming_dict[SUFFIX_VAR])
         logger.debug('AftClean: ' + ('|'.join(naming_dict.values())))
 
@@ -220,7 +221,7 @@ def composeFullDesp(season: hs.Season, logger: Logger):
     Once merged, all files are ready to accept the final naming conflict check, and then be layouted onto disk.
     '''
 
-    cfs = season.cfs
+    cfs = season.files
 
     max_index = {}
     for cf in [info for info in cfs if not info.f]:
@@ -270,26 +271,26 @@ def composeFullDesp(season: hs.Season, logger: Logger):
 
 
 def decomposeFullDesp(season: hs.Season, logger: Logger):
-    for cf in season.cfs:
+    for cf in season.files:
         if cf.f:
             if m := re.match(FULL_DESP_REGEX, cf.f):
                 cf.f = ''
                 c = normClassification(c) if (c := m.group('c')) else ''
                 i1 = normDecimal(m.group('i1')) if (i1 := m.group('i1')) else ''
                 i2 = normDecimal(m.group('i2')) if (i2 := m.group('i2')) else ''
-                s = normDescription(m.group('s')) if (s := m.group('s')) else ''
+                s = normDesp(m.group('s')) if (s := m.group('s')) else ''
                 cf.c, cf.i1, cf.i2, cf.s = c, i1, i2, s
-                logger.debug(f'Decomposed "{cf.f}" -> "{cf.c}|{cf.i1}|{cf.i2}|{cf.s}"')
+                logger.debug(VP_PARSED_FILENAME_2.format(cf.f, f"{cf.c}|{cf.i1}|{cf.i2}|{cf.s}"))
             else:
-                logger.warning(f'Cannot decompose "{cf.f}".')
+                logger.warning(VP_FAILED_PARSING_1.format(cf.f))
 
 
 
 
 def cmpDstNaming(season: hs.Season, logger: Logger) -> bool:
     ok = True
-    for cf in season.cfs:
-        if cf.dstname != cf.srcname:
-            logger.warning(f'The filename differs after reconstruction: "{cf.srcname}" -> "{cf.dstname}".')
+    for cf in season.files:
+        if cf.name != cf.srcname:
+            logger.warning(VP_FILENAME_CHANGED_AFTER_RECON_2.format(cf.srcname, cf.name))
             ok = False
     return ok

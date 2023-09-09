@@ -5,6 +5,7 @@ from typing import Any
 from pathlib import Path
 
 from utils import *
+from langs import *
 from configs import *
 from pymediainfo import Track
 
@@ -26,7 +27,7 @@ class ImageFile:
         ):
 
         if not (path := Path(path).resolve()).is_file():
-            raise FileNotFoundError(f'Cannot find the file "{path}" to init an ImageFile instance.')
+            raise FileNotFoundError(CANT_FIND_SRC_FOR_IMAGEFILE_1.format(path))
         self.__path: Path = path
         self.__mediainfo: MediaInfo = getMediaInfo(path)
         self.__ffprobe: dict|None = None

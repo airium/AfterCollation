@@ -5,7 +5,9 @@ from configs.user import MIN_UNIQUE_CHAR_IN_ASS
 __all__ = ['getAssTextLangDict']
 
 
-def getAssTextLangDict(text:str|list[str]) -> dict[str, bool]:
+
+
+def getAssTextLangDict(text: str|list[str]) -> dict[str, bool]:
     if isinstance(text, list): text = ''.join(text)
     chars = set(text)
     ret = {}

@@ -221,7 +221,7 @@ def chkTitle(inp: Season|CoreFile, logger: logging.Logger) -> bool:
 
 
 
-def chkLocation(inp:CoreFile, logger: logging.Logger) -> bool:
+def chkLocation(inp: CoreFile, logger: logging.Logger) -> bool:
     #! We no longer check its relation to typename in this function
 
     l = inp.l
@@ -285,7 +285,7 @@ def chkClassification(inp: CoreFile, logger: logging.Logger) -> bool:
 
 
 
-def chkIndex(inp:CoreFile, logger: logging.Logger) -> bool:
+def chkIndex(inp: CoreFile, logger: logging.Logger) -> bool:
 
     i1 = inp.i1
     i2 = inp.i2
@@ -327,7 +327,7 @@ def chkIndex(inp:CoreFile, logger: logging.Logger) -> bool:
 def chkSupplementDesp(cf: CoreFile, logger: logging.Logger) -> bool:
 
     s = cf.s
-    cs = normDescription(s)
+    cs = normDesp(s)
 
     if not s: return True  # empty location is correct
 
@@ -345,7 +345,7 @@ def chkSupplementDesp(cf: CoreFile, logger: logging.Logger) -> bool:
 def chkCustomisedDesp(cf: CoreFile, logger: logging.Logger) -> bool:
 
     d = cf.f
-    cd = normDescription(d)
+    cd = normDesp(d)
 
     if not cf: return True  # empty customised description is correct
 
@@ -389,7 +389,7 @@ def chkSuffix(obj: Season|CoreFile, logger: logging.Logger) -> bool:
     if isinstance(obj, CoreFile):
 
         #! only MKV/MP4/ASS can have lang suffix
-        if obj.e not in (VNx_VID_EXTS + VNx_SUB_EXTS):
+        if obj.e not in (VX_VID_EXTS + VX_SUB_EXTS):
             logger.error(f'Found disallowed suffix "{cx}" for file 0x{obj.crc32}/{obj.e}.')
             return False
 
@@ -411,10 +411,10 @@ def chkSuffix(obj: Season|CoreFile, logger: logging.Logger) -> bool:
             logger.error(f'Found different capitalization styles in "{cx}".')
             ok = False
 
-        if obj.e in VNx_VID_EXTS:
+        if obj.e in VX_VID_EXTS:
             logger.info(f'Found suffix "{cx}" for file 0x{obj.crc32} - plz recheck that this video is hard-subbed.')
 
-        if obj.e in VNx_SUB_EXTS:
+        if obj.e in VX_SUB_EXTS:
             langs = toUniformLangTags(cx)
             lang_detected = ''
             if ass_obj := toAssFileObj(obj.path, test=True):

@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 import json
 import shutil
 import logging
 import itertools
 from pathlib import Path
 from logging import Logger
+from typing import Optional, Iterable
 from multiprocessing import Pool
 
 from utils import *
@@ -16,8 +19,10 @@ from .season import *
 from .misc import *
 from .subtitle import getAssTextLangDict
 from .language import *
-from .corefile import *
 from .formatter import *
+from .summaries import *
+import helpers.corefile as hcf
+
 
 import yaml
 from tqdm import tqdm
@@ -30,9 +35,9 @@ __all__ = [
     'readVideoAlphaNamingFile',
     'copyFileNamingFromVA',
     'recordBDMVInfo',
-    'toVDTableDicts',
+    'toVideoInfoDicts',
     'readVdCSV',
-    'writeVDTable',
+    'writeVideoInfo2CSV',
     'doEarlyNamingGuess',
     'guessNamingFieldsFromSimpleFilename',
     'guessNamingFields4ASS',
@@ -186,8 +191,8 @@ def copyFileNamingFromVA(cfs: list[CoreFile], file_naming_dicts: list[dict[str, 
             va_vol_idx = file_naming_dict.get(VA_M2TS_VOL_VAR)
             va_m2ts_idx = file_naming_dict.get(VA_M2TS_IDX_VAR)
             cf_vol_num = cf_vol_num
-            cf_m2ts_idx = m.group('m2ts_idx'
-                                  ) if (m := re.match(STRICT_TRANSCODED_FILESTEM_REGEX, cf.path.stem)) else None
+            cf_m2ts_idx = m.group('m2ts_idx') if (
+                m := re.match(STRICT_TRANSCODED_FILESTEM_REGEX, cf.path.stem)) else None
             if cf_vol_num and cf_m2ts_idx and va_vol_idx and va_m2ts_idx:
                 if (int(cf_vol_num) == int(va_vol_idx)) and (int(cf_m2ts_idx) == int(va_m2ts_idx)):
                     cf.updateFromNamingDict(file_naming_dict)
@@ -266,14 +271,14 @@ def recordBDMVInfo(input_dir: Path):
 
 
 
-def toVDTableDicts(cfs: list[CF], logger: Logger) -> list[dict[str, str]]:
+def toVideoInfoDicts(cfs: list[hcf.CF], logger: Logger) -> list[dict[str, str]]:
     ret = []
 
     for cf in cfs:
 
         d: dict[str, str] = {}
         d.update({k: '' for k in VD_FULL_DICT.keys()})
-        d.update({k: getattr(cf, v) for k, v in VD_USER_DICT.items()})
+        d.update({k: getattr(cf, v) for (k, v) in VD_USER_DICT.items()})
 
         d[FULLPATH_CN] = cf.src
         d[CRC32_CN] = cf.crc32
@@ -343,7 +348,7 @@ def readVdCSV(vd_csv_path: Path, logger: Logger) -> tuple[dict[str, str], list[d
 
 
 
-def writeVDTable(
+def writeVideoInfo2CSV(
     csv_path: Path, base_csv_dict: dict[str, str], file_csv_dicts: list[dict[str, str]], logger: Logger
     ) -> bool:
 
@@ -359,7 +364,7 @@ def writeVDTable(
 
 
 
-def guessNamingFieldsFromSimpleFilename(cf: CF, logger: Logger):
+def guessNamingFieldsFromSimpleFilename(cf: hcf.CF, logger: Logger):
     '''Sometimes the video may be already simply named. Let's try our luck.
 
     It should now be able to process something like:
@@ -394,7 +399,7 @@ def guessNamingFieldsFromSimpleFilename(cf: CF, logger: Logger):
 
 
 
-def guessNamingFields4ASS(cf: CF, logger: Logger):
+def guessNamingFields4ASS(cf: hcf.CF, logger: Logger):
     '''We should be able to guess the eposide index and the language suffix if lucky.'''
 
     #* firstly let's try to get the info from filename
@@ -449,7 +454,7 @@ def guessNamingFields4ASS(cf: CF, logger: Logger):
 
 
 
-def guessNamingFields4ARC(cf: CF, logger: Logger):
+def guessNamingFields4ARC(cf: hcf.CF, logger: Logger):
     filenames = getFileList(cf.path)
     has_png, has_font = False, False
     for filename in filenames:
@@ -464,7 +469,7 @@ def guessNamingFields4ARC(cf: CF, logger: Logger):
 
 
 
-def guessNamingFields4MKA(mka: CF, cfs: list[CF], logger: Logger):
+def guessNamingFields4MKA(mka: hcf.CF, cfs: list[hcf.CF], logger: Logger):
 
     candidates = [cf for cf in cfs if (cf.e == 'mkv' and matchTime(mka.duration, cf.duration))]
     #? how can we discriminate multiple mka if they have the same duration?
@@ -474,7 +479,7 @@ def guessNamingFields4MKA(mka: CF, cfs: list[CF], logger: Logger):
 
 
 
-def doEarlyNamingGuess(cfs: list[CF], logger: Logger):
+def doEarlyNamingGuess(cfs: list[hcf.CF], logger: Logger):
     '''We can actually guess very few fields at VD, but try it.'''
 
     for i, cf in enumerate(cfs):
@@ -498,18 +503,18 @@ def doEarlyNamingGuess(cfs: list[CF], logger: Logger):
 
 
 
-def collectVideoInfos(input_dir: Path, va_file: Path|None = None):
+def collectVideoInfos(src_dir: Path, va_file: Optional[Path] = None):
 
-    logger = initLogger(log_path := input_dir.parent.joinpath(VD_LOG_FILENAME))
-    logger.info(USING_VD_1.format(AC_VERSION))
-    logger.info(THE_INPUT_IS_1.format(str(input_dir) + (f' + {va_file}' if va_file else '')))
+    logger = initLogger(src_dir.parent / VP_LOG_FILENAME)
+    logger.info(USING_VP_1.format(AC_VERSION))
+    logger.info(THE_INPUT_IS_1.format(str(src_dir) + (f' + {va_file}' if va_file else '')))
 
-    va_base_naming_dict, va_file_naming_dicts = readVANamingFile(va_file, logger)
+    va_base_naming_dict, va_file_naming_dicts = readVideoAlphaNamingFile(va_file, logger)
 
-    paths = filterVxFilePaths(input_dir, logger)
-    cfs = toCoreFilesWithTqdm(paths, logger, mp=getCRC32MultiProc(paths, logger))
+    paths = filterVxFilePaths(src_dir, logger)
+    cfs = hcf.toCoreFilesWithTqdm(paths, logger, mp=getCRC32MultiProc(paths, logger))
     cmpCfCRC32(cfs, findCRC32InFilenames(paths), logger)
-    if ENABLE_FILE_CHECKING_IN_VD: chkSeasonFiles(cfs, logger)
+    if ENABLE_FILE_CHECKING_IN_VP: chkSeasonFiles(cfs, logger)
 
     # NOTE first guess naming and then fill each CF from VA
     # so the naming instruction in VA will not be overwritten
@@ -517,7 +522,7 @@ def collectVideoInfos(input_dir: Path, va_file: Path|None = None):
     # so we cannot use file_naming_dicts for copyNamingFromVA()
     doEarlyNamingGuess(cfs, logger)
     copyFileNamingFromVA(cfs, va_file_naming_dicts, logger)
-    file_csv_dicts = toVDTableDicts(cfs, logger)
+    file_csv_dicts = toVideoInfoDicts(cfs, logger)
 
     # don't forget to update the default dict from VA, which is not updated in fillFieldsFromVA()
     # NOTE leave useful fields as '' to notify the user that they can fill it
@@ -525,7 +530,7 @@ def collectVideoInfos(input_dir: Path, va_file: Path|None = None):
     base_csv_dict.update({k: '' for k in VD_BASE_LINE_USER_DICT.keys()})
     base_csv_dict.update({k: va_base_naming_dict.get(v, '') for k, v in VA_BASE_LINE_USER_DICT.items()})
 
-    writeVDTable(input_dir.parent.joinpath(VD_CSV_FILENAME), base_csv_dict, file_csv_dicts, logger)
+    writeVideoInfo2CSV(src_dir.parent / VP_CSV_FILENAME, base_csv_dict, file_csv_dicts, logger)
 
 
 
@@ -610,9 +615,9 @@ def doAutoIndexing(season: Season, logger: Logger):
     # dep_cfs: dependent files, which need to copy the naming from another file by crc32 lookup
     # named_cfs: naming already specified in cf.c, no need to do anything
 
-    auto_cfs: list[CF] = [info for info in cfs if not info.f]
-    dep_cfs: list[CF] = [info for info in cfs if (info.f and re.match(CRC32_STRICT_REGEX, info.f))]
-    named_cfs: list[CF] = [info for info in cfs if (info.f and not re.match(CRC32_STRICT_REGEX, info.f))]
+    auto_cfs: list[hcf.CF] = [info for info in cfs if not info.f]
+    dep_cfs: list[hcf.CF] = [info for info in cfs if (info.f and re.match(CRC32_STRICT_REGEX, info.f))]
+    named_cfs: list[hcf.CF] = [info for info in cfs if (info.f and not re.match(CRC32_STRICT_REGEX, info.f))]
 
     state: dict[str, int|float] = {}
     for i, acf in enumerate(auto_cfs):
@@ -745,7 +750,7 @@ def placeVideos(csv_path: Path):
     if not tstIO4VP(src_file_paths, dst_parent_dir, logger): return
 
     (season := Season()).dst_parent = dst_parent_dir.as_posix()
-    season.add(toCoreFilesWithTqdm(src_file_paths, logger, mp=getCRC32MultiProc(src_file_paths, logger)))
+    season.add(hcf.toCoreFilesWithTqdm(src_file_paths, logger, mp=getCRC32MultiProc(src_file_paths, logger)))
     cmpCfCRC32(season.files, [naming_info[CRC32_VAR] for naming_info in file_naming_dicts], logger)
     applyNamingDicts(season, base_naming_dict, file_naming_dicts, logger)
     doAutoIndexing(season, logger)
@@ -825,8 +830,8 @@ def doComparison(*groups: list[Path], grpname: str = '0', subgrps_names: list[st
             logger.error(f'Cannot compare empty group.')
             continue
 
-        g1 = [CF(f) for f in g1]
-        g2 = [CF(f) for f in g2]
+        g1 = [hcf.CF(f) for f in g1]
+        g2 = [hcf.CF(f) for f in g2]
 
         if any(cf.has_video for cf in g1 + g2):
             logger.info('Comparing video...')
@@ -996,8 +1001,8 @@ def main2doMatching2CSV(input1_dir: Path, input2_dir: Path):
     if len(input2_fs) != len(input2_fs_all):
         logger.info(f'Removed some FLAC in {STD_CDS_DIRNAME} from the input dir "{input2_dir}".')
 
-    input1_cfs = [CF(f) for f in input1_fs]
-    input2_cfs = [CF(f) for f in input2_fs]
+    input1_cfs = [hcf.CF(f) for f in input1_fs]
+    input2_cfs = [hcf.CF(f) for f in input2_fs]
 
     groups: dict[str, list[tuple[str, str, str]]] = dict()
     if not input1_cfs or not input2_cfs:
@@ -1137,7 +1142,7 @@ def main2doMatching2CSV(input1_dir: Path, input2_dir: Path):
         timestamps = input1_cf.menu_timestamps[0]
         if len(timestamps) < 2: continue  # this seems an incorrect menu
         distances = [(timestamps[i + 1] - timestamps[i]) for i in range(len(timestamps) - 1)]
-        founds: list[CF] = []
+        founds: list[hcf.CF] = []
         for i, distance in enumerate(distances):
             for input2_cf in input2_cfs:
                 if input2_cf in founds: continue
@@ -1159,7 +1164,7 @@ def main2doMatching2CSV(input1_dir: Path, input2_dir: Path):
         timestamps = input2_cf.menu_timestamps[0]
         if len(timestamps) < 2: continue  # this seems an incorrect menu
         distances = [(timestamps[i + 1] - timestamps[i]) for i in range(len(timestamps) - 1)]
-        founds: list[CF] = []
+        founds: list[hcf.CF] = []
         for i, distance in enumerate(distances):
             for input1_cf in input1_cfs:
                 if input1_cf in founds: continue

@@ -2,20 +2,22 @@ import re
 from logging import Logger
 from pathlib import PurePath
 
-from configs.runtime import *
-from configs.regex import *
+from langs import *
+from configs import *
+
 
 __all__ = [
     'parseSeriesDirName',
     'parseSeasonDirName',
     'parseCoreFileName',
+    'parseAlbumDirName',
     ]
 
 
 
 
 def parseSeriesDirName(path: PurePath, logger: Logger|None = None) -> dict[str, str]|None:
-    naming_dict = {k: '' for k in VND_FULL_DICT.values()}
+    naming_dict = {k: '' for k in VD_FULL_DICT.values()}
     if m := re.match(VCBS_SERIES_ROOT_DIRNAME_PATTERN, path.name.strip()):
         names = m.groupdict()
         naming_dict[FULLPATH_VAR] = path.as_posix()
@@ -23,14 +25,14 @@ def parseSeriesDirName(path: PurePath, logger: Logger|None = None) -> dict[str, 
         naming_dict[TITLE_VAR] = t if (t := names['t']) else ''
         return naming_dict
     else:
-        if logger: logger.error(f'Failed to parse the series name "{path.name}".')
+        if logger: logger.error(VP_FAILED_PARSING_SERIES_NAME_1.format(path.name))
         return None
 
 
 
 
 def parseSeasonDirName(path: PurePath, logger: Logger|None = None) -> dict[str, str]|None:
-    naming_dict = {k: '' for k in VND_FULL_DICT.values()}
+    naming_dict = {k: '' for k in VD_FULL_DICT.values()}
     if m := re.match(VCBS_SEASON_ROOT_DIRNAME_PATTERN, path.name.strip()):
         names = m.groupdict()
         naming_dict[FULLPATH_VAR] = path.as_posix()
@@ -39,14 +41,14 @@ def parseSeasonDirName(path: PurePath, logger: Logger|None = None) -> dict[str, 
         naming_dict[SUFFIX_VAR] = x if (x := names['x']) else ''
         return naming_dict
     else:
-        if logger: logger.error(f'Failed to parse the season name "{path.name}".')
+        if logger: logger.error(VP_FAILED_PARSING_SEASON_NAME_1.format(path.name))
         return None
 
 
 
 
 def parseCoreFileName(path: PurePath, logger: Logger|None = None, location: str|None = None) -> dict[str, str]|None:
-    naming_dict = {k: '' for k in VND_FULL_DICT.values()}
+    naming_dict = {k: '' for k in VD_FULL_DICT.values()}
     if m := re.match(VCBS_COREFILE_FILENAME_PATTERN, path.name.strip()):
         names = m.groupdict()
         naming_dict[FULLPATH_VAR] = path.as_posix()
@@ -59,5 +61,11 @@ def parseCoreFileName(path: PurePath, logger: Logger|None = None, location: str|
         naming_dict[TLABEL_VAR] = t if (t := names['tlabel']) else ''
         return naming_dict
     else:
-        if logger: logger.error(f'Failed to parse "{path.name}".')
+        if logger: logger.error(VP_FAILED_PARSING_VID_FILENAME_1.format(path.name))
         return None
+
+
+
+
+def parseAlbumDirName(name: str, logger: Logger) -> dict|None:
+    pass

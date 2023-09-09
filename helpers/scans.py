@@ -121,7 +121,7 @@ def cleanScansFilenames(scans_dir: Path, logger: Logger):
                         old_path = dir_path / (old_name := lower2orig_filename_mapping[lower_name])
                         new_path = dir_path / (new_name := old_name[prewidth:len(old_name) - len(ext) - endwidth] + ext)
                         old_path.rename(new_path)
-                        logger.info(f'Renamed "{old_path}" -> "{new_path.name}".')
+                        logger.info(RENAMED_2.format(old_path, new_path.name))
 
 
 

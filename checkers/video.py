@@ -10,19 +10,19 @@ __all__ = ['chkVideoTracks', 'cmpVideoContent']
 
 
 
-def cmpVideoContent(cfs1:CF|list[CF], cfs2:CF|list[CF], logger:logging.Logger):
+def cmpVideoContent(cfs1: CF|list[CF], cfs2: CF|list[CF], logger: logging.Logger):
     logger.info('Video content comparison is not implemented yet.')
     #TODO can we replace RPC's function here
 
 
 
 
-def chkVideoTracks(cf:CF, logger:logging.Logger, decode:bool=False):
+def chkVideoTracks(cf: CF, logger: logging.Logger, decode: bool = False):
 
     if cf.ext not in COMMON_VIDEO_EXTS:
         logger.error(f'The file is not a known file type with video.')
         return
-    if cf.ext not in VNx_VID_EXTS:
+    if cf.ext not in VX_VID_EXTS:
         logger.warning(f'The video checker is not designed to check the file type "{cf.ext}".')
         return
     if not cf.has_video:
@@ -40,7 +40,7 @@ def chkVideoTracks(cf:CF, logger:logging.Logger, decode:bool=False):
         case 'mp4':
             pass
         case _:
-            logger.error(f'Updated {VNx_VID_EXTS=} but forgot to update the checker.')
+            logger.error(f'Updated {VX_VID_EXTS=} but forgot to update the checker.')
             return
 
     #* ---------------------------------------------------------------------------------------------
@@ -84,5 +84,5 @@ def chkVideoTracks(cf:CF, logger:logging.Logger, decode:bool=False):
 
         # do a full decoding test for each audio track
         if decode:
-            if not tryFFMPEGVideoDecode(cf.path, id=i):
+            if not tstFFmpegVideoDecode(cf.path, id=i):
                 logger.error(f'The video track #{i} failed to decode.')

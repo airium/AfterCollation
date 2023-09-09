@@ -18,7 +18,7 @@ __all__ = ['chkScansNaming', 'chkScansFiles']
 
 
 
-def chkScansNaming(scans_dir:Path, logger:Logger):
+def chkScansNaming(scans_dir: Path, logger: Logger):
     '''
     Check the naming of the scans folder.
 
@@ -40,7 +40,7 @@ def chkScansNaming(scans_dir:Path, logger:Logger):
         for f in ext_upper_cased_files:
             logger.warning(f'The file extension is not lowercase: "{f}".')
 
-        file_groups_by_ext : dict[str, list[Path]] = {}
+        file_groups_by_ext: dict[str, list[Path]] = {}
         for f in files:
             key = f.suffix.lower()
             if file_groups_by_ext.get(key):
@@ -49,8 +49,10 @@ def chkScansNaming(scans_dir:Path, logger:Logger):
                 file_groups_by_ext[key] = [f]
 
         if len(set(f.stem.lower() for f in files)) != len(files):
-            logger.warning(f'Found different file types have the same filename under "{img_dir}". '
-                            'This should be avoided.')
+            logger.warning(
+                f'Found different file types have the same filename under "{img_dir}". '
+                'This should be avoided.'
+                )
 
         for k, v in file_groups_by_ext.items():
 
@@ -60,7 +62,9 @@ def chkScansNaming(scans_dir:Path, logger:Logger):
             if lower_common_stem:
 
                 if not lower_common_stem.isdigit():
-                    logger.warning(f'Possibly unnecessary prefix "{lower_common_stem}" for "{v[0].parent}{os.sep}{lower_common_stem}*{k}".')
+                    logger.warning(
+                        f'Possibly unnecessary prefix "{lower_common_stem}" for "{v[0].parent}{os.sep}{lower_common_stem}*{k}".'
+                        )
                 else:
                     # TODO: can we use a more accurate common prefix warning?
                     # current implementation can rarely raise a false detection
@@ -75,26 +79,26 @@ def chkScansNaming(scans_dir:Path, logger:Logger):
             # however, there are too many possible naming style for files so we can hardly do a 100% trusty check
             # if anything happens in production, add here
 
-
         # TODO: do we need to check the file indexing is correct?
         # generally, wrong number (incl. not starting from 01) are all considered normal and acceptable
         # they are the normal behavior by the scanner
 
-
         #***************************************************************************************************************
         dirs = listDir(img_dir, rglob=False)
 
-        lower_dirnames_map : dict[str, str] = {}
-        lower_dirnames : list[str] = []
+        lower_dirnames_map: dict[str, str] = {}
+        lower_dirnames: list[str] = []
         for dir in dirs:
             lower_dirnames.append(dir.name.lower())
             lower_dirnames_map[dir.name.lower()] = dir.name
 
-        groups : list[set[str]] = []
+        groups: list[set[str]] = []
         for i, lower_dirname in enumerate(lower_dirnames):
             # using [i:] make the matching return a list at least containing itself
             # using a cutoff 0.5 to make matches such as '01' vs '02'
-            matches = difflib.get_close_matches(lower_dirname, lower_dirnames[i:], n=len(lower_dirnames[i:]), cutoff=0.5)
+            matches = difflib.get_close_matches(
+                lower_dirname, lower_dirnames[i:], n=len(lower_dirnames[i:]), cutoff=0.5
+                )
             added = False
             for group in groups:
                 if any((match in group) for match in matches):
@@ -131,15 +135,16 @@ def chkScansNaming(scans_dir:Path, logger:Logger):
                         logger.error(f'Duplicated dirname index: "{img_dir}{os.sep}{mc_name}*".')
                     if min(ints) != 1:
                         logger.warning(f'Dirname is indexed from {min(ints)}: "{img_dir}{os.sep}{mc_name}*".')
-                    if ints != list(range(min(ints), max(ints)+1)):
+                    if ints != list(range(min(ints), max(ints) + 1)):
                         logger.warning(f'Improperly incremented index: "{img_dir}{os.sep}{mc_name}*".')
                 else:
-                    logger.warning(f'Inconsistent dirname suffix part: "{img_dir}{os.sep}{mc_name}[{"|".join(cased_diff_names)}]".')
-
+                    logger.warning(
+                        f'Inconsistent dirname suffix part: "{img_dir}{os.sep}{mc_name}[{"|".join(cased_diff_names)}]".'
+                        )
 
         #***************************************************************************************************************
         match len(dirs) and len(files):
-            case 0, 0: # empty folder doesn't matter in torrent making, so just give a notice
+            case 0, 0:  # empty folder doesn't matter in torrent making, so just give a notice
                 logger.info(f'Note an empty dir: "{img_dir}".')
             case 0, 1:
                 logger.info(f'Note a 1-file dir: "{img_dir}".')
@@ -153,12 +158,14 @@ def chkScansNaming(scans_dir:Path, logger:Logger):
 
 
 
-def chkScansFiles(files:list[Path], temp_dir:Path|None, logger:Logger):
+def chkScansFiles(files: list[Path], temp_dir: Path|None, logger: Logger):
 
     if DEBUG: assert all(file.is_file() for file in files)
 
     with logging_redirect_tqdm([logger]):
-        pbar = tqdm.tqdm(total=len(files), desc='Checking', unit='file', unit_scale=False, ascii=True, dynamic_ncols=True)
+        pbar = tqdm.tqdm(
+            total=len(files), desc='Checking', unit='file', unit_scale=False, ascii=True, dynamic_ncols=True
+            )
         for file in files:
             chkScansImage(CF(file), temp_dir, logger=logger, decode=True)
             pbar.update(1)

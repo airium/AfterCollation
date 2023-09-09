@@ -11,7 +11,8 @@ __all__ = ['chkMenuTracks', 'cmpMenuContent']
 
 
 
-def cmpMenuContent(input1:CF|list[CF], input2:CF|list[CF], logger:logging.Logger):
+
+def cmpMenuContent(input1: CF|list[CF], input2: CF|list[CF], logger: logging.Logger):
 
     if isinstance(input1, CF): input1 = [input1]
     if isinstance(input2, CF): input2 = [input2]
@@ -72,12 +73,12 @@ def cmpMenuContent(input1:CF|list[CF], input2:CF|list[CF], logger:logging.Logger
 
 
 
-def chkMenuTracks(cf:CF, logger:logging.Logger):
+def chkMenuTracks(cf: CF, logger: logging.Logger):
 
     if cf.ext not in COMMON_VIDEO_EXTS:
         logger.error(f'The file is not a known file type with menu.')
         return
-    if cf.ext not in VNx_VID_EXTS:
+    if cf.ext not in VX_VID_EXTS:
         logger.warning(f'The menu checker is not designed to check the file type "{cf.ext}".')
         return
     if not cf.has_menu:
@@ -88,7 +89,7 @@ def chkMenuTracks(cf:CF, logger:logging.Logger):
 
     for t in cf.menu_tracks:
         # first
-        chap_times, chap_texts = list(zip(*[(k, v) for (k, v) in t.to_data().items() if re.match(MEDIAINFO_CHAPTER_PATTERN, k)]))
+        chap_times, chap_texts = list(zip(*[(k, v) for (k, v) in t.to_data().items() if re.match(LIBMEDIAINFO_CHAPTER_REGEX, k)]))
         # disable sorting may preserve the original order?
         # chap_times, chap_texts = zip(*sorted(zip(chap_times, chap_texts)))
         # start checking the chapter content
@@ -98,13 +99,13 @@ def chkMenuTracks(cf:CF, logger:logging.Logger):
                 logger.warning('The first chapter not starts at 00:00:00')
             if last_chap_time and (chap_time <= last_chap_time):
                 logger.warning(f'Chapter {i} at {chap_time} should > last chapter at {last_chap_time}.')
-            if m := re.search(STD_CHAP_TXT_PATTERN, chap_text):
+            if m := re.search(MENU_TEXT_STD_REGEX, chap_text):
                 is_chapter_xx = True
                 if (idx := int(m.group('idx'))) != i:
                     logger.warning(f'Chapter #{i} is mistakenly labelled as chapter #{idx}.')
                 chap_lang = m.group('lang')
                 chap_text = m.group('text')
-            elif m := re.search(CUSTOM_CHAP_PATTERN, chap_text):
+            elif m := re.search(MENU_TEXT_CUSTOM_REGEX, chap_text):
                 logger.warning(f'Using custom chapter text #{i:02d}:\"{m.group("text")}\"')
                 chap_lang = m.group('lang')
                 chap_text = m.group('text')
@@ -116,7 +117,7 @@ def chkMenuTracks(cf:CF, logger:logging.Logger):
         # after-loop check
         if i == 0:
             logger.warning('Menu with only the starting chapter should be removed.')
-        if m := re.match(MEDIAINFO_CHAPTER_PATTERN, last_chap_time):
+        if m := re.match(LIBMEDIAINFO_CHAPTER_REGEX, last_chap_time):
             hour, minute, milisecond = m.groups()
             last_chap_time = int(hour) * 3600000 + int(minute) * 60000 + int(milisecond)
             duration = cf.duration
@@ -125,9 +126,9 @@ def chkMenuTracks(cf:CF, logger:logging.Logger):
             elif last_chap_time >= duration:
                 logger.warning('The last chapter locates outside of the video duration.')
             else:
-                pass # ok
+                pass  # ok
         # check if the menu language label agrees with its text
-        if cf.gtr.format == 'Matroska': # MP4 chap has no language label
+        if cf.gtr.format == 'Matroska':  # MP4 chap has no language label
             if len(chap_langs := set(chap_langs)) != 1:
                 logger.warning('Menu language label looks malformed.')
             if chap_langs and (chap_lang := chap_langs.pop()):
@@ -145,8 +146,10 @@ def chkMenuTracks(cf:CF, logger:logging.Logger):
                     else:
                         found_lang = chkLang(chap_desp)
                 if chap_lang != found_lang:
-                    logger.warning(f'Menu language detected "{found_lang}" != tagged "{chap_lang}" '
-                                    '(note the detection is not accurate at the moment).')
+                    logger.warning(
+                        f'Menu language detected "{found_lang}" != tagged "{chap_lang}" '
+                        '(note the detection is not accurate at the moment).'
+                        )
 
     # val1 = CHAP_NAME_PATTERN.match(line1).groups()
     # val2 = CHAP_NAME_PATTERN.match(line2).groups()

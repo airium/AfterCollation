@@ -24,7 +24,7 @@ def chkImage(cf: CF, logger: Logger, decode: bool = True) -> bool:
     filesize = cf.path.stat().st_size
     if filesize == 0:
         logger.error(f'The file is empty.')
-        return False # NOTE return on empty file
+        return False  # NOTE return on empty file
     elif filesize < SMALL_IMAGE_FILE_SIZE:
         logger.warning('The image file is very small.')
 
@@ -38,7 +38,7 @@ def chkImage(cf: CF, logger: Logger, decode: bool = True) -> bool:
         return False
 
     #* check decoding ******************************************************************************
-    if decode and not tryFFMPEGDecode(cf.path):
+    if decode and not tstFFmpegDecode(cf.path):
         logger.error(f'Failed to decode the image file.')
         return False
 
@@ -47,7 +47,7 @@ def chkImage(cf: CF, logger: Logger, decode: bool = True) -> bool:
 
 
 
-def chkScansImage(cf:CF, temp_dir:Path|None, logger:Logger, decode:bool=True):
+def chkScansImage(cf: CF, temp_dir: Path|None, logger: Logger, decode: bool = True):
 
     if not chkImage(cf, logger, decode=decode): return
 
@@ -63,12 +63,14 @@ def chkScansImage(cf:CF, temp_dir:Path|None, logger:Logger, decode:bool=True):
             ret = tstDwebp(f'{work_file.as_posix()}')
             # NOTE don't decode the raw ret['stderr'], it may contain unknown encoding difficult to determine
             # and actually our regex only need the ASCII part
-            if m := re.search(DWEBP_STDERR_PARSE_PATTERN, ret['stderr']):
+            if m := re.search(DWEBP_STDERR_PARSE_REGEX, ret['stderr']):
                 w, h, mode, alpha = m['width'], m['height'], m['mode'], m['alpha']
                 q = getWebpQuality(f'{work_file.as_posix()}')
-                if q and not ((ENFORCED_WEBP_QUALITY - 3) < q < (ENFORCED_WEBP_QUALITY + 3)):
-                    logger.warning(f'The WEBP file "{cf.path}" may have improper quality '
-                                f'(got {q} but expect {ENFORCED_WEBP_QUALITY}).')
+                if q and not ((DEFAULT_WEBP_QUALITY - 3) < q < (DEFAULT_WEBP_QUALITY + 3)):
+                    logger.warning(
+                        f'The WEBP file "{cf.path}" may have improper quality '
+                        f'(got {q} but expect {DEFAULT_WEBP_QUALITY}).'
+                        )
                 if alpha:
                     logger.info(f'Note an alpha WEBP file "{cf.path}".')
             else:
@@ -103,12 +105,12 @@ def chkScansImage(cf:CF, temp_dir:Path|None, logger:Logger, decode:bool=True):
 
 
 
-def chkImageTracks(cf:CF, logger:Logger, decode:bool=True):
+def chkImageTracks(cf: CF, logger: Logger, decode: bool = True):
 
     if cf.ext not in COMMON_IMAGE_EXTS:
         logger.error(f'The file is not a known file type with image.')
         return
-    if cf.ext not in VNx_IMG_EXTS:
+    if cf.ext not in VX_IMG_EXTS:
         logger.warning(f'The image checker is not designed to check the file type "{cf.ext}".')
         return
     if not cf.has_image:
@@ -120,7 +122,7 @@ def chkImageTracks(cf:CF, logger:Logger, decode:bool=True):
 
 
 
-def cmpImageContent(input1:CF|list[CF], input2:CF|list[CF], logger:Logger):
+def cmpImageContent(input1: CF|list[CF], input2: CF|list[CF], logger: Logger):
 
     if isinstance(input1, CF): input1 = [input1]
     if isinstance(input2, CF): input2 = [input2]

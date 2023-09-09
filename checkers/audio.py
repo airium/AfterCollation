@@ -7,15 +7,18 @@ from helpers.corefile import CF
 
 import numpy as np
 
+
 __all__ = ['chkAudioTracks', 'cmpAudioContent']
 
 
-def chkAudioTracks(cf:CF, logger:logging.Logger, decode:bool=True):
+
+
+def chkAudioTracks(cf: CF, logger: logging.Logger, decode: bool = True):
 
     if cf.ext not in COMMON_VIDEO_EXTS + COMMON_AUDIO_EXTS:
         logger.error(f'The file is not a known file type with audio.')
         return
-    if cf.ext not in VNx_WITH_AUD_EXTS:
+    if cf.ext not in VX_WITH_AUD_EXTS:
         logger.warning(f'The audio checker is not designed to check the file type "{cf.ext}".')
         return
     if not cf.has_audio:
@@ -33,12 +36,17 @@ def chkAudioTracks(cf:CF, logger:logging.Logger, decode:bool=True):
             if len([atr for atr in cf.audio_tracks if (atr and atr.compression_mode == 'Lossless')]) > 2:
                 logger.warning('The MKV has more than 2 lossless audio tracks. Consider using MKA.')
             if len(cf.audio_tracks) > 1:
-                mkv_stem = m.group('stem').lower() if (m := re.match(UNAMED_OKE_STEM_PATTERN, cf.path.stem)) else ''
+                mkv_stem = m.group('stem').lower() if (m := re.match(TRANSCODED_FILESTEM_REGEX, cf.path.stem)) else ''
                 if mkv_stem:
-                    mka_files = listFile(cf.path.parent, rglob=False)
-                    mka_stems = [m.group('stem').lower() for m in [re.match(UNAMED_OKE_STEM_PATTERN, mka.stem) for mka in mka_files] if m]
+                    mka_files = listFile(cf.path.parent, ext='mka', rglob=False)
+                    mka_stems = [
+                        m.group('stem').lower()
+                        for m in [re.match(TRANSCODED_FILESTEM_REGEX, mka.stem) for mka in mka_files] if m
+                        ]
                     if mkv_stem in mka_stems:
-                        logger.warning('It seems that there is already a counterpart MKA, so the MKV should contain only 1 audio track.')
+                        logger.warning(
+                            'It seems that there is already a counterpart MKA, so the MKV should contain only 1 audio track.'
+                            )
             for i, atr in enumerate(cf.audio_tracks):
                 if i == 0 and atr.default != 'Yes':
                     logger.warning(f'The MKV audio track #{i} should be marked as DEFAULT.')
@@ -46,7 +54,7 @@ def chkAudioTracks(cf:CF, logger:logging.Logger, decode:bool=True):
                     logger.info(f'The MKV audio track #{i} is not lossless.')
                 if i == 0 and atr.channel_s != 2:
                     logger.warning(f'The MKV audio track #{i} is not 2ch.')
-                if i > 0 and atr.channel_s > 2: # we do have i == 0 but 6ch in practice, so only give not 2ch warn as above
+                if i > 0 and atr.channel_s > 2:  # we do have i == 0 but 6ch in practice, so only give not 2ch warn as above
                     logger.warning(f'The MKV audio track #{i} is >2ch, which should placed in MKA.')
                 if not atr.language:
                     logger.warning(f'The MKV audio track #{i} is missing language tag.')
@@ -57,13 +65,17 @@ def chkAudioTracks(cf:CF, logger:logging.Logger, decode:bool=True):
 
         case 'mka':
             if not cf.path.with_suffix('.mkv').is_file():
-                mka_stem = m.group('stem').lower() if (m := re.match(UNAMED_OKE_STEM_PATTERN, cf.path.stem)) else ''
+                mka_stem = m.group('stem').lower() if (m := re.match(TRANSCODED_FILESTEM_REGEX, cf.path.stem)) else ''
                 if mka_stem:
                     mkv_files = listFile(cf.path.parent, rglob=False)
-                    mkv_stems = [m.group('stem').lower() for m in [re.match(UNAMED_OKE_STEM_PATTERN, mkv.stem) for mkv in mkv_files] if m]
+                    mkv_stems = [
+                        m.group('stem').lower()
+                        for m in [re.match(TRANSCODED_FILESTEM_REGEX, mkv.stem) for mkv in mkv_files] if m
+                        ]
                     if mka_stem in mkv_stems:
                         logger.warning('Cannot find the counterpart MKV of the same filename.')
-                else: logger.warning('Cannot find the counterpart MKV (filename too complicated).')
+                else:
+                    logger.warning('Cannot find the counterpart MKV (filename too complicated).')
 
             for i, atr in enumerate(cf.audio_tracks):
                 if i == 0 and atr.compression_mode != 'Lossless':
@@ -96,7 +108,7 @@ def chkAudioTracks(cf:CF, logger:logging.Logger, decode:bool=True):
             # it seems that FLAC has no specific checking
             pass
         case _:
-            logger.error(f'Updated {VNx_WITH_AUD_EXTS=} but forgot to update the checker.')
+            logger.error(f'Updated {VX_WITH_AUD_EXTS=} but forgot to update the checker.')
             return
 
     #* ---------------------------------------------------------------------------------------------
@@ -115,23 +127,24 @@ def chkAudioTracks(cf:CF, logger:logging.Logger, decode:bool=True):
         if atr.channel_s not in COMMON_AUDIO_CHANNEL:
             logger.warning(f'The audio track #{i} if of uncommon channel number "{atr.channel_s}".')
         if atr.bit_rate_mode:
-            pass # TODO seems difficult to check something meaningful here (AAC has no such tag)
+            pass  # TODO seems difficult to check something meaningful here (AAC has no such tag)
         if not atr.duration:
             logger.error(f'The audio track #{i} has no duration.')
         elif not matchTime(int(float(atr.duration)), cf.duration, MAX_DURATION_DIFF_BETWEEN_TRACKS):
-                logger.warning(f'The audio track #{i} has a different duration.')
+            logger.warning(f'The audio track #{i} has a different duration.')
         if atr.delay:
             logger.warning(f'The audio track #{i} has delay ({atr.delay}).')
 
         # do a full decoding test for each audio track
         if decode:
-            if not tryFFMPEGAudioDecode(cf.path, id=i):
+            if not tstFFmpegAudioDecode(cf.path, id=i):
                 logger.error(f'The audio track #{i} failed to decode.')
 
 
 
 
-def cmpAudioContent(input1:CF|list[CF], input2:CF|list[CF], logger:logging.Logger) -> list[tuple[int, np.ndarray, int]]:
+def cmpAudioContent(input1: CF|list[CF], input2: CF|list[CF],
+                    logger: logging.Logger) -> list[tuple[int, np.ndarray, int]]:
     '''
     Compare two groups of audios, supporting multi-track and multi-file.
     In each group, video files is concatenated in series; audio files is placed parallel (i.e. as a new track).
@@ -156,14 +169,13 @@ def cmpAudioContent(input1:CF|list[CF], input2:CF|list[CF], logger:logging.Logge
     if not all_has_audio:
         return []
 
-
     freqs = [at.sampling_rate for at in itertools.chain.from_iterable(cf.audio_tracks for cf in input1 + input2)]
     if not all(freqs):
         logger.error(f'Failed to read sampling rate from some input.')
         return []
 
     # tracks1: dict[idx, list[tuple[CoreFile, audio_idx_in_the_file]]]
-    tracks1 : dict[int, list[tuple[CF, int]]] = {}
+    tracks1: dict[int, list[tuple[CF, int]]] = {}
     vcf1s = [cf for cf in input1 if cf.has_video]
     acf1s = [cf for cf in input1 if not cf.has_video]
     for cf1 in vcf1s:
@@ -172,9 +184,9 @@ def cmpAudioContent(input1:CF|list[CF], input2:CF|list[CF], logger:logging.Logge
     num_aud_in_vids = len(tracks1.keys())
     for cf1 in acf1s:
         for i, at in enumerate(cf1.audio_tracks, start=0):
-            tracks1[i+num_aud_in_vids] = tracks1.get(i, []) + [(cf1, i)]
+            tracks1[i + num_aud_in_vids] = tracks1.get(i, []) + [(cf1, i)]
 
-    tracks2 : dict[int, list[tuple[CF, int]]] = {}
+    tracks2: dict[int, list[tuple[CF, int]]] = {}
     vcf2s = [cf for cf in input2 if cf.has_video]
     acf2s = [cf for cf in input2 if not cf.has_video]
     for cf2 in vcf2s:
@@ -183,17 +195,18 @@ def cmpAudioContent(input1:CF|list[CF], input2:CF|list[CF], logger:logging.Logge
     num_aud_in_vids = len(tracks2.keys())
     for cf2 in acf2s:
         for i, at in enumerate(cf2.audio_tracks, start=0):
-            tracks2[i+num_aud_in_vids] = tracks2.get(i, []) + [(cf2, i)]
-
+            tracks2[i + num_aud_in_vids] = tracks2.get(i, []) + [(cf2, i)]
 
     if len(tracks1.keys()) != len(tracks2.keys()):
         audio_nums_to_cmp = min(len(tracks1.keys()), len(tracks2.keys()))
-        logger.warning(f'The number of audio tracks mismatches: {len(tracks1.keys())} vs {len(tracks2.keys())}. '
-                       f'VNR will only compare the first {audio_nums_to_cmp} audio track(s).')
+        logger.warning(
+            f'The number of audio tracks mismatches: {len(tracks1.keys())} vs {len(tracks2.keys())}. '
+            f'VR will only compare the first {audio_nums_to_cmp} audio track(s).'
+            )
 
     ret = []
     for (k, track1), (k2, track2) in zip(tracks1.items(), tracks2.items()):
-        assert k == k2 # this should be never triggered
+        assert k == k2  # this should be never triggered
 
         fi1s, id1s = [cf for cf, _ in track1], [id for _, id in track1]
         # fi1s, id1s = zip(*track1) # NOTE not using this because language server has a bug
@@ -201,7 +214,7 @@ def cmpAudioContent(input1:CF|list[CF], input2:CF|list[CF], logger:logging.Logge
         # fi2s, id2s = zip(*track2) # NOTE not using this because language server has a bug
 
         bits = [cf.audio_tracks[i].bit_depth for cf, i in zip(fi1s + fi2s, id1s + id2s)]
-        bits = [b for b in bits if b] # remove None because aac/mp3 has not depth
+        bits = [b for b in bits if b]  # remove None because aac/mp3 has not depth
         if len(set(bits)) > 1:
             logger.warning(f'#{k} audio tracks have different bit depths.')
 
@@ -220,7 +233,7 @@ def cmpAudioContent(input1:CF|list[CF], input2:CF|list[CF], logger:logging.Logge
         audio1 = np.concatenate([readAudio(cf.path, id=i, start=start, length=length) for cf, i in track1])
         audio2 = np.concatenate([readAudio(cf.path, id=i, start=start, length=length) for cf, i in track2])
 
-        start1, start2 = calcAudioOffset(audio1, audio2, start=freq*CHK_OFFSET_STA, length=freq*CHK_OFFSET_LEN)
+        start1, start2 = calcAudioOffset(audio1, audio2, start=freq * CHK_OFFSET_STA, length=freq * CHK_OFFSET_LEN)
         if offset := (start1 - start2):
             logger.warning(f'#{k} audio has detected offset: A1[{start1}:]≈A2[{start2}:] ({offset/freq:.3f}s)')
 

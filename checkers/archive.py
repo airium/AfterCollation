@@ -17,22 +17,22 @@ __all__ = [
 
 
 
-def chkArcFile(cf:CF, logger:logging.Logger, decompress:bool=True) -> bool:
+def chkArcFile(cf: CF, logger: logging.Logger, decompress: bool = True) -> bool:
 
     if cf.ext not in COMMON_ARCHIVE_EXTS:
         logger.error('The file is not a known archive file.')
         return False
-    if cf.ext not in VNx_ARC_EXTS:
+    if cf.ext not in VX_ARC_EXTS:
         logger.warning(f'The archive checker is not designed to check the file type "{cf.ext}".')
         return False
-    if not tstDecompressArchive(cf.path):
+    if not tstArchive(cf.path):
         logger.error('The archive file cannot be decompressed.')
         return False
 
-    filenames = getArchiveFilelist(cf.path)
+    filenames = getFileList(cf.path)
     has_png, has_font = False, False
     for filename in filenames:
-        if filename.lower().endswith(VNx_IMG_EXTS): has_png = True
+        if filename.lower().endswith(VX_IMG_EXTS): has_png = True
         if filename.lower().endswith(COMMON_FONT_EXTS): has_font = True
         if has_png and has_font: break
 
@@ -46,22 +46,22 @@ def chkArcFile(cf:CF, logger:logging.Logger, decompress:bool=True) -> bool:
         ok = False
 
     if decompress and (has_png or has_font):
-        path = decompressArchives(cf.path)
-        if not path:
+        temp_dir = TEMP_DIR_DECOMPRESS.joinpath(cf.path.name + TIMESTAMP)
+        if not extractARC(cf.path, temp_dir):
             logger.error('Failed to decompress the archive file to test the content.')
             return False
         if has_png:
-            ok = ok if chkImageArcDir(path, logger) else False
+            ok = ok if chkImageArcDir(temp_dir, logger) else False
         if has_font:
-            ok = ok if chkFontArcDir(path, logger) else False
-        shutil.rmtree(path, ignore_errors=True)
+            ok = ok if chkFontArcDir(temp_dir, logger) else False
+        shutil.rmtree(temp_dir, ignore_errors=True)
 
     return ok
 
 
 
 
-def chkFontArcDir(path:Path, logger:logging.Logger) -> bool:
+def chkFontArcDir(path: Path, logger: logging.Logger) -> bool:
 
     if not path.is_dir():
         return False
@@ -83,14 +83,14 @@ def chkFontArcDir(path:Path, logger:logging.Logger) -> bool:
 
 
 
-def chkImageArcDir(path:Path, logger:logging.Logger) -> bool:
+def chkImageArcDir(path: Path, logger: logging.Logger) -> bool:
 
     if not path.is_dir():
         return False
 
     ok = True
     all_files = listFile(path)
-    all_image_files = listFile(path, ext=VNx_IMG_EXTS)
+    all_image_files = listFile(path, ext=VX_IMG_EXTS)
 
     if len(all_files) != len(all_image_files):
         logger.error('The archive file contains non-PNG files.')

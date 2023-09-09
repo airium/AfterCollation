@@ -1,18 +1,24 @@
+from __future__ import annotations
+
 import string
 import logging
 from pathlib import Path
 
 from utils import *
 from configs import *
-from helpers.season import Season
-from helpers.corefile import CoreFile
-from helpers.album import AlbumInfo
+import helpers.season as hs
+import helpers.corefile as hcf
+import helpers.album as ha
+
 
 __all__ = [
     'logScansSummary',
     'logMusicSummary',
     'logNamingSummary',
     ]
+
+
+
 
 def logScansSummary(root: Path, files: list[Path], logger):
 
@@ -46,7 +52,7 @@ def logScansSummary(root: Path, files: list[Path], logger):
 
 
 
-def logMusicSummary(root: Path, ais: list[AlbumInfo], logger: logging.Logger):
+def logMusicSummary(root: Path, ais: list[ha.AlbumInfo], logger: logging.Logger):
     '''
     Print a generic summary about the content in each album folder.
     Previously, it's not very convenient to compactly list the files within each album.
@@ -113,7 +119,9 @@ def logMusicSummary(root: Path, ais: list[AlbumInfo], logger: logging.Logger):
 
 
 
-def logNamingSummary(base_dict:dict[str, str], naming_dicts: list[dict[str, str]], season:Season, logger: logging.Logger):
+def logNamingSummary(
+    base_dict: dict[str, str], naming_dicts: list[dict[str, str]], season: hs.Season, logger: logging.Logger
+    ):
 
     logger.info(f'Naming Summary ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓')
     logger.info(f'crc32      (ext) : |U|s|e|r|I|n|p|u|t| -> |P|r|o|g|r|a|m|O|u|t|p|u|t|')
@@ -123,8 +131,8 @@ def logNamingSummary(base_dict:dict[str, str], naming_dicts: list[dict[str, str]
     x = base_dict[SUFFIX_VAR]
     logger.info(f'season dir       : |{g}|{s}|{x}| -> |{season.g}|{season.t}|{season.x}|')
 
-    lines: list[tuple[dict[str, str], CoreFile]] = []
-    cfs = season.cfs[:]
+    lines: list[tuple[dict[str, str], hcf.CoreFile]] = []
+    cfs = season.files[:]
     #! in case of order changing during processing, match it back by path
     for naming_dict in naming_dicts:
         found = False
