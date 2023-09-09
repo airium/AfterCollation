@@ -2,75 +2,98 @@
 The file contains internal variables used in AfterCollation.
 Dont touch these variables unless you know what you are doing.
 '''
+from .time import TIMESTAMP, YYMMDD, HHMMSS
+
+VA_LOG_FILENAME = f'VA-{TIMESTAMP}.log'
+VP_LOG_FILENAME = f'VP-{TIMESTAMP}.log'
+VR_LOG_FILENAME = f'VR-{TIMESTAMP}.log'
+
+SD_LOG_FILENAME = f'SD-{TIMESTAMP}.log'
+SP_LOG_FILENAME = f'SP-{TIMESTAMP}.log'
+SR_LOG_FILENAME = f'SR-{TIMESTAMP}.log'
+
+AD_LOG_FILENAME = f'AD-{TIMESTAMP}.log'
+AP_LOG_FILENAME = f'AP-{TIMESTAMP}.log'
+AR_LOG_FILENAME = f'AR-{TIMESTAMP}.log'
+
+VP_CSV_FILENAME = f'VP-{TIMESTAMP}.csv'
+SP_CSV_FILENAME = f'SP-{TIMESTAMP}.csv'
+AP_CSV_FILENAME = f'AP-{TIMESTAMP}.csv'
+
+SD_DIRNAME_3 = 'SD-{}-{}-{}'
+AD_DIRNAME_3 = 'AD-{}-{}-{}'
+
+SD_TMP_DIRNAME = f'SD-{HHMMSS}'
+AD_TMP_DIRNAME = f'AD-{HHMMSS}'
 
 #* CSV fields exchange table -------------------------------------------------------------------------------------------
 # these fields define the variable names saved internally
 
-#! VNA/VND/VNE recognise the base/default line of naming config by any fields with this text in it
+#! VA/VD/VP recognise the base/default line of naming config by any fields with this text in it
 BASE_LINE_LABEL = '此格不填'
 
-# general csv titles and internal variable names for VNA/VND/VNE/VNR
-FULLPATH_CN,      FULLPATH_VAR = '完整路径', 'vn_fullpath'
-CRC32_CN,            CRC32_VAR = 'CRC32', 'vn_crc32'
-DURATION_CN,      DURATION_VAR = '时长', 'vn_duration'
-FILESIZE_CN,      FILESIZE_VAR = '大小', 'vn_filesize'
-EXTENSION_CN,    EXTENSION_VAR = '文件后缀', 'vn_fileext'
-FORMAT_CN,          FORMAT_VAR = '实际格式', 'vn_container'
-TR_COMP_CN,        TR_COMP_VAR = '轨道组成', 'vn_trackcomp'
-TR_VIDEO_CN,      TR_VIDEO_VAR = '视频轨道', 'vn_video_tracks'
-TR_AUDIO_CN,      TR_AUDIO_VAR = '音频轨道', 'vn_audio_tracks'
-TR_TEXT_CN,        TR_TEXT_VAR = '图形字幕', 'vn_text_tracks'
-TR_MENU_CN,        TR_MENU_VAR = '章节菜单', 'vn_menu_tracks'
-GRPTAG_CN,          GRPTAG_VAR = '组名', 'vn_grptag'
-TITLE_CN,            TITLE_VAR = '片名', 'vn_title'
-LOCATION_CN,      LOCATION_VAR = '位置', 'vn_location'
-CLASSIFY_CN,      CLASSIFY_VAR = '内容类型', 'vn_classification'
-IDX1_CN,              IDX1_VAR = '主序号', 'vn_idx1'
-IDX2_CN,              IDX2_VAR = '副序号', 'vn_idx2'
-SUPPLEMENT_CN,  SUPPLEMENT_VAR = '补充说明', 'vn_supplement'
-FULLDESP_CN,      FULLDESP_VAR = '自定义名称', 'vn_fulldesp'
-SUFFIX_CN,          SUFFIX_VAR = '后缀', 'vn_suffix'
-ENABLE_CN,          ENABLE_VAR = '启用?', 'vn_enabled'
-QLABEL_CN,          QLABEL_VAR = '画质标签', 'vn_qlabel'
-TLABEL_CN,          TLABEL_VAR = '轨道标签', 'vn_tlabel'
+# general csv titles and internal variable names for VA/VD/VP/VR
+FULLPATH_CN,      FULLPATH_VAR = '完整路径', 'vx_fullpath'
+CRC32_CN,            CRC32_VAR = 'CRC32', 'vx_crc32'
+DURATION_CN,      DURATION_VAR = '时长', 'vx_duration'
+FILESIZE_CN,      FILESIZE_VAR = '大小', 'vx_filesize'
+EXTENSION_CN,    EXTENSION_VAR = '文件后缀', 'vx_fileext'
+FORMAT_CN,          FORMAT_VAR = '实际格式', 'vx_container'
+TR_COMP_CN,        TR_COMP_VAR = '轨道组成', 'vx_trackcomp'
+TR_VIDEO_CN,      TR_VIDEO_VAR = '视频轨道', 'vx_video_tracks'
+TR_AUDIO_CN,      TR_AUDIO_VAR = '音频轨道', 'vx_audio_tracks'
+TR_TEXT_CN,        TR_TEXT_VAR = '图形字幕', 'vx_text_tracks'
+TR_MENU_CN,        TR_MENU_VAR = '章节菜单', 'vx_menu_tracks'
+GRPTAG_CN,          GRPTAG_VAR = '组名', 'vx_grptag'
+TITLE_CN,            TITLE_VAR = '片名', 'vx_title'
+LOCATION_CN,      LOCATION_VAR = '位置', 'vx_location'
+CLASSIFY_CN,      CLASSIFY_VAR = '内容类型', 'vx_classification'
+IDX1_CN,              IDX1_VAR = '主序号', 'vx_idx1'
+IDX2_CN,              IDX2_VAR = '副序号', 'vx_idx2'
+SUPPLEMENT_CN,  SUPPLEMENT_VAR = '补充说明', 'vx_supplement'
+FULLDESP_CN,      FULLDESP_VAR = '自定义名称', 'vx_fulldesp'
+SUFFIX_CN,          SUFFIX_VAR = '后缀', 'vx_suffix'
+ENABLE_CN,          ENABLE_VAR = '启用?', 'vx_enabled'
+QLABEL_CN,          QLABEL_VAR = '画质标签', 'vx_qlabel'
+TLABEL_CN,          TLABEL_VAR = '轨道标签', 'vx_tlabel'
 
-# dedicated used between VNA/VND
-VNA_PATH_CN,                    VNA_PATH_VAR = 'M2TS路径', 'vna_m2ts_path'
-VNA_M2TS_VOL_CN,            VNA_M2TS_VOL_VAR = 'M2TS卷号', 'vna_volume_idx'
-VNA_M2TS_IDX_CN,            VNA_M2TS_IDX_VAR = 'M2TS序号', 'vna_m2ts_idx'
-VNA_SCRIPT_CN,                VNA_SCRIPT_VAR = '使用脚本', 'vna_script'
-VNA_COMMENT_CN,              VNA_COMMENT_VAR = '其它备注', 'vna_comment'
-VNA_AUDIO_SAMPLES_CN,  VNA_AUDIO_SAMPLES_VAR = '音频摘要', 'vna_audio_samples'
-VNA_VID_FPS_CN,              VNA_VID_FPS_VAR = '视频帧率', 'vna_video_fps'
+# dedicated used between VA/VD
+VA_PATH_CN,                    VA_PATH_VAR = 'M2TS路径', 'va_m2ts_path'
+VA_M2TS_VOL_CN,            VA_M2TS_VOL_VAR = 'M2TS卷号', 'va_volume_idx'
+VA_M2TS_IDX_CN,            VA_M2TS_IDX_VAR = 'M2TS序号', 'va_m2ts_idx'
+VA_SCRIPT_CN,                VA_SCRIPT_VAR = '使用脚本', 'va_script'
+VA_COMMENT_CN,              VA_COMMENT_VAR = '其它备注', 'va_comment'
+VA_AUDIO_SAMPLES_CN,  VA_AUDIO_SAMPLES_VAR = '音频摘要', 'va_audio_samples'
+VA_VID_FPS_CN,              VA_VID_FPS_VAR = '视频帧率', 'va_video_fps'
 
-# dedicated used in VNR
-VNR_GRP_IDX_CN,       VNR_GRP_IDX_VAR = '主分组', 'vnr_main_grouping'
-VNR_SUBGRP_IDX_CN, VNR_SUBGRP_IDX_VAR = '子分组', 'vnr_sub_grouping'
+# dedicated used in VR
+VR_GRP_IDX_CN,       VR_GRP_IDX_VAR = '主分组', 'vr_main_grouping'
+VR_SUBGRP_IDX_CN, VR_SUBGRP_IDX_VAR = '子分组', 'vr_sub_grouping'
 
 #* CSV fields the their order ------------------------------------------------------------------------------------------
 # these are the field order to be shown in CSV files
 
 #! dont change the order unless you know what you are doing
-VNA_FULL_DICT = {
-    VNA_PATH_CN:            VNA_PATH_VAR,
-    VNA_M2TS_VOL_CN:        VNA_M2TS_VOL_VAR,
-    VNA_M2TS_IDX_CN:        VNA_M2TS_IDX_VAR,
+VA_FULL_DICT = {
+    VA_PATH_CN:            VA_PATH_VAR,
+    VA_M2TS_VOL_CN:        VA_M2TS_VOL_VAR,
+    VA_M2TS_IDX_CN:        VA_M2TS_IDX_VAR,
     DURATION_CN:            DURATION_VAR,
     TR_COMP_CN:             TR_COMP_VAR,
-    VNA_VID_FPS_CN:         VNA_VID_FPS_VAR,
-    VNA_SCRIPT_CN:          VNA_SCRIPT_VAR,
-    VNA_COMMENT_CN:         VNA_COMMENT_VAR,
+    VA_VID_FPS_CN:         VA_VID_FPS_VAR,
+    VA_SCRIPT_CN:          VA_SCRIPT_VAR,
+    VA_COMMENT_CN:         VA_COMMENT_VAR,
     CLASSIFY_CN:            CLASSIFY_VAR,
     IDX1_CN:                IDX1_VAR,
     IDX2_CN:                IDX2_VAR,
     FULLDESP_CN:            FULLDESP_VAR,
     GRPTAG_CN:              GRPTAG_VAR,
     TITLE_CN:               TITLE_VAR,
-    VNA_AUDIO_SAMPLES_CN:   VNA_AUDIO_SAMPLES_VAR,
+    VA_AUDIO_SAMPLES_CN:   VA_AUDIO_SAMPLES_VAR,
 }
 
 #! dont change the order unless you know what you are doing
-VND_FULL_DICT = {
+VD_FULL_DICT = {
     # VNX_CSV_PERSISTENT_KEY_DICT: these fields are always saved in CSV
     FULLPATH_CN:            FULLPATH_VAR,
     CRC32_CN:               CRC32_VAR,
@@ -101,10 +124,10 @@ VND_FULL_DICT = {
 }
 
 #! dont change the order unless you know what you are doing
-#! if change, also change the order in `read/writeCSV4VNR()`
-VNR_ALL_DICT = {
-    VNR_GRP_IDX_CN:         VNR_GRP_IDX_VAR,
-    VNR_SUBGRP_IDX_CN:      VNR_SUBGRP_IDX_VAR,
+#! if change, also change the order in `read/writeCSV4VR()`
+VR_FULL_DICT = {
+    VR_GRP_IDX_CN:         VR_GRP_IDX_VAR,
+    VR_SUBGRP_IDX_CN:      VR_SUBGRP_IDX_VAR,
     ENABLE_CN:              ENABLE_VAR,
     FULLPATH_CN:            FULLPATH_VAR,
 }
@@ -112,17 +135,17 @@ VNR_ALL_DICT = {
 #* sub fields ----------------------------------------------------------------------------------------------------------
 # NOTE dont change the order unless you know what you are doing
 
-VNA_BASE_LINE_USER_DICT = {
+VA_BASE_LINE_USER_DICT = {
     GRPTAG_CN:              GRPTAG_VAR,
     TITLE_CN:               TITLE_VAR,
 }
-# 'presistent' means they are automatically in VNA but to be used in VND
-VNA_PERSISTENT_DICT = {
-    VNA_M2TS_VOL_CN:        VNA_M2TS_VOL_VAR,
-    VNA_M2TS_IDX_CN:        VNA_M2TS_IDX_VAR,
-    VNA_AUDIO_SAMPLES_CN:   VNA_AUDIO_SAMPLES_VAR,
+# 'presistent' means they are automatically in VA but to be used in VD
+VA_PERSISTENT_DICT = {
+    VA_M2TS_VOL_CN:        VA_M2TS_VOL_VAR,
+    VA_M2TS_IDX_CN:        VA_M2TS_IDX_VAR,
+    VA_AUDIO_SAMPLES_CN:   VA_AUDIO_SAMPLES_VAR,
 }
-VNA_USER_DICT = {
+VA_USER_DICT = {
     CLASSIFY_CN:            CLASSIFY_VAR,
     IDX1_CN:                IDX1_VAR,
     IDX2_CN:                IDX2_VAR,
@@ -131,18 +154,18 @@ VNA_USER_DICT = {
     TITLE_CN:               TITLE_VAR,
 }
 
-VND_BASE_LINE_USER_DICT = {
+VD_BASE_LINE_USER_DICT = {
     FULLPATH_CN:            FULLPATH_VAR,
     GRPTAG_CN:              GRPTAG_VAR,
     TITLE_CN:               TITLE_VAR,
     SUFFIX_CN:              SUFFIX_VAR,
 }
-# 'presistent' means they are automatically created in VND but to be used in VNE
-VND_PERSISTENT_DICT = {
+# 'presistent' means they are automatically created in VD but to be used in VP
+VD_PERSISTENT_DICT = {
     FULLPATH_CN:            FULLPATH_VAR,
     CRC32_CN:               CRC32_VAR,
 }
-VND_USER_DICT = {
+VD_USER_DICT = {
     GRPTAG_CN:              GRPTAG_VAR,
     TITLE_CN:               TITLE_VAR,
     LOCATION_CN:            LOCATION_VAR,
@@ -165,6 +188,7 @@ COREFILE_DICT = {
     SUPPLEMENT_CN:          SUPPLEMENT_VAR,
     FULLDESP_CN:            FULLDESP_VAR,
     SUFFIX_CN:              SUFFIX_VAR,
+    ENABLE_CN:              ENABLE_VAR,
 }
 
 
@@ -192,7 +216,7 @@ EXTS2FORMATS = {
     'wav64': 'wave',
 
     'tak' : 'tak',
-    'ape' : 'monkey\'s audio',
+    'ape' : "monkey's audio",
     'wv'  : 'wavpack',
     'tak' : 'tak',
     'mp3' : 'mpeg audio',
@@ -220,37 +244,112 @@ EXTS2FORMATS = {
 
 # only the listed extensions will be processed by VNx tools
 # which = the specification
-VNx_VID_EXTS     = ('mkv', 'mp4')            # video
-VNx_EXT_AUD_EXTS = ('mka', )                 # external audio
-VNx_STA_AUD_EXTS = ('flac', )                # standalone audio
-VNx_IMG_EXTS     = ('png',)                  # images, in SPs PNG is the only allowed image format
-VNx_SUB_EXTS     = ('ass',)                  # subtitle
-VNx_ARC_EXTS     = ('zip', '7z', 'rar')      # archives
+VX_VID_EXTS     = ('mkv', 'mp4')            # video
+VX_EXT_AUD_EXTS = ('mka', )                 # external audio
+VX_STA_AUD_EXTS = ('flac', )                # standalone audio
+VX_IMG_EXTS     = ('png',)                  # images, in SPs PNG is the only allowed image format
+VX_SUB_EXTS     = ('ass',)                  # subtitle
+VX_ARC_EXTS     = ('zip', '7z', 'rar')      # archives
 
 # NOTE if updated, remember to update the corresponding checkers
-VNx_WITH_AUD_EXTS = VNx_VID_EXTS + VNx_EXT_AUD_EXTS + VNx_STA_AUD_EXTS              # used to filter files in checkers/audio.py
-VNx_MAIN_EXTS = VNx_VID_EXTS + VNx_EXT_AUD_EXTS + VNx_STA_AUD_EXTS + VNx_IMG_EXTS   # used to filter files in VNR matching
-VNx_ALL_EXTS = VNx_MAIN_EXTS + VNx_SUB_EXTS + VNx_ARC_EXTS                          # used everywhere
-VNx_DEP_EXTS = VNx_EXT_AUD_EXTS + VNx_SUB_EXTS                                      # dependent exts i.e. the naming of the item depends on another file
-VNx_IDP_EXTS = VNx_VID_EXTS + VNx_STA_AUD_EXTS + VNx_IMG_EXTS + VNx_ARC_EXTS        # independent extensions
+VX_WITH_AUD_EXTS = VX_VID_EXTS + VX_EXT_AUD_EXTS + VX_STA_AUD_EXTS              # used to filter files in checkers/audio.py
+VX_MAIN_EXTS = VX_VID_EXTS + VX_EXT_AUD_EXTS + VX_STA_AUD_EXTS + VX_IMG_EXTS   # used to filter files in VR matching
+VX_ALL_EXTS = VX_MAIN_EXTS + VX_SUB_EXTS + VX_ARC_EXTS                          # used everywhere
+VX_DEP_EXTS = VX_EXT_AUD_EXTS + VX_SUB_EXTS                                      # dependent exts i.e. the naming of the item depends on another file
+VX_IDP_EXTS = VX_VID_EXTS + VX_STA_AUD_EXTS + VX_IMG_EXTS + VX_ARC_EXTS        # independent extensions
 
 #* the following defines the capability of Sx tools --------------------------------------------------------------------
 
-# ScansMaker acceptable file extensions
-SM_ACCEPTABLE_EXTS = tuple('png bmp tif tiff jpg jpeg webp'.split())
+# ScansDrafter acceptable file extensions
+SD_INFO_CSV_FILENAME : str = 'sd.csv'
+SD_IMG_EXTS = tuple('png bmp tif tiff jpg jpeg webp'.split())
+SD_ARC_EXTS = tuple('zip 7z rar'.split())
+SD_ORIG_PATH_CN, SD_ORIG_PATH_VAR = '原始路径', 'sm_orig_path'
+SD_PROC_PATH_CN, SD_PROC_PATH_VAR = '处理路径', 'sm_proc_path'
+SD_CSV_DICT = {
+    CRC32_CN: CRC32_VAR,
+    SD_ORIG_PATH_CN: SD_ORIG_PATH_VAR,
+    SD_PROC_PATH_CN: SD_PROC_PATH_VAR,
+    }
+
+
+
+SP_SRC_PATH_CN,     SP_SRC_DIR_PATH_VAR = '源目录', 'sp_src_path'
+SP_DIRNAME_CN,           SP_DIRNAME_VAR = '目录命名', 'sp_dirname'
+SP_VOLNUM_CN,             SP_VOLNUM_VAR = '卷号', 'sp_volnum'
+SP_COMPLEMENT_CN,     SP_COMPLEMENT_VAR = '后缀说明', 'sp_complementry'
+SP_CUSTOM_NAME_CN,   SP_CUSTOM_NAME_VAR = '自订名称', 'sp_custom_name'
+SP_CSV_DICT = {
+    SP_SRC_PATH_CN: SP_SRC_DIR_PATH_VAR,
+    SP_DIRNAME_CN: SP_DIRNAME_VAR,
+    SP_VOLNUM_CN: SP_VOLNUM_VAR,
+    SP_COMPLEMENT_CN: SP_COMPLEMENT_VAR,
+    SP_CUSTOM_NAME_CN: SP_CUSTOM_NAME_VAR,
+    }
 
 #* the following defines the capability of Mx tools --------------------------------------------------------------------
 
-MM_ACCEPTED_AUD_EXTS = tuple('wav wav64 flac tak ape wv mp3 m4a'.split())
-MM_ACCEPTED_IMG_EXTS = SM_ACCEPTABLE_EXTS
-MM_ACCEPTED_VID_EXTS = ('mkv', )
-MM_ACCEPTABLE_EXTS = MM_ACCEPTED_AUD_EXTS + MM_ACCEPTED_IMG_EXTS + MM_ACCEPTED_VID_EXTS
+AD_INFO_CSV_FILENAME : str = 'ad.csv'
+AD_ARC_EXTS = tuple('zip 7z rar'.split())
+AD_AUD_EXTS = tuple('wav wav64 flac tak ape wv mp3 m4a'.split())
+AD_EAC_EXTS = tuple('cue log'.split())
+AD_VID_EXTS = ('mkv', )
+AD_IMG_EXTS = SD_IMG_EXTS
+AD_SRC_EXTS = AD_AUD_EXTS + AD_EAC_EXTS + AD_VID_EXTS + AD_IMG_EXTS
+
+AD_ORIG_PATH_CN, AD_ORIG_PATH_VAR = '原始路径', 'sm_orig_path'
+AD_PROC_PATH_CN, AD_PROC_PATH_VAR = '处理路径', 'sm_proc_path'
+AD_FILE_TYPE_CN, AD_FILE_TYPE_VAR = '文件归类', 'sm_file_type'
+
+AD_CSV_DICT = {
+    CRC32_CN: CRC32_VAR,
+    AD_ORIG_PATH_CN: AD_ORIG_PATH_VAR,
+    AD_PROC_PATH_CN: AD_PROC_PATH_VAR,
+    }
+
+AD_FILE_TYPE_CD_0 = 'Album'
+AD_FILE_TYPE_BK_0 = 'BK'
+AD_FILE_TYPE_MV_0 = 'MV'
+
+
+
+
+
+AP_SRC_PATH_CN,       AP_SRC_PATH_VAR = '源目录', 'ap_src_path'
+AP_DIR_TYPE_CN,      AP_DIR_TYPE_VAR = '目录类型', 'ap_src_dir_type'
+AP_ALBUM_DATE_CN,    AP_ALBUM_DATE_VAR = '年月日', 'ap_yymmdd'
+AP_ALBUM_PRENAME_CN, AP_ALBUM_PRENAME_VAR = '专辑类型', 'ap_album_prename'
+AP_ALBUM_NAME_CN,    AP_ALBUM_NAME_VAR = '专辑名称', 'ap_album_name'
+AP_ALBUM_AFTNAME_CN, AP_ALBUM_AFTNAME_VAR = '专辑后缀', 'ap_album_aftname'
+AP_ALBUM_ARTISTS_CN, AP_ALBUM_ARTISTS_VAR = '专辑艺术家', 'ap_album_artists'
+AP_ALBUM_EDITION_CN, AP_ALBUM_EDITION_VAR = '专辑版本', 'ap_album_edition'
+AP_CATALOG_CN,           AP_CATALOG_VAR = 'CATALOG', 'ap_catalog'
+AP_VGMDB_UID_CN,     AP_VGMDB_UID_VAR = 'VGMDB UID', 'ap_vgmdb_uid'
+
+AP_DIR_TYPE_DSK_CN = '音频'
+AP_DIR_TYPE_BKS_CN = '扫图'
+AP_DIR_TYPE_SPS_CN = '视频'
+
+AP_CSV_DICT = {
+    AP_SRC_PATH_CN: AP_SRC_PATH_VAR,
+    AP_DIR_TYPE_CN: AP_DIR_TYPE_VAR,
+    AP_ALBUM_DATE_CN: AP_ALBUM_DATE_VAR,
+    AP_ALBUM_PRENAME_CN: AP_ALBUM_PRENAME_VAR,
+    AP_ALBUM_NAME_CN: AP_ALBUM_NAME_VAR,
+    AP_ALBUM_AFTNAME_CN: AP_ALBUM_AFTNAME_VAR,
+    AP_ALBUM_ARTISTS_CN: AP_ALBUM_ARTISTS_VAR,
+    AP_CATALOG_CN: AP_CATALOG_VAR,
+    AP_VGMDB_UID_CN: AP_VGMDB_UID_VAR,
+    }
+
+
+
 
 #* other variables -----------------------------------------------------------------------------------------------------
 # the following is customisable, but they should not be exposed to the user configuration file
 
-# the all possible output formats of VNA
-VNA_OUTPUT_EXTS : list[str] = ['csv', 'yaml', 'json']
+# the all possible output formats of VA
+VA_OUTPUT_EXTS : list[str] = ['csv', 'yaml', 'json']
 
 # we used the following keywords from VGMDB note to detect bonus CD
 VGMDB_BONUS_CD_KEYWORDS : list[str] = ['bonus', 'enclosed', 'enclosure']

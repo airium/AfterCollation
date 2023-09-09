@@ -1,15 +1,15 @@
 # the use this as the default webp quality
-ENFORCED_WEBP_QUALITY : int = 90
-
-OLD_GRP_NAME : str = 'VCB-S'
-STD_GRPTAG : str = 'VCB-Studio'
-STD_FONT_NAME : str = 'Fonts'
-STD_SPS_DIRNAME : str = 'SPs'
-STD_BKS_DIRNAME : str = 'Scans'   # standard BK root dirname
-STD_CDS_DIRNAME : str = 'CDs'     # standard CD roor diranme
-STD_COVER_FILENAME : str = 'Cover.jpg'
-DEFAULT_TSDM_CREDIT : str = 'TSDM合购区'
-STD_TSDM_CREDIT_TXT_FILENAME : str = '天使动漫自购转载声明.txt'
+DEFAULT_WEBP_QUALITY: int = 90
+DEFAULT_JPEG_QUALITY: int = 95
+OLD_GRP_NAME: str = 'VCB-S'
+STD_GRPTAG: str = 'VCB-Studio'
+STD_FONT_NAME: str = 'Fonts'
+STD_SPS_DIRNAME: str = 'SPs'
+STD_BKS_DIRNAME: str = 'Scans'  # standard BK root dirname
+STD_CDS_DIRNAME: str = 'CDs'  # standard CD roor diranme
+STD_COVER_FILENAME: str = 'Cover.jpg'
+DEFAULT_TSDM_CREDIT: str = 'TSDM合购区'
+STD_TSDM_CREDIT_TXT_FILENAME: str = '天使动漫自购转载声明.txt'
 STD_TSDM_CREDIT_TEXT = '''天使动漫授权 VCB-Studio 转载声明
 TSDM's authorization of redistribution for VCB-Studio
 
@@ -32,12 +32,12 @@ https://www.tsdm39.net/forum.php?mod=viewthread&tid=841501'''
 # these are whitelisted
 # NOTE don't adjust the orders in these LANG_TAGS
 # it will change the function behavior in `chkSuffix()`
-AVAIL_JPN_LANG_SUFFIXES : list[str] = ['jp', 'JP', 'jpn', 'JPN', 'Jpn']
-AVAIL_CHS_LANG_SUFFIXES : list[str] = ['sc', 'SC', 'chs', 'CHS', 'Chs']
-AVAIL_CHT_LANG_SUFFIXES : list[str] = ['tc', 'TC', 'cht', 'CHT', 'Cht']
-AVAIL_LANG_SUFFIXES : list[str] = AVAIL_JPN_LANG_SUFFIXES + AVAIL_CHS_LANG_SUFFIXES + AVAIL_CHT_LANG_SUFFIXES
-AVAIL_SEASON_LANG_SUFFIXES : list[str] = AVAIL_CHS_LANG_SUFFIXES + AVAIL_CHT_LANG_SUFFIXES
-AVAIL_FILE_LANG_SUFFIXES : list[str] = ['sc', 'tc', 'chs', 'cht', 'sc&jp', 'tc&jp', 'chs&jpn', 'cht&jpn']
+AVAIL_JPN_LANG_SUFFIXES: list[str] = ['jp', 'JP', 'jpn', 'JPN', 'Jpn']
+AVAIL_CHS_LANG_SUFFIXES: list[str] = ['sc', 'SC', 'chs', 'CHS', 'Chs']
+AVAIL_CHT_LANG_SUFFIXES: list[str] = ['tc', 'TC', 'cht', 'CHT', 'Cht']
+AVAIL_LANG_SUFFIXES: list[str] = AVAIL_JPN_LANG_SUFFIXES + AVAIL_CHS_LANG_SUFFIXES + AVAIL_CHT_LANG_SUFFIXES
+AVAIL_SEASON_LANG_SUFFIXES: list[str] = AVAIL_CHS_LANG_SUFFIXES + AVAIL_CHT_LANG_SUFFIXES
+AVAIL_FILE_LANG_SUFFIXES: list[str] = ['sc', 'tc', 'chs', 'cht', 'sc&jp', 'tc&jp', 'chs&jpn', 'cht&jpn']
 
 # allowed file extensions under 'Scans'
 ALL_EXTS_IN_SCANS = tuple('jpg jpeg webp'.split())
@@ -50,11 +50,11 @@ VID_EXTS_IN_CDS = ('mkv', )
 TXT_EXTS_IN_CDS = ('txt', )
 ALL_EXTS_IN_CDS = MAIN_EXTS_IN_CDS + IMG_EXTS_IN_CDS + VID_EXTS_IN_CDS + TXT_EXTS_IN_CDS
 
-GRPTAG : str = 'full_group_tag'
-TITLE : str = 'show_title'
-QUALITY : str = 'quality_label'
+GRPTAG: str = 'full_group_tag'
+TITLE: str = 'show_title'
+QUALITY: str = 'quality_label'
 SUFFIX: str = 'suffix'
-EXT : str = 'extension'
+EXT: str = 'extension'
 
 SERIES_DIR_FMT = f'{{{GRPTAG}:s}} {{{TITLE}:s}} {{{SUFFIX}:s}}.'
 SEASON_DIR_FMT = f'{{{GRPTAG}:s}} {{{TITLE}:s}} {{{QUALITY}:s}}{{{SUFFIX}:s}}.'

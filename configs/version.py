@@ -13,5 +13,8 @@
 # date
 # format is YYMMDD, which gives a fast insight on what should be done
 
-DATE = '230801'
-AC_VERSION = '0.9.0' + '.' + DATE
+
+
+DATE = '230908'
+
+AC_VERSION = '0.12.0' + '.' + DATE

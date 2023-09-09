@@ -37,12 +37,20 @@ TEMP_DIRPATH_DECOMPRESS : str = '$TEMP'
 #! if using an absolute path, make sure the path is on the same partition as your working files
 TEMP_DIRNAME_HARDLINK : str = '@AC-Temp'
 
-# enable this option to attach an audio digest for each m2ts with audio tracks in VNA.csv
-# this will make VND more accurate in matching the encoded MKV/MP4 to the original M2TS and then copy the naming
-# note that this will cause full reading m2ts files, significantly slowing down VNA
-ENABLE_AUDIO_SAMPLES_IN_VNA : bool = True
+# this is the output dir for SD
+# if left empty, the program will output to the same dir along side the input
+SD_WORKING_DIR: str = ''
 
-# if your input got rejected by VNE, you can add additional characters to be allowed here
+# this is the output dir for AD
+# if left empty, the program will output to the same dir along side the input
+AD_WORKING_DIR: str = ''
+
+# enable this option to attach an audio digest for each m2ts with audio tracks in VA.csv
+# this will make VD more accurate in matching the encoded MKV/MP4 to the original M2TS and then copy the naming
+# note that this will cause full reading m2ts files, significantly slowing down VA
+ENABLE_AUDIO_SAMPLES_IN_VA : bool = True
+
+# if your input got rejected by VP, you can add additional characters to be allowed here
 #! however, you will always get a warning if allowing/using any 'non-safe' characters
 USER_GROUP_NAME_CHARS = ''
 USER_SHOW_TITLE_CHARS = ''
@@ -52,22 +60,28 @@ USER_DESCRIPTION_CHARS = ''
 USER_SUFFIX_CHARS = ''
 # rarely you may need: "# ？꞉⁄‹›＜＞"
 
-# this is the default output format from VNA
-VNA_DEFAULT_CONFIG = {'csv': True, 'yaml': False, 'json': False }
+# this is the default output format from VA
+VA_DEFAULT_CONFIG = {'csv': True, 'yaml': False, 'json': False }
 
-# you can optionally turn off the file checking in VND
-# this will make VND much faster to generate the naming proposal (VND.csv)
+# you can optionally turn off the file checking in VD
+# this will make VD much faster to generate the naming proposal (VD.csv)
 # which would be helpful when you are adding new files frequently
-ENABLE_FILE_CHECKING_IN_VND : bool = True
+ENABLE_FILE_CHECKING_IN_VP : bool = True
 
-# file checking should be done in VND and re-done in VNR
-# but if you want to be noticed earlier after VNE, enable this option
-# note this will much slow down VNE
-ENABLE_FILE_CHECKING_IN_VNE : bool = False
+# file checking should be done in VD and re-done in VR
+# but if you want to be noticed earlier after VP, enable this option
+# note this will much slow down VP
+ENABLE_FILE_CHECKING_IN_VP : bool = False
+
+
+# use at most this number of multi-proc workers for CPU-intensive jobs
+# the default value 0 means to use all physical CPU cores
+# it will be automatically lowered to not exceed the number of physical CPU cores
+MAX_NUM_CPU_WORKERS : int = 0
 
 # use at most this number of multi-proc workers for IO-intensive jobs e.g. CRC32
 # the default value 8 should be able to max out PCIe 4.0 x4 SSDs
-# it will be automatically lower to not exceed the number of physical CPU cores
+# it will be automatically lowered to not exceed the number of physical CPU cores
 MAX_NUM_IO_WORKERS : int = 8
 
 # whether to still enable multi-processing when ssd checker failed
@@ -75,7 +89,7 @@ MAX_NUM_IO_WORKERS : int = 8
 # ssd checker cannot lookup the device type of such SCSI devices
 ENABLE_MULTI_PROC_IF_UNSURE : bool = False
 
-# this is used to determine the number of multi-proc workers for CPU/RAM-intensive jobs
+# this is used to determine the number of multi-proc workers for RAM-intensive jobs
 # the number is calculated based on your available RAM at script startup, not the total RAM
 # it will be automatically lower to not exceed the number of physical CPU cores
 MIN_RAM_PER_WORKER : int = 10 # this unit is GiB
@@ -93,8 +107,8 @@ PROXY : str = ''
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
 
 # output language of all scripts
-#! it has no usage for now
-LANGUAGE = 'en-GB'
+#! only 'en_GB' for now
+LANGUAGE = 'en_GB'
 
 #* advanced user config ------------------------------------------------------------------------------------------------
 
@@ -164,15 +178,16 @@ MAX_DIFF_MEAN : int = 1
 
 #* others --------------------------------------------------------------------------------------------------------------
 
-# this is the show name that will be applied when the program didn't correctly catch your mistake of forgetting filling any title for VND. This should never appear on your hard disk - but if you see it, please fill a bug report.
+# this is the show name that will be applied when the program didn't correctly catch your mistake of forgetting filling any title for VD. This should never appear on your hard disk - but if you see it, please fill a bug report.
 FALLBACK_TITLE = '1145141919810'
 
 #* don't touch below --------------------------------------------------------------------------------------------------
 
 import psutil
 cpu, ram = psutil.cpu_count(logical=False), psutil.virtual_memory().total // (1024**3)
+NUM_CPU_JOBS = MAX_NUM_CPU_WORKERS if MAX_NUM_CPU_WORKERS > 0 else cpu
+NUM_RAM_JOBS = min(cpu, max(ram // (MIN_RAM_PER_WORKER), 1))
 NUM_IO_JOBS = min(cpu, MAX_NUM_IO_WORKERS)
-NUM_CPU_JOBS = min(cpu, max(ram // (MIN_RAM_PER_WORKER), 1))
 del psutil, cpu, ram
 
 
@@ -202,7 +217,7 @@ del os, pathlib, TEMP_DIRPATH_DECOMPRESS
 
 if not LANGUAGE:
     import locale
-    LANGUAGE = locale.getdefaultlocale()[LANGUAGE]
+    LANGUAGE = locale.getdefaultlocale()[0]
     del locale
 
 
