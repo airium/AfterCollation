@@ -1,27 +1,18 @@
-from .va import *
-from .vd import *
-from .vp import *
-from .vr import *
-
-from .naming import *
-from .formatter import *
-from .parser import *
-from .misc import *
-
+from .album import *
 from .corefile import *
-
-from .subtitle import *
-
+from .dirgetter import *
+from .error import *
+from .formatter import *
+from .image import *
+from .misc import *
+from .naming import *
+from .parser import *
+from .scans import *
 from .season import *
 from .series import *
-
-from .error import *
-
-from .scans import *
-
-from .album import *
-
+from .subtitle import *
 from .summaries import *
+from .video import *
 
 # NOTICE
 # This module should only contain functions that:
