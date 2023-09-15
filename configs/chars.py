@@ -1,6 +1,7 @@
 import string
 
 TAG_SPLITTER = '&'
+CSV_QUOT_CHAR = '"'
 
 
 # these are the set of characters considered safe in each naming part

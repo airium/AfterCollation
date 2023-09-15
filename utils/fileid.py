@@ -7,6 +7,7 @@ from configs.regex import CRC32_IN_FILENAME_REGEX, CRC32_STRICT_REGEX
 
 
 __all__ = [
+    'getFileID',
     'getCRC32',
     'getCRC32List',
     'findCRC32InFilename',
@@ -14,6 +15,17 @@ __all__ = [
     ]
 
 
+
+
+def getFileID(path: str|Path) -> int|str:
+    path = Path(path)
+    if not path.is_file():
+        raise FileNotFoundError(f'The input "{path}" is not a file.')
+    try:
+        if inode := path.stat().st_ino:
+            return inode
+    finally:
+        return getCRC32(path)
 
 
 def getCRC32(path: Path|str, prefix: str = '', read_size: int = 16 * 2**20, pass_not_found: bool = False) -> str:

@@ -1,19 +1,4 @@
-import os
-import re
-import csv
-import json
-import random
-import shutil
-import platform
-import itertools
-from typing import Optional, Iterable
-from .crc32 import getCRC32
-
-from pathlib import Path
-from configs import *
-
-import yaml
-
+'''Generic file io operations.'''
 
 __all__ = [
     'listFile',
@@ -34,8 +19,20 @@ __all__ = [
     'listM2TS2JSON',
     'getTempDir4Hardlink',
     'condenseDirLayout',
-    'getFileID',
     ]
+
+import os
+import csv
+import json
+import random
+import shutil
+import platform
+from pathlib import Path
+from typing import Optional, Iterable
+
+from configs import *
+
+import yaml
 
 
 
@@ -139,7 +136,7 @@ def readCSV(csv_path: Path, encoding: str = 'utf-8-sig', newline: str = os.lines
 
 
 
-def findCommonParentDir(*paths: str|Path) -> Path|None:
+def findCommonParentDir(paths: Iterable[str|Path]) -> Path|None:
 
     ps = [Path(p).resolve() for p in paths]
 
@@ -233,19 +230,6 @@ def tryCopy(src: str|Path, dst: str|Path) -> bool:
     except:
         if remove_dst: dst.unlink(missing_ok=True)
         return False
-
-
-
-
-def getFileID(path: str|Path) -> int|str:
-    path = Path(path)
-    if not path.is_file():
-        raise FileNotFoundError(f'The input "{path}" is not a file.')
-    try:
-        if inode := path.stat().st_ino:
-            return inode
-    finally:
-        return getCRC32(path)
 
 
 

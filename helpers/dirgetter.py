@@ -1,3 +1,5 @@
+__all__ = ['proposeFilePath', 'initScansDraftDstParentDir', 'initAlbumDraftDstParentDir']
+
 from pathlib import Path
 from logging import Logger
 from typing import Iterable, Optional
@@ -7,22 +9,20 @@ from configs import *
 from utils import findCommonParentDir
 
 
-__all__ = ['proposePath', 'initScansDraftDstParentDir', 'initAlbumDraftDstParentDir']
 
 
-
-
-def proposePath(paths: Iterable[Path], dst_filename: str, logger: Logger|None = None) -> Path:
+def proposeFilePath(paths: Iterable[Path], dst_filename: str, logger: Optional[Logger] = None) -> Path:
     paths = list(paths)
     if not paths: raise ValueError(GOT_NO_INPUT_0)
-    call = logger.info if logger else lambda msg: print(msg)
-    if not (log_path := findCommonParentDir(*paths)):
+    call = logger.info if logger else (lambda msg: print(msg))
+    common_parent = findCommonParentDir(paths)
+    if not common_parent:
         log_path = paths[0].parent / dst_filename
         call(CANT_PROPOSE_COMMON_PARENT_FOR_LOG_1.format(log_path))
-    elif log_path.is_dir():
-        log_path = log_path.joinpath(dst_filename)
+    elif common_parent.is_dir():
+        log_path = common_parent / dst_filename
     else:
-        log_path = log_path.parent.joinpath(dst_filename)
+        log_path = common_parent.parent / dst_filename
     return log_path
 
 
@@ -58,7 +58,7 @@ def initScansDraftDstParentDir(
                 pass
 
     if input_paths:
-        if common_path := findCommonParentDir(*input_paths):
+        if common_path := findCommonParentDir(input_paths):
             return common_path
 
     if script_path:
@@ -99,7 +99,7 @@ def initAlbumDraftDstParentDir(
                 pass
 
     if input_paths:
-        if common_path := findCommonParentDir(*input_paths):
+        if common_path := findCommonParentDir(input_paths):
             return common_path
 
     if script_path:

@@ -1,30 +1,31 @@
-import shutil
-from pathlib import Path
-
-from langs import *
-from configs.time import TIMESTAMP
-
-import pyzipper
-import py7zr
-import rarfile
-
-
 __all__ = [
     'isArchive',
     'extract7Z',
     'extractRAR',
     'extractZIP',
     'extractARC',
-    'extractWithPwdPrompt',
+    'extractArcWithPwdPrompt',
     'extractMultiple',
     'tstArchive',
     'getFileList',
     ]
 
+import shutil
+from pathlib import Path
+from typing import Optional
+
+from langs import *
+from configs.time import TIMESTAMP
+
+import py7zr
+import rarfile
+import pyzipper
+
 
 
 
 def isArchive(path: Path) -> bool:
+    '''Check if the given file is an archive file.'''
     if not path.is_file(): return False
     try:
         match path.suffix.lower():
@@ -35,7 +36,7 @@ def isArchive(path: Path) -> bool:
             case '.zip':
                 return pyzipper.is_zipfile(path)
             case _:
-                print(UNSUPPORTED_ARC_TYPE_1.format(path.suffix))
+                print(UNHANDLED_ARC_FMT_1.format(path.suffix))
                 return False
     except:
         return False
@@ -43,7 +44,8 @@ def isArchive(path: Path) -> bool:
 
 
 
-def extract7Z(src_path: Path, dst_dir: Path, password: str|None = None) -> bool:
+def extract7Z(src_path: Path, dst_dir: Path, password: Optional[str] = None) -> bool:
+    '''Decompress a 7z file to the given (must be already existing) output dir.'''
     if not src_path.is_file(): return False
     if not dst_dir.is_dir(): return False
     if not isArchive(src_path): return False
@@ -62,7 +64,7 @@ def extract7Z(src_path: Path, dst_dir: Path, password: str|None = None) -> bool:
 
 
 
-def extractRAR(src_path: Path, dst_dir: Path, password: str|None = None) -> bool:
+def extractRAR(src_path: Path, dst_dir: Path, password: Optional[str] = None) -> bool:
     if not src_path.is_file(): return False
     if not dst_dir.is_dir(): return False
     if not isArchive(src_path): return False
@@ -92,7 +94,7 @@ def _isEncryptedZIP(src_path: Path) -> bool:
 
 
 
-def extractZIP(src_path: Path, dst_dir: Path, password: str|None = None) -> bool:
+def extractZIP(src_path: Path, dst_dir: Path, password: Optional[str] = None) -> bool:
     if not src_path.is_file(): return False
     if not dst_dir.is_dir(): return False
     if not isArchive(src_path): return False
@@ -118,7 +120,7 @@ def extractZIP(src_path: Path, dst_dir: Path, password: str|None = None) -> bool
 
 
 
-def extractARC(src_path: Path, dst_dir: Path, passwords: str|list[str]|None = None) -> bool:
+def extractARC(src_path: Path, dst_dir: Path, passwords: Optional[str|list[str]] = None) -> bool:
 
     if not src_path.is_file(): return False
     if not dst_dir.is_dir(): return False
@@ -152,7 +154,7 @@ def extractARC(src_path: Path, dst_dir: Path, passwords: str|list[str]|None = No
 
 
 
-def extractWithPwdPrompt(src_path: Path, dst_dir: Path, passwords: str|list[str]|None = None) -> str|None:
+def extractArcWithPwdPrompt(src_path: Path, dst_dir: Path, passwords: str|list[str]|None = None) -> str|None:
 
     if not src_path.is_file(): return None
     if not dst_dir.is_dir(): return None
@@ -227,7 +229,7 @@ def extractMultiple(src_paths: list[Path], dst_parent_dir: Path,
 
 
 def tstArchive(path: Path) -> bool:
-    '''Decompress the files one by one to memory without temporarily saving to disk.'''
+    '''Test the archive files by accessing parent library API.'''
     if not path.is_file(): return False
     if not isArchive(path): return False
     try:

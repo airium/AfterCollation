@@ -1,9 +1,10 @@
 
 from .archive import *
 from .chars import *
-from .crc32 import *
-from .ffmpegutils import *
+from .fileid import *
 from .fileutils import *
+from .formatter import *
+from .ffmpegutils import *
 from .fontutils import *
 from .language import *
 from .mediainfo import *
