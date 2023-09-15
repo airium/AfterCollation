@@ -3,8 +3,9 @@ import logging
 from pathlib import Path
 
 from configs import *
+from langs import *
 from utils import *
-from .image import chkImage
+from .image import chkCfImage
 from helpers.corefile import CF
 
 
@@ -20,13 +21,13 @@ __all__ = [
 def chkArcFile(cf: CF, logger: logging.Logger, decompress: bool = True) -> bool:
 
     if cf.ext not in COMMON_ARCHIVE_EXTS:
-        logger.error('The file is not a known archive file.')
+        logger.error(GOT_UNKNOWN_ARC_EXT_1.format(cf.ext))
         return False
     if cf.ext not in VX_ARC_EXTS:
-        logger.warning(f'The archive checker is not designed to check the file type "{cf.ext}".')
+        logger.warning(UNSUPPORTED_EXT_TO_CHECK_1.format(cf.ext))
         return False
     if not tstArchive(cf.path):
-        logger.error('The archive file cannot be decompressed.')
+        logger.warning(INVALID_FILE_1.format(cf.path))
         return False
 
     filenames = getFileList(cf.path)
@@ -48,12 +49,11 @@ def chkArcFile(cf: CF, logger: logging.Logger, decompress: bool = True) -> bool:
     if decompress and (has_png or has_font):
         temp_dir = TEMP_DIR_DECOMPRESS.joinpath(cf.path.name + TIMESTAMP)
         if not extractARC(cf.path, temp_dir):
-            logger.error('Failed to decompress the archive file to test the content.')
+            logger.error(FAILED_TO_DECOMPRESS_1.format(cf.path))
+            shutil.rmtree(temp_dir, ignore_errors=True)
             return False
-        if has_png:
-            ok = ok if chkImageArcDir(temp_dir, logger) else False
-        if has_font:
-            ok = ok if chkFontArcDir(temp_dir, logger) else False
+        if has_png: ok = ok if chkImageArcDir(temp_dir, logger) else False
+        if has_font: ok = ok if chkFontArcDir(temp_dir, logger) else False
         shutil.rmtree(temp_dir, ignore_errors=True)
 
     return ok
@@ -96,6 +96,6 @@ def chkImageArcDir(path: Path, logger: logging.Logger) -> bool:
         logger.error('The archive file contains non-PNG files.')
         ok = False
     for image_file in all_image_files:
-        ok = ok if chkImage(CF(image_file), logger) else False
+        ok = ok if chkCfImage(CF(image_file), logger) else False
 
     return ok

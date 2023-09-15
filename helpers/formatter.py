@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-import logging
 from pathlib import Path
+from logging import Logger
 
 from configs import *
 from utils import *
 from langs import *
 from .misc import *
-import helpers.corefile as hc
+import helpers.corefile as hcf
 
 
 __all__ = ['fmtQualityLabel', 'fmtTrackLabel']
@@ -27,7 +27,7 @@ def fmtSeasonRootName(grp='', title='', quality='', suffix='') -> str:
 
 
 
-def fmtQualityLabel(cf: hc.CF, logger: logging.Logger|None = None) -> str:
+def fmtQualityLabel(cf: hcf.CF, logger: Logger|None = None) -> str:
 
     # files without video track have no quality label
     if not cf.video_tracks: return ''
@@ -68,7 +68,7 @@ def fmtQualityLabel(cf: hc.CF, logger: logging.Logger|None = None) -> str:
 
 
 
-def fmtTrackLabel(cf: hc.CF|MI, logger: logging.Logger|None = None) -> str:
+def fmtTrackLabel(cf: hcf.CF|MI, logger: Logger|None = None) -> str:
 
     if not cf.video_tracks: return ''
 

@@ -1,6 +1,7 @@
-import logging
 import itertools
+from logging import Logger
 
+from langs import *
 from utils import *
 from configs import *
 from helpers.corefile import CF
@@ -8,18 +9,18 @@ from helpers.corefile import CF
 import numpy as np
 
 
-__all__ = ['chkAudioTracks', 'cmpAudioContent']
+__all__ = ['chkCfAudTracks', 'cmpCfAudContent']
 
 
 
 
-def chkAudioTracks(cf: CF, logger: logging.Logger, decode: bool = True):
+def chkCfAudTracks(cf: CF, logger: Logger, decode: bool = True):
 
     if cf.ext not in COMMON_VIDEO_EXTS + COMMON_AUDIO_EXTS:
-        logger.error(f'The file is not a known file type with audio.')
+        logger.error(GOT_UNKNOWN_AUD_EXT_1.format(cf.ext))
         return
     if cf.ext not in VX_WITH_AUD_EXTS:
-        logger.warning(f'The audio checker is not designed to check the file type "{cf.ext}".')
+        logger.warning(UNSUPPORTED_EXT_TO_CHECK_1.format(cf.ext))
         return
     if not cf.has_audio:
         return
@@ -143,8 +144,7 @@ def chkAudioTracks(cf: CF, logger: logging.Logger, decode: bool = True):
 
 
 
-def cmpAudioContent(input1: CF|list[CF], input2: CF|list[CF],
-                    logger: logging.Logger) -> list[tuple[int, np.ndarray, int]]:
+def cmpCfAudContent(input1: CF|list[CF], input2: CF|list[CF], logger: Logger) -> list[tuple[int, np.ndarray, int]]:
     '''
     Compare two groups of audios, supporting multi-track and multi-file.
     In each group, video files is concatenated in series; audio files is placed parallel (i.e. as a new track).

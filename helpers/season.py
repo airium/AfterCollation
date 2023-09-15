@@ -13,7 +13,7 @@ from .misc import *
 
 import helpers.naming as hnm
 import helpers.corefile as hcf
-import helpers.series as hss
+import helpers.series as hsr
 import helpers.misc as hms
 
 
@@ -32,7 +32,7 @@ class Season:
         self,
         /,
         files: list[hcf.CoreFile]|None = None,
-        series: hss.Series|None = None,
+        series: hsr.Series|None = None,
         quality: str|None = None,
         logger: Logger|None = None,
         **kwargs: Any
@@ -41,7 +41,7 @@ class Season:
         self.__cfs: list[hcf.CoreFile] = list()
         if files: self.add(files)
 
-        self.__series: hss.Series|None = series
+        self.__series: hsr.Series|None = series
 
         self.__fixed_qlabel: str|None = quality.strip() if quality else None
         self.__cached_qlabel: str|None = None
@@ -95,11 +95,11 @@ class Season:
     #* parent series ---------------------------------------------------------------------------------------------------
 
     @property
-    def parent(self) -> hss.Series|None:
+    def parent(self) -> hsr.Series|None:
         return self.__series
 
     @parent.setter
-    def parent(self, series: hss.Series|None):
+    def parent(self, series: hsr.Series|None):
         self.__series = series
 
     #* shortcut access to naming fields --------------------------------------------------------------------------------

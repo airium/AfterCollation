@@ -36,7 +36,7 @@ __all__ = [
     'collectScansDirs',
     'placeScans',
     'chkScans',
-    'procScanSrcList',
+    'processScansSourceDirs',
     ]
 
 
@@ -61,7 +61,7 @@ def filterScansFiles(src_path: Path, logger: Optional[Logger] = None) -> list[Pa
 
 def cleanScansFilenames(scans_dir: Path, logger: Logger):
     if not scans_dir.is_dir():
-        raise NotADirectoryError(f'The input "{scans_dir}" is not a dir.')
+        raise NotADirectoryError( f'The input "{scans_dir}" is not a dir.')
     for dir_path in listDir(scans_dir):
 
         files = listFile(dir_path, rglob=False, ext=ALL_EXTS_IN_SCANS)
@@ -268,7 +268,7 @@ def procScanSrc(src_path: Path, dst_dir: Path, logger: Logger):
 
 
 
-def procScanSrcList(src_paths: list[Path]):
+def processScansSourceDirs(src_paths: list[Path]):
     if DEBUG: assert src_paths, GOT_NO_INPUT_0
     dst_parent = initScansDraftDstParentDir(input_paths=src_paths, script_path=Path(__file__).parent.parent)
     if DEBUG: assert dst_parent.is_dir(), CANT_INIT_OUTPUT_DIR_0
@@ -288,7 +288,7 @@ def collectScansDirs(src_paths: Iterable[Path]):
     src_paths = list(src_paths)
     assert src_paths, GOT_NO_INPUT_0
 
-    sp_csv_path = proposePath(src_paths, SP_CSV_FILENAME)
+    sp_csv_path = proposeFilePath(src_paths, SP_CSV_FILENAME)
     try:
         sp_csv_path.parent.mkdir(parents=True, exist_ok=True)
         sp_csv_path.write_bytes(b'')

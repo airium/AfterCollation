@@ -17,6 +17,7 @@ AP_LOG_FILENAME = f'AP-{TIMESTAMP}.log'
 AR_LOG_FILENAME = f'AR-{TIMESTAMP}.log'
 
 VP_CSV_FILENAME = f'VP-{TIMESTAMP}.csv'
+VR_CSV_FILENAME = f'VR-{TIMESTAMP}.csv'
 SP_CSV_FILENAME = f'SP-{TIMESTAMP}.csv'
 AP_CSV_FILENAME = f'AP-{TIMESTAMP}.csv'
 
@@ -237,7 +238,7 @@ EXTS2FORMATS = {
 
     # NOTE libmediainfo wont detect ass file as an SSA media track if the file has BOM for UTF-8 encoding
     # remember to specially handle this in VNx tools
-    'ass' : 'ASS',
+    'ass' : 'ass',
 }
 
 #* the following defines the capability of VNx tools -------------------------------------------------------------------

@@ -7,8 +7,9 @@ from pathlib import PurePath
 from utils import *
 from langs import *
 from configs import *
-import helpers.corefile as hc
-import helpers.season as hs
+import helpers.corefile as hcf
+import helpers.season as hsn
+import helpers.series as hsr
 
 
 __all__ = [
@@ -161,7 +162,7 @@ def splitGroupTag(chars: str, clean: bool = True, remove_empty: bool = True) -> 
 
 
 
-def cmpCoreFileNaming(a: hc.CF, b: hc.CF) -> list[bool]:
+def cmpCoreFileNaming(a: hcf.CF, b: hcf.CF) -> list[bool]:
     ret = [False] * 10
     if a.g == b.g: ret[0] = True  # compare group name
     if a.t == b.t: ret[1] = True  # compare title
@@ -210,7 +211,7 @@ def cleanNamingDicts(default_dict: dict[str, str], naming_dicts: list[dict[str, 
 
 
 
-def composeFullDesp(season: hs.Season, logger: Logger):
+def composeFullDesp(season: hsn.Season, logger: Logger):
     '''
     This function merge seperated typename/index1/2/note fields to the customization fields.
 
@@ -270,7 +271,7 @@ def composeFullDesp(season: hs.Season, logger: Logger):
 
 
 
-def decomposeFullDesp(season: hs.Season, logger: Logger):
+def decomposeFullDesp(season: hsn.Season, logger: Logger):
     for cf in season.files:
         if cf.f:
             if m := re.match(FULL_DESP_REGEX, cf.f):
@@ -287,7 +288,7 @@ def decomposeFullDesp(season: hs.Season, logger: Logger):
 
 
 
-def cmpDstNaming(season: hs.Season, logger: Logger) -> bool:
+def cmpDstNaming(season: hsn.Season, logger: Logger) -> bool:
     ok = True
     for cf in season.files:
         if cf.name != cf.srcname:

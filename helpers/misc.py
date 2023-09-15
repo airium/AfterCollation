@@ -11,7 +11,7 @@ from typing import Callable, Optional, Iterable
 import traceback
 import contextlib
 
-import helpers.corefile as hc
+import helpers.corefile as hcf
 from langs import *
 from configs import *
 from utils import *
@@ -22,7 +22,7 @@ import ssd_checker
 __all__ = [
     'wrapTrackBack',
     'toEnabledList',
-    'cmpCfCRC32',
+    'cmpCRC4CoreFiles',
     'printUsage',
     'printCheckerEnding',
     'filterOutCDsScans',
@@ -47,7 +47,7 @@ def wrapTrackBack(func: Callable[[list[Path]], None], args: list[str]):
 
 
 
-def toEnabledList(values: list[str]|tuple[str]) -> list[bool]:
+def toEnabledList(values: Iterable[str]) -> list[bool]:
     '''
     all None = enable all
     partial yes = enable these yes
@@ -72,8 +72,8 @@ def toEnabledList(values: list[str]|tuple[str]) -> list[bool]:
 
 
 
-def cmpCfCRC32(
-    cfs: Iterable[hc.CF],
+def cmpCRC4CoreFiles(
+    cfs: Iterable[hcf.CF],
     expected_crc32s: Iterable[str],
     logger: Optional[Logger] = None,
     pass_not_recorded: bool = False
@@ -267,7 +267,7 @@ def handleResourceSrc(src: Path, tmp: Path, logger: Optional[Logger] = None) -> 
             try:
                 assert not tmp.is_file()
                 tmp.mkdir(parents=True, exist_ok=True)
-                if extractWithPwdPrompt(src, tmp) != None:
+                if extractArcWithPwdPrompt(src, tmp) != None:
                     return tmp
             except:
                 if logger: logger.error(DECOMPRESS_FAILED_2.format(src, tmp))

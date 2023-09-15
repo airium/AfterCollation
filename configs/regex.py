@@ -10,6 +10,7 @@ CRC32_CSV_FIELD_REGEX = _rc(r'^(0x)?(?P<crc32>[0-9a-f]{8})$', _re.I)
 UNNAMED_TRANSCODED_FILENAME_REGEX = _rc(
     r'^'
     r'(?P<m2ts_idx>[0-9]{5}([-_](?P<sub_idx>[0-9]{1,3}))?)?'
+    r'\w*(\.m2ts)?\w*'
     r'(?P<stem>(.(?!(\[[0-9a-f]{8}\])?\.(mkv|mka|mp4|flac|png|ass|7z|zip|rar)))*.)'
     r'(\[(?P<crc32>[0-9a-f]{8})\])?\.(mkv|mka|mp4|flac|png|ass|7z|zip|rar)'
     r'$', _re.I)

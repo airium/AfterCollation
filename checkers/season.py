@@ -39,7 +39,7 @@ def chkSeasonFiles(inp: Season|list[CoreFile], logger: logging.Logger):
     with logging_redirect_tqdm([logger]):
         for cf in tqdm.tqdm(cfs, desc='Checking', unit='file', ascii=True, dynamic_ncols=True):
             if cf.ext in VX_ALL_EXTS:
-                chkFile(cf, logger=logger)
+                chkCoreFileFormat(cf, logger=logger)
             else:
                 logger.error(f'Skipping "{cf.path}" as its extension is not listed as valid.')
 

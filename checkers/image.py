@@ -8,12 +8,12 @@ from configs import *
 from helpers.corefile import CF
 
 
-__all__ = ['chkImage', 'chkScansImage', 'chkImageTracks', 'cmpImageContent']
+__all__ = ['chkCfImage', 'chkScansImage', 'chkImageTracks', 'cmpImageContent']
 
 
 
 
-def chkImage(cf: CF, logger: Logger, decode: bool = True) -> bool:
+def chkCfImage(cf: CF, logger: Logger, decode: bool = True) -> bool:
 
     if cf.ext not in COMMON_IMAGE_EXTS:
         logger.info('The input file is not an image file.')
@@ -49,7 +49,7 @@ def chkImage(cf: CF, logger: Logger, decode: bool = True) -> bool:
 
 def chkScansImage(cf: CF, temp_dir: Path|None, logger: Logger, decode: bool = True):
 
-    if not chkImage(cf, logger, decode=decode): return
+    if not chkCfImage(cf, logger, decode=decode): return
 
     iinfo = cf.image_tracks[0]
 
@@ -117,7 +117,7 @@ def chkImageTracks(cf: CF, logger: Logger, decode: bool = True):
         logger.error(f'The file has no image track.')
         return
 
-    chkImage(cf, logger, decode=decode)
+    chkCfImage(cf, logger, decode=decode)
 
 
 

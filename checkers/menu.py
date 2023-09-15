@@ -7,12 +7,12 @@ from utils.language import chkLang
 from configs import *
 
 
-__all__ = ['chkMenuTracks', 'cmpMenuContent']
+__all__ = ['chkMenuTracks', 'cmpCfMenuContent']
 
 
 
 
-def cmpMenuContent(input1: CF|list[CF], input2: CF|list[CF], logger: logging.Logger):
+def cmpCfMenuContent(input1: CF|list[CF], input2: CF|list[CF], logger: logging.Logger):
 
     if isinstance(input1, CF): input1 = [input1]
     if isinstance(input2, CF): input2 = [input2]

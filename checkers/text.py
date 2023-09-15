@@ -1,16 +1,16 @@
-import logging
+__all__ = ['chkTextTracks', 'chkPGS', 'chkAssFile', 'cmpTextContent']
+
+from logging import Logger
 
 from configs import *
 from utils import *
 from helpers.corefile import CF
-
-
-__all__ = ['chkTextTracks', 'chkPGS', 'chkAssFile', 'cmpTextContent']
+from langs import FOUND_ASS_EXTRA_SECTION_1, FOUND_ASS_GARBAGE_SECTION_0
 
 
 
 
-def chkTextTracks(cf: CF, logger: logging.Logger):
+def chkTextTracks(cf: CF, logger: Logger):
 
     if cf.ext not in COMMON_VIDEO_EXTS:
         logger.error(f'The file is not a known file type with text.')
@@ -54,27 +54,27 @@ def chkTextTracks(cf: CF, logger: logging.Logger):
 
 
 
-def chkPGS(cf: CF, logger: logging.Logger):
-    logger.info('PGS checking inside a video file is not supported yet.')
+def chkPGS(cf: CF, logger: Logger):
+    logger.debug('PGS checking inside a video file is not supported yet.')
 
 
 
 
-def chkAssFile(cf: CF, logger: logging.Logger):
+def chkAssFile(cf: CF, logger: Logger):
     if not tstAssFile(cf.path):
         logger.error('The ASS file is invalid or of non-standard encoding.')
         return
     ass_obj = toAssFileObj(cf.path)
     for section in ass_obj.extra_sections:
-        logger.warning(
-            f'Found unnecessary ASS section "{section.name}". '
-            'Consider removing it using the standalone tools in the `scripts` folder.'
-            )
+        if section.name == 'Aegisub Garbage':
+            logger.warning(FOUND_ASS_GARBAGE_SECTION_0.format(section.name))
+        else:
+            logger.info(FOUND_ASS_EXTRA_SECTION_1.format(section.name))
 
     # TODO add more ass content checking
 
 
 
 
-def cmpTextContent(fi1: CF|list[CF], fi2: CF|list[CF], logger: logging.Logger):
+def cmpTextContent(fi1: CF|list[CF], fi2: CF|list[CF], logger: Logger):
     logger.info('Text content comparison inside media files is not supported yet.')

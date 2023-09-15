@@ -1,13 +1,11 @@
-import re
 import logging
 from pathlib import Path
+from logging import Logger
 
-from utils import listDir
 from configs import *
+from helpers.series import Series
 from .season import *
 from .naming import *
-from helpers.series import *
-from helpers.season import *
 
 
 __all__ = [
@@ -19,20 +17,20 @@ __all__ = [
 
 
 
-def chkSeries(series: Series, logger: logging.Logger):
+def chkSeries(series: Series, logger: Logger):
     chkSeriesFiles(series, logger)
     chkSeriesNaming(series, logger)
 
 
 
 
-def chkSeriesFiles(series: Series, logger: logging.Logger):
+def chkSeriesFiles(series: Series, logger: Logger):
     pass
 
 
 
 
-def chkSeriesNaming(series: Series, logger: logging.Logger, check_sub_seasons: bool = True):
+def chkSeriesNaming(series: Series, logger: Logger, check_sub_seasons: bool = True):
     pass
 
     # if not input_dir.is_dir():

@@ -1,5 +1,34 @@
 from __future__ import annotations
 
+
+__all__ = [
+    'readConf4VideoAlpha',
+    'toVideoAlphaInfoDict',
+    'readVideoAlphaNamingFile',
+    'copyVideoNamingFromVA',
+    'recordBDMVInfo',
+    'toVideoInfoDicts',
+    'readVdCSV',
+    'writeVideoInfo2CSV',
+    'guessVideoNaming',
+    'guessNamingFieldsFromSimpleFilename',
+    'guessNamingFields4ASS',
+    'guessNamingFields4ARC',
+    'guessNamingFields4MKA',
+    'collectVideoInfos',
+    'tstIO4VP',
+    'doVideoFilePlacement',
+    'doAutoIndexing',
+    'placeVideos',
+    'readCSV4ComplexVideoCmp',
+    'writeCSV4ComplexVideoCmp',
+    'cmpVideoGroups',
+    'doStdSoloVideoCheck',
+    'findVideoMatchingBetweenDir',
+    'cmpSimplyPairedVideos',
+    'cmpComplexlyPairedVideos',
+    ]
+
 import json
 import shutil
 import logging
@@ -15,47 +44,19 @@ from configs import *
 from checkers import *
 from loggers import initLogger
 from .naming import *
-from .season import *
 from .misc import *
 from .subtitle import getAssTextLangDict
 from .language import *
 from .formatter import *
 from .summaries import *
+from .dirgetter import proposeFilePath
 import helpers.corefile as hcf
-
+import helpers.season as hsn
+import helpers.series as hsr
 
 import yaml
 from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
-
-
-__all__ = [
-    'readConf4VideoAlpha',
-    'toVideoAlphaInfoDict',
-    'readVideoAlphaNamingFile',
-    'copyFileNamingFromVA',
-    'recordBDMVInfo',
-    'toVideoInfoDicts',
-    'readVdCSV',
-    'writeVideoInfo2CSV',
-    'doEarlyNamingGuess',
-    'guessNamingFieldsFromSimpleFilename',
-    'guessNamingFields4ASS',
-    'guessNamingFields4ARC',
-    'guessNamingFields4MKA',
-    'collectVideoInfos',
-    'tstIO4VP',
-    'doFilePlacement',
-    'doAutoIndexing',
-    'placeVideos',
-    'readCSV4VR',
-    'writeCSV4VR',
-    'doComparison',
-    'main2doStandardCheck',
-    'main2doComparisonFromCSV',
-    'main2doMatching2CSV',
-    'main2doDroppedComparison',
-    ]
 
 
 
@@ -94,7 +95,7 @@ def readConf4VideoAlpha(script_path: str|Path, *paths: str|Path) -> dict:
 def toVideoAlphaInfoDict(
     m2ts_path: Path, assumed_vol: int|str, input_dir: Path, init_audio_samples: bool = ENABLE_AUDIO_SAMPLES_IN_VA
     ) -> dict[str, str]:
-    cf: CoreFile = CoreFile(m2ts_path, init_crc32=False, init_audio_samples=init_audio_samples)
+    cf: hcf.CoreFile = hcf.CoreFile(m2ts_path, init_crc32=False, init_audio_samples=init_audio_samples)
     info_dict = dict(zip(VA_FULL_DICT.keys(), itertools.repeat('')))
     info_dict[VA_PATH_CN] = m2ts_path.relative_to(input_dir).as_posix()
     info_dict[VA_M2TS_VOL_CN] = str(assumed_vol)
@@ -108,7 +109,7 @@ def toVideoAlphaInfoDict(
 
 
 
-def readVideoAlphaNamingFile(va_file: Path|None, logger: logging.Logger) -> tuple[dict, list[dict]]:
+def readVideoAlphaNamingFile(va_file: Path|None, logger: Logger) -> tuple[dict, list[dict]]:
     '''
     Read the instructed naming fields ever filled in VA.
     '''
@@ -158,7 +159,7 @@ def readVideoAlphaNamingFile(va_file: Path|None, logger: logging.Logger) -> tupl
 
 
 
-def copyFileNamingFromVA(cfs: list[CoreFile], file_naming_dicts: list[dict[str, str]], logger: logging.Logger):
+def copyVideoNamingFromVA(cfs: list[hcf.CoreFile], file_naming_dicts: list[dict[str, str]], logger: Logger):
 
     if not file_naming_dicts: return
 
@@ -191,8 +192,7 @@ def copyFileNamingFromVA(cfs: list[CoreFile], file_naming_dicts: list[dict[str, 
             va_vol_idx = file_naming_dict.get(VA_M2TS_VOL_VAR)
             va_m2ts_idx = file_naming_dict.get(VA_M2TS_IDX_VAR)
             cf_vol_num = cf_vol_num
-            cf_m2ts_idx = m.group('m2ts_idx') if (
-                m := re.match(STRICT_TRANSCODED_FILESTEM_REGEX, cf.path.stem)) else None
+            cf_m2ts_idx = m.group('m2ts_idx') if (m := STRICT_TRANSCODED_FILESTEM_REGEX.match(cf.path.stem)) else None
             if cf_vol_num and cf_m2ts_idx and va_vol_idx and va_m2ts_idx:
                 if (int(cf_vol_num) == int(va_vol_idx)) and (int(cf_m2ts_idx) == int(va_m2ts_idx)):
                     cf.updateFromNamingDict(file_naming_dict)
@@ -262,6 +262,8 @@ def recordBDMVInfo(input_dir: Path):
             working_list = quotFields4CSV(va_info_dicts) if ext == 'csv' else va_info_dicts
             if not globals()[f'listM2TS2{ext.upper()}'](out_file, working_list):
                 print(FAILED_TO_WRITE_1.format(out_file))
+
+    logging.shutdown()
 
 
 
@@ -352,13 +354,13 @@ def writeVideoInfo2CSV(
     csv_path: Path, base_csv_dict: dict[str, str], file_csv_dicts: list[dict[str, str]], logger: Logger
     ) -> bool:
 
-    logger.debug(f'Writing VD csv ...')
+    logger.debug(WRITING_1.format(csv_path))
     csv_dicts = quotFields4CSV([base_csv_dict] + file_csv_dicts)
-    if not writeCSV(csv_path, csv_dicts):
-        logger.error(f'Failed to save "{csv_path}".')
+    if writeCSV(csv_path, csv_dicts):
+        logger.info(SAVED_1.format(csv_path))
         return False
     else:
-        logger.info(f'Saved to "{csv_path}".')
+        logger.error(FAILED_TO_WRITE_INFO_CSV_1.format(csv_path))
         return True
 
 
@@ -440,11 +442,7 @@ def guessNamingFields4ASS(cf: hcf.CF, logger: Logger):
     if lang_detected:
         if langs and not (lang_detected in langs):
             #! this means the detected lang differs from the one in filename - dont fill anything
-            logger.warning(
-                f'The detected language "{lang_detected}" differs from that in filename '
-                f'{cf.path.parent.name}/{cf.path.name}". '
-                f'The naming guesser wont fill in the language suffix for you.'
-                )
+            logger.warning(GUESSED_ASS_NAMING_CONFLICT_3.format(lang_detected, cf.path.parent.name, cf.path.name))
         else:
             # NOTE use un-normalized `lang_in_filename` as this may be the expectation of the fansub groups
             # TODO normalize the field so the user wont get an error message in VP
@@ -454,17 +452,24 @@ def guessNamingFields4ASS(cf: hcf.CF, logger: Logger):
 
 
 
-def guessNamingFields4ARC(cf: hcf.CF, logger: Logger):
-    filenames = getFileList(cf.path)
-    has_png, has_font = False, False
-    for filename in filenames:
-        if filename.lower().endswith(VX_IMG_EXTS): has_png = True
+def guessNamingFields4ARC(cf: hcf.CF, logger: Optional[Logger] = None):
+    if not isArchive(cf.path):
+        if logger: logger.error(INVALID_FILE_1.format(cf.path))
+        return
+    has_image, has_font = False, False
+    for filename in getFileList(cf.path):
+        if filename.lower().endswith(COMMON_IMAGE_EXTS): has_image = True
         if filename.lower().endswith(COMMON_FONT_EXTS): has_font = True
-        if has_png and has_font: break
-    if has_png and not has_font:
-        cf.l = STD_SPS_DIRNAME
-    if not has_png and has_font:
-        cf.c = STD_FONT_NAME
+        if has_image and has_font: break  # early stopping
+    match has_image, has_font:
+        case True, False:
+            cf.l = STD_SPS_DIRNAME  # archives of pure images are placed in SPs
+        case False, True:
+            cf.l = STD_FONT_NAME  # archives of pure fonts are placed in fonts
+        case True, True:
+            if logger: logger.warning(DIRTY_CONTENT_1.format(cf.path))
+        case False, False:
+            if logger: logger.warning(UNKNOWN_ARC_CONTENT_1.format(cf.path))
 
 
 
@@ -479,11 +484,10 @@ def guessNamingFields4MKA(mka: hcf.CF, cfs: list[hcf.CF], logger: Logger):
 
 
 
-def doEarlyNamingGuess(cfs: list[hcf.CF], logger: Logger):
-    '''We can actually guess very few fields at VD, but try it.'''
-
+def guessVideoNaming(cfs: list[hcf.CF], logger: Logger):
+    '''Guess the naming of each CoreFile based on its current filename.'''
     for i, cf in enumerate(cfs):
-        logger.debug(f'Guessing naming fields for "{cf.path}" ...')
+        logger.debug(GUESSING_NAMING_1.format(cf.path))
         match cf.ext:
             case 'mkv'|'mp4':
                 guessNamingFieldsFromSimpleFilename(cf, logger)
@@ -498,37 +502,45 @@ def doEarlyNamingGuess(cfs: list[hcf.CF], logger: Logger):
             case '7z'|'zip'|'rar':
                 guessNamingFields4ARC(cf, logger)
             case _:
-                logger.error(f'Got "{cf.ext}" but "{VX_ALL_EXTS=}".')
+                logger.warning(GOT_BUT_EXPECT_ONE_OF_2.format(cf.ext, VX_ALL_EXTS))
 
 
 
 
-def collectVideoInfos(src_dir: Path, va_file: Optional[Path] = None):
+def collectVideoInfos(*, src_dir: Path, va_file: Optional[Path] = None):
+
+    if not src_dir.exists():
+        print(CANT_FIND_1.format(src_dir))
+        return
 
     logger = initLogger(src_dir.parent / VP_LOG_FILENAME)
     logger.info(USING_VP_1.format(AC_VERSION))
-    logger.info(THE_INPUT_IS_1.format(str(src_dir) + (f' + {va_file}' if va_file else '')))
 
-    va_base_naming_dict, va_file_naming_dicts = readVideoAlphaNamingFile(va_file, logger)
+    if va_file:
+        logger.info(THE_INPUT_IS_2.format(src_dir, va_file))
+        va_base_naming_dict, va_file_naming_dicts = readVideoAlphaNamingFile(va_file, logger)
+    else:
+        logger.info(logger.info(THE_INPUT_IS_1.format(src_dir)))
+        va_base_naming_dict, va_file_naming_dicts = {}, []
 
-    paths = filterVxFilePaths(src_dir, logger)
-    cfs = hcf.toCoreFilesWithTqdm(paths, logger, mp=getCRC32MultiProc(paths, logger))
-    cmpCfCRC32(cfs, findCRC32InFilenames(paths), logger)
+    vx_paths = filterVxFilePaths(src_dir, logger)
+    cfs = hcf.toCoreFilesWithTqdm(vx_paths, logger, mp=getCRC32MultiProc(vx_paths, logger))
+    cmpCRC4CoreFiles(cfs, findCRC32InFilenames(vx_paths), logger)
     if ENABLE_FILE_CHECKING_IN_VP: chkSeasonFiles(cfs, logger)
 
     # NOTE first guess naming and then fill each CF from VA
     # so the naming instruction in VA will not be overwritten
     # also, audio samples will not appear in file_naming_dicts to be sent to VP
     # so we cannot use file_naming_dicts for copyNamingFromVA()
-    doEarlyNamingGuess(cfs, logger)
-    copyFileNamingFromVA(cfs, va_file_naming_dicts, logger)
+    guessVideoNaming(cfs, logger)
+    copyVideoNamingFromVA(cfs, va_file_naming_dicts, logger)
     file_csv_dicts = toVideoInfoDicts(cfs, logger)
 
     # don't forget to update the default dict from VA, which is not updated in fillFieldsFromVA()
     # NOTE leave useful fields as '' to notify the user that they can fill it
     base_csv_dict = {k: BASE_LINE_LABEL for k in VD_FULL_DICT.keys()}
-    base_csv_dict.update({k: '' for k in VD_BASE_LINE_USER_DICT.keys()})
-    base_csv_dict.update({k: va_base_naming_dict.get(v, '') for k, v in VA_BASE_LINE_USER_DICT.items()})
+    base_csv_dict.update({k: ' ' for k in VD_BASE_LINE_USER_DICT.keys()})
+    base_csv_dict.update({k: va_base_naming_dict.get(v, ' ') for k, v in VA_BASE_LINE_USER_DICT.items()})
 
     writeVideoInfo2CSV(src_dir.parent / VP_CSV_FILENAME, base_csv_dict, file_csv_dicts, logger)
 
@@ -606,7 +618,7 @@ def tstIO4VP(src_files: list[str]|list[Path], dst_dir: str|Path, logger: Logger)
 
 
 
-def doAutoIndexing(season: Season, logger: Logger):
+def doAutoIndexing(season: hsn.Season, logger: Logger):
 
     cfs = season.files
 
@@ -678,11 +690,13 @@ def doAutoIndexing(season: Season, logger: Logger):
 
 
 
-def doFilePlacement(season: Season, hardlink: bool, logger: Logger) -> bool:
+def doVideoFilePlacement(season: hsn.Season, hardlink: bool, logger: Logger) -> bool:
     '''
-    Perform the naming plan onto disk.
+    Execute the naming plan of a Season onto disk.
 
     Arguments:
+    season: Season: the source Season object
+
     dst_parent: Path : the output dir will be under this dir
     default: INFO : the base/default naming config
     infos: list[CF] : the naming config of each files
@@ -736,7 +750,7 @@ def doFilePlacement(season: Season, hardlink: bool, logger: Logger) -> bool:
 
 
 
-def placeVideos(csv_path: Path):
+def placeVideos(*, csv_path: Path):
 
     logger = initLogger(log_path := csv_path.parent.joinpath(VP_LOG_FILENAME))
     logger.info(USING_VP_1.format(AC_VERSION))
@@ -749,10 +763,10 @@ def placeVideos(csv_path: Path):
     src_file_paths = [Path(d[FULLPATH_VAR]) for d in file_naming_dicts]
     if not tstIO4VP(src_file_paths, dst_parent_dir, logger): return
 
-    (season := Season()).dst_parent = dst_parent_dir.as_posix()
+    (season := hsn.Season()).dst_parent = dst_parent_dir.as_posix()
     season.add(hcf.toCoreFilesWithTqdm(src_file_paths, logger, mp=getCRC32MultiProc(src_file_paths, logger)))
-    cmpCfCRC32(season.files, [naming_info[CRC32_VAR] for naming_info in file_naming_dicts], logger)
-    applyNamingDicts(season, base_naming_dict, file_naming_dicts, logger)
+    cmpCRC4CoreFiles(season.files, [naming_info[CRC32_VAR] for naming_info in file_naming_dicts], logger)
+    hsn.applyNamingDicts(season, base_naming_dict, file_naming_dicts, logger)
     doAutoIndexing(season, logger)
     chkSeasonNaming(season, logger)
     composeFullDesp(season, logger)
@@ -761,7 +775,7 @@ def placeVideos(csv_path: Path):
         if not chkSeasonFiles(season, logger): return
     if not chkFinalNamingConflict(season, logger): return
     logNamingSummary(base_naming_dict, file_naming_dicts, season, logger)
-    if not doFilePlacement(season, tstMkHardlinks(src_file_paths, dst_parent_dir), logger): return
+    if not doVideoFilePlacement(season, tstMkHardlinks(src_file_paths, dst_parent_dir), logger): return
 
 
 
@@ -771,7 +785,7 @@ def placeVideos(csv_path: Path):
 
 
 
-def readCSV4VR(input_path: Path) -> tuple[bool, dict[str, list[tuple[str, str, str]]]]:
+def readCSV4ComplexVideoCmp(input_path: Path) -> tuple[bool, dict[str, list[tuple[str, str, str]]]]:
 
     if not input_path or not (input_path := Path(input_path)).is_file():
         return False, {}
@@ -796,7 +810,7 @@ def readCSV4VR(input_path: Path) -> tuple[bool, dict[str, list[tuple[str, str, s
 
 
 
-def writeCSV4VR(ouput_path: Path, grouping_dict: dict[str, list[tuple[str, str, str]]]) -> bool:
+def writeCSV4ComplexVideoCmp(ouput_path: Path, grouping_dict: dict[str, list[tuple[str, str, str]]]) -> bool:
 
     if not ouput_path or (output_path := Path(ouput_path)).exists():
         return False
@@ -812,7 +826,7 @@ def writeCSV4VR(ouput_path: Path, grouping_dict: dict[str, list[tuple[str, str, 
 
 
 
-def doComparison(*groups: list[Path], grpname: str = '0', subgrps_names: list[str] = [], logger: logging.Logger):
+def cmpVideoGroups(*groups: list[Path], grpname: str = '0', subgrps_names: list[str] = [], logger: Logger):
 
     if len(groups) < 2:
         logger.error('At least 2 groups are required.')
@@ -839,26 +853,19 @@ def doComparison(*groups: list[Path], grpname: str = '0', subgrps_names: list[st
 
         if any(cf.has_audio for cf in g1 + g2):
             logger.info('Comparing audio...')
-            diff_audios = cmpAudioContent(g1, g2, logger)
+            diff_audios = cmpCfAudContent(g1, g2, logger)
             for k, diff_audio, freq in diff_audios:
-                img_path = findCommonParentDir(*[cf.path for cf in g1 + g2])
-                if not img_path:
-                    print(
-                        '!!! Cannot find a common parent dir of your input. '
-                        'The spectrogram of audio difference will be written under the same dir as this script.'
-                        )
-                    img_path = Path(__file__).parent
-                img_path = img_path.joinpath(
-                    f'VR-{TIMESTAMP}-DiffAudio-{grpname if grpname else 0}-{n1}vs{n2}-a{k}.log'
-                    )
+                filename = f'VR-{TIMESTAMP}-DiffAudio-{grpname if grpname else 0}-{n1}vs{n2}-a{k}.log'
+                img_path = proposeFilePath([cf.path for cf in (g1 + g2)], filename)
+                logger.debug(f'Proposed spectrogram img path: {img_path}')
                 if mkSpectrogram(img_path, diff_audio, freq):
-                    logger.info(f'Successfully written spectrogram to "{img_path}".')
+                    logger.info(SAVED_SPECTROGRAM_1.format(img_path))
                 else:
-                    logger.error(f'Failed to write spectrogram to "{img_path}".')
+                    logger.error(FAILED_TO_WRITE_1.format(img_path))
 
         if any(cf.has_menu for cf in g1 + g2):
             logger.info('Comparing menu...')
-            cmpMenuContent(g1, g2, logger)
+            cmpCfMenuContent(g1, g2, logger)
 
         if any(cf.has_image for cf in g1 + g2):
             logger.info('Comparing menu...')
@@ -873,157 +880,68 @@ def doComparison(*groups: list[Path], grpname: str = '0', subgrps_names: list[st
 
 
 
-def main2doStandardCheck(input_dir: Path):
+def doStdSoloVideoCheck(input_dir: Path):
+
+    if not input_dir.is_dir(): return
 
     logger = initLogger(log_path := input_dir.parent.joinpath(VR_LOG_FILENAME))
     logger.info(USING_VR_1.format(AC_VERSION))
-    logger.info(f'Mode: do standard checking of naming and files for "{input_dir}".')
+    logger.info(VR_MODE_STD_SOLO_CHK_0)
 
-    ds = listDir(input_dir, rglob=False)
-    fs = listDir(input_dir, rglob=False)
-    match bool(ds), bool(fs):
-        case False, False:
-            logger.error(f'Cannot check empty "{input_dir}".')
-        case True, False:
-            logger.info('Series checking has not been pushed. Separately check the seasons instead.')
+    dirs = listDir(input_dir, rglob=False)
+    files = listFile(input_dir, rglob=False)
+    match len(dirs), len(files):
+        case 0, 0:
+            logger.error(GOT_EMPTY_DIR_1.format(input_dir))
+        case _, 0:
+            logger.info(VR_GOT_SERIES_DIR_0)
             # if series := fromSeriesDir(input_dir, logger): chkSeries(series, logger)
             # else: logger.error(f'Not a valid series dir "{input_dir}".')
-        case _, True:
-            if season := fromSeasonDir(input_dir, logger):
+        case _, _:
+            if season := hsn.fromSeasonDir(input_dir, logger):
                 chkSeason(season, logger)
                 composeFullDesp(season, logger)
                 cmpDstNaming(season, logger)
             else:
-                logger.error(f'Not a valid season dir "{input_dir}".')
+                logger.error(VR_NOT_A_VALID_SEASON_DIR.format(input_dir))
 
     printCheckerEnding(log_path.as_posix(), logger)
 
 
 
 
-def main2doComparisonFromCSV(input_csv_path: Path):
+def findVideoMatchingBetweenDir(input1_dir: Path, input2_dir: Path):
 
-    logger = initLogger(log_path := input_csv_path.parent.joinpath(VR_LOG_FILENAME))
+    if not input1_dir.is_dir() or not input2_dir.is_dir(): return
+
+    logger = initLogger(log_path := proposeFilePath([input1_dir, input2_dir], VR_LOG_FILENAME))
     logger.info(USING_VR_1.format(AC_VERSION))
-    logger.info(f'Mode: do video comparison as instructed in "{input_csv_path}".')
-
-    succ, groups = readCSV4VR(input_csv_path)
-    if not succ:
-        logger.error(f'Failed to read "{input_csv_path}".')
-        logging.shutdown()
-        return
-
-    for grouping_id, group_items in groups.items():
-
-        if not grouping_id:
-            continue
-
-        logger.info(f'------------------------------------------------------------------------------------------------')
-        logger.info(f'Checking grouping "{grouping_id}" with the following items:')
-        subgrps, enableds, fullpaths = zip(*group_items)
-        enableds = toEnabledList(enableds)
-        for sub_grp, enabled, fullpath in zip(subgrps, enableds, fullpaths):
-            logger.info(f'{sub_grp:s} ({"E" if enabled else "D"}): "{fullpath}"')
-        if sum(enableds) < 2:
-            logger.warning('Cannot check this group due to <2 items enabled. Skipping.')
-            continue
-        subgrps = [sub_grp for sub_grp, enabled in zip(subgrps, enableds) if enabled]
-        fullpaths = [full_path for full_path, enabled in zip(fullpaths, enableds) if enabled]
-        subgrp_tags = list(set(subgrps))
-        assert subgrp_tags  # this should never happen
-
-        fullpaths = [Path(fullpath) for fullpath in fullpaths]
-        all_files_exist = True
-        for fullpath in fullpaths:
-            if not fullpath.is_file():
-                logger.error(f'File "{fullpath}" is missing.')
-                all_files_exist = False
-        if not all_files_exist:
-            logger.error('Some files are missing. Please check again.')
-            continue
-
-        # NOTE this is no longer considered as unsupported
-        # if len(valid_subgrps) > 2:
-        #     logger.error(f'>2 subgroups defined in group "{grouping_id}". It will be converted to 2 subgroups.')
-        #     valid_subgrps = valid_subgrps[:2]
-        #     subgrps = [(valid_subgrps[-1] if (sub_grp not in valid_subgrps) else sub_grp) for sub_grp in subgrps]
-        #     logger.info(f'Converted subgrouping:')
-        #     for sub_grp, fullpath in zip(subgrps, fullpaths):
-        #         logger.info(f'{sub_grp:s}: "{fullpath}"')
-
-        if len(subgrp_tags) == 1:
-            subgrps = ['1', '2']
-            if len(fullpaths) > 2:
-                logger.warning('>2 items defined in a single subgroup. Plz note auto subgrouping is not accurate.')
-                base_parent = fullpaths[0].parent
-                for i, fullpath in zip(itertools.count(), fullpaths):
-                    subgrps[i] = '1' if fullpath.is_relative_to(base_parent) else '2'
-                logger.info(f'Auto subgrouping:')
-                for sub_grp, fullpath in zip(subgrps, fullpaths):
-                    logger.info(f'{sub_grp:s}: "{fullpath}"')
-
-        src = [fullpath for (sub_grp, fullpath) in zip(subgrps, fullpaths) if sub_grp == subgrp_tags[0]]
-        refs = []
-        for subgrp_tag in subgrp_tags[1:]:
-            refs.append([fullpath for (sub_grp, fullpath) in zip(subgrps, fullpaths) if sub_grp == subgrp_tag])
-
-        doComparison(src, *refs, grpname=grouping_id, subgrps_names=subgrp_tags, logger=logger)
-
-
-
-
-def main2doMatching2CSV(input1_dir: Path, input2_dir: Path):
-
-    log_path = findCommonParentDir(input1_dir, input2_dir)
-    if not log_path:
-        print(
-            '!!! Cannot find a common parent dir of your input. '
-            'Output log will be located at the same dir as this script.'
-            )
-        log_path = Path(__file__).parent.joinpath(VR_LOG_FILENAME)
-    elif log_path.is_dir():
-        log_path = log_path.joinpath(VR_LOG_FILENAME)
-    else:
-        log_path = log_path.parent.joinpath(VR_LOG_FILENAME)
-
-    logger = initLogger(log_path)
-    logger.info(USING_VR_1.format(AC_VERSION))
-    logger.info(f'Mode: try video matching between "{input1_dir}" and "{input2_dir}".')
-
-    assert input1_dir.is_dir() and input2_dir.is_dir()
+    logger.info(VR_MODE_FIND_MATCHING_0)
 
     input1_fs_all: list[Path] = listFile(input1_dir, ext=VX_MAIN_EXTS)
     input2_fs_all: list[Path] = listFile(input2_dir, ext=VX_MAIN_EXTS)
     input1_fs = filterOutCDsScans(input1_fs_all)
     input2_fs = filterOutCDsScans(input2_fs_all)
-    if len(input1_fs) != len(input1_fs_all):
-        logger.info(f'Removed some FLAC in {STD_CDS_DIRNAME} from the input dir "{input1_dir}".')
-    if len(input2_fs) != len(input2_fs_all):
-        logger.info(f'Removed some FLAC in {STD_CDS_DIRNAME} from the input dir "{input2_dir}".')
+    # if len(input1_fs) != len(input1_fs_all):
+    #     logger.info(f'Removed some FLAC in {STD_CDS_DIRNAME} from the input dir "{input1_dir}".')
+    # if len(input2_fs) != len(input2_fs_all):
+    #     logger.info(f'Removed some FLAC in {STD_CDS_DIRNAME} from the input dir "{input2_dir}".')
+    input1_cfs = [hcf.CoreFile(f) for f in input1_fs]
+    input2_cfs = [hcf.CoreFile(f) for f in input2_fs]
 
-    input1_cfs = [hcf.CF(f) for f in input1_fs]
-    input2_cfs = [hcf.CF(f) for f in input2_fs]
-
-    groups: dict[str, list[tuple[str, str, str]]] = dict()
-    if not input1_cfs or not input2_cfs:
-        logger.warning('No video files found in either of the input dirs.')
-        logger.info('VR will still try to generate a non-ref CSV in case you want to fill it by yourself.')
-        if input1_cfs and not input2_cfs:
-            for i, input1_cf in enumerate(input1_cfs):
-                groups[str(i)] = [('', '', input1_cf.path.resolve().as_posix())]
-        elif input2_cfs and not input1_cfs:
-            for i, input2_cf in enumerate(input2_cfs):
-                groups[str(i)] = [('', '', input2_cf.path.resolve().as_posix())]
+    if (not input1_cfs) or (not input2_cfs):
+        logger.info(VR_GOT_EMPTY_DIR_FINDING_MATCHING_0)
+        groups: dict[str, list[tuple[str, str, str]]] = dict()
+        #! only one of the two loops below will be executed
+        for i, input1_cf in enumerate(input1_cfs):
+            groups[str(i)] = [('', '', input1_cf.path.resolve().as_posix())]
+        for i, input2_cf in enumerate(input2_cfs):
+            groups[str(i)] = [('', '', input2_cf.path.resolve().as_posix())]
+        csv_path = input1_dir.parent / VR_CSV_FILENAME if input1_cfs else input2_dir.parent / VR_CSV_FILENAME
+        if writeCSV4ComplexVideoCmp(csv_path, groups):
+            logger.info(SAVED_1.format(csv_path))
         else:
-            raise ValueError  # NOTE this should be never reached
-
-        csv_parent = findCommonParentDir(input1_dir, input2_dir)
-        if not csv_parent: csv_path = input1_dir.parent.joinpath(f'VR-{TIMESTAMP}.csv')
-        else: csv_path = csv_parent.joinpath(f'VR-{TIMESTAMP}.csv')
-        if writeCSV4VR(csv_path, groups):
-            logger.info(f'Successfully written to "{csv_path}"..')
-        else:
-            logger.error(f'Failed to write to "{csv_path}".')
+            logger.error(FAILED_TO_WRITE_1.format(csv_path))
         logging.shutdown()
         return
 
@@ -1031,8 +949,8 @@ def main2doMatching2CSV(input1_dir: Path, input2_dir: Path):
     idx = itertools.count(1)
 
     # now let's start matching, we do it in this order:
-    # 1. match by chapter timestamps, high robust (may fail if main videos rarely use identical chapters)
-    # 2. match by audio samples, high robust (may fail in CMs with identical audio)
+    # 1. match by menu timestamps, higher robust (may fail if videos rarely use identical menu)
+    # 2. match by audio samples, higher robust (may fail especially in CM/Menu with identical audio)
     # 3. match by duration, mid robust (may fail in any videos having identical duration)
 
     #***********************************************************************************************
@@ -1062,8 +980,10 @@ def main2doMatching2CSV(input1_dir: Path, input2_dir: Path):
     # step 2: match by audio digest
     if ENABLE_AUDIO_SAMPLES_IN_VA:
         for input1_cf in input1_cfs[:]:  # make a copy of the list, so we can call .remove() in the loop
-            matches = [input2_fi for input2_fi in input2_cfs \
-                       if cmpAudioSamples(input1_cf.audio_samples, input2_fi.audio_samples)]
+            matches = [
+                input2_fi for input2_fi in input2_cfs
+                if cmpAudioSamples(input1_cf.audio_samples, input2_fi.audio_samples)
+                ]
             if len(matches) == 1:
                 groups[str(next(idx))] = [('1', '', input1_cf.path.resolve().as_posix()),
                                             ('2', '', matches[0].path.resolve().as_posix())]
@@ -1195,10 +1115,10 @@ def main2doMatching2CSV(input1_dir: Path, input2_dir: Path):
     #***********************************************************************************************
     # write the result to a CSV
 
-    csv_parent = findCommonParentDir(input1_dir, input2_dir)
+    csv_parent = findCommonParentDir([input1_dir, input2_dir])
     if not csv_parent: csv_path = input1_dir.parent.joinpath(f'VR-{TIMESTAMP}.csv')
     else: csv_path = csv_parent.joinpath(f'VR-{TIMESTAMP}.csv')
-    if writeCSV4VR(csv_path, groups):
+    if writeCSV4ComplexVideoCmp(csv_path, groups):
         logger.info(f'Successfully written to "{csv_path}".')
         logger.info('')
         logger.info('NEXT:')
@@ -1211,32 +1131,92 @@ def main2doMatching2CSV(input1_dir: Path, input2_dir: Path):
 
 
 
-def main2doDroppedComparison(*paths: Path):
+def cmpSimplyPairedVideos(paths: Iterable[Path]):
 
+    paths = [Path(p) for p in paths]
     assert len(paths) % 2 == 0
     group1 = paths[:len(paths) // 2]
     group2 = paths[len(paths) // 2:]
 
-    log_path = findCommonParentDir(*paths)
-    if not log_path:
-        print(
-            '!!! Cannot find a common parent dir of your input. '
-            'Output log will be located at the same dir as this script.'
-            )
-        log_path = Path(__file__).parent.joinpath(VR_LOG_FILENAME)
-    elif log_path.is_dir():
-        log_path = log_path.joinpath(VR_LOG_FILENAME)
-    else:
-        log_path = log_path.parent.joinpath(VR_LOG_FILENAME)
-
-    logger = initLogger(log_path)
+    logger = initLogger(log_path := proposeFilePath(paths, VR_LOG_FILENAME))
     logger.info(USING_VR_1.format(AC_VERSION))
-    logger.info(f'Mode: do video comparison from directly dropped files.')
+    logger.info(VR_MODE_SIMP_PAIRED_CMP_0)
 
     total = len(group1)
     for i, (path1, path2) in enumerate(zip(group1, group2)):
-        logger.info(f'------------------------------------------------------------------------------------------------')
-        logger.info(f'Checking grouping "{i+1:03d}/{total:03d}" with the following items:')
-        logger.info(f'a: "{path1}"')
-        logger.info(f'b: "{path2}"')
-        doComparison([path1], [path2], logger=logger)
+        logger.info(VR_COMPARING_GRP_4.format(i + 1, total, path1, path2))
+        cmpVideoGroups([path1], [path2], logger=logger)
+
+
+
+
+def cmpComplexlyPairedVideos(input_csv_path: Path):
+
+    logger = initLogger(input_csv_path.parent / VR_LOG_FILENAME)
+    logger.info(USING_VR_1.format(AC_VERSION))
+    logger.info(VR_MODE_COMPLEX_PAIRED_CMP_0)
+
+    succ, groups = readCSV4ComplexVideoCmp(input_csv_path)
+    if not succ:
+        logger.error(FAILED_TO_READ_INFO_CSV_1.format(input_csv_path))
+        logging.shutdown()
+        return
+
+    for group_id, group_items in groups.items():
+
+        if not group_id:
+            continue
+
+        logger.info('')
+        logger.info(VR_COMPARING_GRP_1.format(group_id))
+
+        subgrps, enableds, fullpaths = zip(*group_items)
+        enableds = toEnabledList(enableds)
+        for sub_grp, enabled, fullpath in zip(subgrps, enableds, fullpaths):
+            logger.info(VR_COMPARING_ITEM_1.format(sub_grp, ('E' if enabled else 'D'), fullpath))
+
+        if sum(enableds) < 2:
+            logger.error(VR_CANT_CHK_GRP_LT2_0)
+            continue
+
+        subgrps = [sub_grp for (sub_grp, enabled) in zip(subgrps, enableds) if enabled]
+        fullpaths = [full_path for (full_path, enabled) in zip(fullpaths, enableds) if enabled]
+        subgrp_tags = list(set(subgrps))
+        assert subgrp_tags  # this should never happen
+
+        fullpaths = [Path(fullpath) for fullpath in fullpaths]
+        all_files_exist = True
+        for fullpath in fullpaths:
+            if not fullpath.is_file():
+                logger.error(f'File "{fullpath}" is missing.')
+                all_files_exist = False
+        if not all_files_exist:
+            logger.error('Some files are missing. Please check again.')
+            continue
+
+        # NOTE this is no longer considered as unsupported
+        # if len(valid_subgrps) > 2:
+        #     logger.error(f'>2 subgroups defined in group "{grouping_id}". It will be converted to 2 subgroups.')
+        #     valid_subgrps = valid_subgrps[:2]
+        #     subgrps = [(valid_subgrps[-1] if (sub_grp not in valid_subgrps) else sub_grp) for sub_grp in subgrps]
+        #     logger.info(f'Converted subgrouping:')
+        #     for sub_grp, fullpath in zip(subgrps, fullpaths):
+        #         logger.info(f'{sub_grp:s}: "{fullpath}"')
+
+        if len(subgrp_tags) == 1:
+            subgrps = ['1', '2']
+            if len(fullpaths) > 2:
+                logger.warning('>2 items defined in a single subgroup. Plz note auto subgrouping is not accurate.')
+                base_parent = fullpaths[0].parent
+                for i, fullpath in zip(itertools.count(), fullpaths):
+                    subgrps[i] = '1' if fullpath.is_relative_to(base_parent) else '2'
+                logger.info(f'Auto subgrouping:')
+                for sub_grp, fullpath in zip(subgrps, fullpaths):
+                    logger.info(f'{sub_grp:s}: "{fullpath}"')
+
+        src = [fullpath for (sub_grp, fullpath) in zip(subgrps, fullpaths) if sub_grp == subgrp_tags[0]]
+        refs = []
+        for subgrp_tag in subgrp_tags[1:]:
+            refs.append([fullpath for (sub_grp, fullpath) in zip(subgrps, fullpaths) if sub_grp == subgrp_tag])
+
+        cmpVideoGroups(src, *refs, grpname=group_id, subgrps_names=subgrp_tags, logger=logger)

@@ -1,23 +1,24 @@
 import re
 import logging
+from logging import Logger
 from utils import *
 from configs import *
 from helpers.corefile import CF
 
 
-__all__ = ['chkVideoTracks', 'cmpVideoContent']
+__all__ = ['chkCfVidTracks', 'cmpVideoContent']
 
 
 
 
-def cmpVideoContent(cfs1: CF|list[CF], cfs2: CF|list[CF], logger: logging.Logger):
+def cmpVideoContent(cfs1: CF|list[CF], cfs2: CF|list[CF], logger: Logger):
     logger.info('Video content comparison is not implemented yet.')
     #TODO can we replace RPC's function here
 
 
 
 
-def chkVideoTracks(cf: CF, logger: logging.Logger, decode: bool = False):
+def chkCfVidTracks(cf: CF, logger: Logger, decode: bool = False):
 
     if cf.ext not in COMMON_VIDEO_EXTS:
         logger.error(f'The file is not a known file type with video.')

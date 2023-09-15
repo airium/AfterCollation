@@ -11,7 +11,7 @@ from langs import *
 from configs import *
 from .naming import *
 from .formatter import *
-import helpers.season as hs
+import helpers.season as hsn
 
 import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
@@ -41,7 +41,7 @@ class CoreFile:
     def __init__(
         self,
         path: Path|str,
-        season: hs.Season|None = None,
+        season: hsn.Season|None = None,
         depends: CoreFile|None = None,
         init_crc32: bool = False,
         init_audio_samples: bool = False,
@@ -54,7 +54,7 @@ class CoreFile:
         self.__path: Path = path
         self.__mediainfo: MediaInfo = getMediaInfo(path)
 
-        self.__season: hs.Season|None = season
+        self.__season: hsn.Season|None = season
         if season: season.add(self, hook=True)
 
         self.__depends: CoreFile|None = depends
@@ -134,11 +134,11 @@ class CoreFile:
     #* parent and depends ----------------------------------------------------------------------------------------------
 
     @property
-    def parent(self) -> hs.Season|None:
+    def parent(self) -> hsn.Season|None:
         return self.__season
 
     @parent.setter
-    def parent(self, season: hs.Season|None):
+    def parent(self, season: hsn.Season|None):
         self.__season = season
 
     @property

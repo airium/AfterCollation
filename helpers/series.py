@@ -6,8 +6,8 @@ from logging import Logger
 
 from langs import *
 from configs import *
-from .naming import *
-import helpers.season as hs
+import helpers.naming as hnm
+import helpers.season as hsn
 
 
 __all__ = [
@@ -19,9 +19,9 @@ __all__ = [
 
 class Series:
 
-    def __init__(self, /, seasons: list[hs.Season]|None = None, logger: Logger|None = None, **kwargs: Any):
+    def __init__(self, /, seasons: list[hsn.Season]|None = None, logger: Logger|None = None, **kwargs: Any):
 
-        self.__seasons: set[hs.Season] = set()
+        self.__seasons: set[hsn.Season] = set()
         if seasons: self.add(seasons)
 
         self.__logger: Logger|None = logger
@@ -79,7 +79,7 @@ class Series:
 
     @g.setter
     def g(self, grptag: str):
-        setattr(self, GRPTAG_VAR, normFullGroupTag(grptag))
+        setattr(self, GRPTAG_VAR, hnm.normFullGroupTag(grptag))
 
     @property
     def t(self) -> str:
@@ -91,7 +91,7 @@ class Series:
 
     @t.setter
     def t(self, title: str):
-        setattr(self, TITLE_VAR, normTitle(title))
+        setattr(self, TITLE_VAR, hnm.normTitle(title))
 
     @property
     def x(self) -> str:
@@ -99,23 +99,23 @@ class Series:
 
     @x.setter
     def x(self, suffix: str):
-        setattr(self, SUFFIX_VAR, normFullSuffix(suffix))
+        setattr(self, SUFFIX_VAR, hnm.normFullSuffix(suffix))
 
     #* contained seasons -----------------------------------------------------------------------------------------------
 
     @property
-    def seasons(self) -> list[hs.Season]:
+    def seasons(self) -> list[hsn.Season]:
         return list(self.__seasons)
 
-    def add(self, seasons: hs.Season|list[hs.Season], hook: bool = True):
-        if isinstance(seasons, hs.Season):
+    def add(self, seasons: hsn.Season|list[hsn.Season], hook: bool = True):
+        if isinstance(seasons, hsn.Season):
             seasons = [seasons]
         for season in seasons:
             self.__seasons.add(season)
             if hook: season.parent = self
 
-    def remove(self, seasons: hs.Season|list[hs.Season], unhook: bool = True):
-        if isinstance(seasons, hs.Season):
+    def remove(self, seasons: hsn.Season|list[hsn.Season], unhook: bool = True):
+        if isinstance(seasons, hsn.Season):
             seasons = [seasons]
         for season in seasons:
             self.__seasons.discard(season)
