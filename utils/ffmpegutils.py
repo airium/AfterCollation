@@ -143,15 +143,16 @@ def toJPG(src: Path, dst: Path) -> bool:
 
 
 
-
-def replaceIfSmaller(src: Path, dst: Path, **kwds) -> bool:
+def replaceIfSmaller(src: Path, dst: Path, bit:int, **kwds) -> bool:
     if not src.is_file(): return False
+    format = f's{bit}le'
+    acodec = f'pcm_s{bit}le'
     file_size = src.stat().st_size
     remove_dst = not dst.is_file()
     try:
         stream = ffmpeg.input(src.resolve().as_posix())
-        stream = stream.output('pipe:', compression_level=12, **kwds)
-        output = stream.run(quiet=True, capture_stdout=True)
+        stream = stream.output('pipe:', f='flac', compression_level=12, **kwds)
+        output = stream.run(quiet=True, capture_stdout=True)[0]
     except ffmpeg._run.Error:
         if remove_dst: dst.unlink(missing_ok=True)
         return False

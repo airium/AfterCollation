@@ -313,23 +313,20 @@ AD_FILE_TYPE_BK_0 = 'BK'
 AD_FILE_TYPE_MV_0 = 'MV'
 
 
-
-
-
-AP_SRC_PATH_CN,       AP_SRC_PATH_VAR = '源目录', 'ap_src_path'
+AP_SRC_PATH_CN,       AP_SRC_PATH_VAR = '来源目录', 'ap_src_path'
 AP_DIR_TYPE_CN,      AP_DIR_TYPE_VAR = '目录类型', 'ap_src_dir_type'
 AP_ALBUM_DATE_CN,    AP_ALBUM_DATE_VAR = '年月日', 'ap_yymmdd'
-AP_ALBUM_PRENAME_CN, AP_ALBUM_PRENAME_VAR = '专辑类型', 'ap_album_prename'
-AP_ALBUM_NAME_CN,    AP_ALBUM_NAME_VAR = '专辑名称', 'ap_album_name'
-AP_ALBUM_AFTNAME_CN, AP_ALBUM_AFTNAME_VAR = '专辑后缀', 'ap_album_aftname'
-AP_ALBUM_ARTISTS_CN, AP_ALBUM_ARTISTS_VAR = '专辑艺术家', 'ap_album_artists'
-AP_ALBUM_EDITION_CN, AP_ALBUM_EDITION_VAR = '专辑版本', 'ap_album_edition'
-AP_CATALOG_CN,           AP_CATALOG_VAR = 'CATALOG', 'ap_catalog'
-AP_VGMDB_UID_CN,     AP_VGMDB_UID_VAR = 'VGMDB UID', 'ap_vgmdb_uid'
+AP_ALBUM_PRENAME_CN, AP_ALBUM_PRENAME_VAR = '专辑内容', 'ap_album_prename'
+AP_ALBUM_NAME_CN,    AP_ALBUM_NAME_VAR = '｢专辑名｣', 'ap_album_name'
+AP_ALBUM_AFTNAME_CN, AP_ALBUM_AFTNAME_VAR = '补充描述', 'ap_album_aftname'
+AP_ALBUM_ARTISTS_CN, AP_ALBUM_ARTISTS_VAR = '艺术家', 'ap_album_artists'
+AP_ALBUM_EDITION_CN, AP_ALBUM_EDITION_VAR = '版本名', 'ap_album_edition'
+AP_CATALOG_CN,           AP_CATALOG_VAR = '碟片名', 'ap_catalog'
 
-AP_DIR_TYPE_DSK_CN = '音频'
-AP_DIR_TYPE_BKS_CN = '扫图'
-AP_DIR_TYPE_SPS_CN = '视频'
+
+AP_DIR_TYPE_DSK_CN = 'DSK'
+AP_DIR_TYPE_BKS_CN = 'BK'
+AP_DIR_TYPE_SPS_CN = 'MV'
 
 AP_CSV_DICT = {
     AP_SRC_PATH_CN: AP_SRC_PATH_VAR,
@@ -339,8 +336,9 @@ AP_CSV_DICT = {
     AP_ALBUM_NAME_CN: AP_ALBUM_NAME_VAR,
     AP_ALBUM_AFTNAME_CN: AP_ALBUM_AFTNAME_VAR,
     AP_ALBUM_ARTISTS_CN: AP_ALBUM_ARTISTS_VAR,
+    AP_ALBUM_EDITION_CN: AP_ALBUM_EDITION_VAR,
     AP_CATALOG_CN: AP_CATALOG_VAR,
-    AP_VGMDB_UID_CN: AP_VGMDB_UID_VAR,
+
     }
 
 

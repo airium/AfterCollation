@@ -102,7 +102,10 @@ def normFullLocation(chars: str) -> str:
     parts = [p for p in parts if p]
     #! need to keep the initial '/' if it exists, used to enforce placing at the root
     chars = ('/' if chars[0] == '/' else '') + '/'.join(parts)
-    return chars.lstrip(INVALID_PATH_LEADING_CHARS).rstrip(INVALID_PATH_ENDING_CHARS)
+    if chars == '/':
+        return chars
+    else:
+        return chars.lstrip(INVALID_PATH_LEADING_CHARS).rstrip(INVALID_PATH_ENDING_CHARS)
 
 
 
@@ -260,7 +263,7 @@ def composeFullDesp(season: hsn.Season, logger: Logger):
 
             spaced = True if ((' ' in t) or (' ' in n)) else False
             if spaced:
-                temp = '{tn}' + (' ' if t else '') + '{i1}' + ('-' if i2 else '') + '{i2}'
+                temp = '{tn}' + (' ' if t else '') + '{i1}' + ('_' if i2 else '') + '{i2}'
                 temp += (' ' if n else '') + '{nt}'
             else:
                 temp = '{tn}' + '{i1}' + ('_' if i2 else '') + '{i2}'

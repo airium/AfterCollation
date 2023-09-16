@@ -103,10 +103,10 @@ def chkNamingDicts(default_dict: dict[str, str], naming_dicts: list[dict[str, st
             raise NamingDraftError
 
         #! 9. if crc32-based name copying is used, ensure the file with the target crc32 exists
-        all_customs = [d[FULLDESP_VAR] for d in naming_dicts if d[FULLDESP_VAR]]
-        all_customs = [m.group('crc32').lower() for c in all_customs if (m := re.match(CRC32_CSV_FIELD_REGEX, c))]
+        all_refs = [d[CLASSIFY_VAR] for d in naming_dicts if d[CLASSIFY_VAR]]
+        all_refs = [m.group('crc32').lower() for c in all_refs if (m := re.match(CRC32_CSV_FIELD_REGEX, c))]
         all_found = True
-        for custom in all_customs:
+        for custom in all_refs:
             if custom not in crc32s:
                 logger.error(f'Cannot find the target file with CRC32 "{custom}" for naming reference.')
                 all_found = False

@@ -226,6 +226,7 @@ def processScansSource(src_path: Path, dst_dir: Path, logger: Logger):
                 logger.info(GOT_UNSUPP_FILE_1.format(img.path))
         dsts.append(dst)
 
+    logger.info(PROCESSING_QUEUED_JOBS_0)
     succs = pool.map(_runJob, jobs)
     if DEBUG: assert len(succs) == len(val_ifs) == len(dsts)
     crc32_to_orig_path: dict[str, Path] = {getCRC32(dst): img.path for (img, dst, s) in zip(val_ifs, dsts, succs) if s}

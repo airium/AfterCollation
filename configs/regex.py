@@ -37,6 +37,8 @@ VA_OUT_FILENAME_REGEX = _rc(r'^VA-[0-9]{6}-[0-9]{6}\.(csv|json|yaml)$')
 VP_CSV_FILENAME_REGEX = _rc(r'^VP-[0-9]{6}-[0-9]{6}\.csv$', _re.I)
 VR_OUT_FILENAME_REGEX = _rc(r'^VR-[0-9]{6}-[0-9]{6}\.csv$', _re.I)
 SP_CSV_FILENAME_REGEX = _rc(r'^SP-[0-9]{6}-[0-9]{6}\.csv$', _re.I)
+AP_CSV_FILENAME_REGEX = _rc(r'^AP-[0-9]{6}-[0-9]{6}\.csv$', _re.I)
+
 
 VCBS_SERIES_ROOT_DIRNAME_PATTERN = _rc(
     r'^'

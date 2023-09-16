@@ -122,7 +122,7 @@ def chkSeasonNamingCorrelation(season: Season, logger: logging.Logger) -> bool:
                 vid_partners: list[CoreFile] = []
                 ass_peers: list[CoreFile] = []
                 for ccf in (cfs[:i] + cfs[i + 1:]):
-                    if all(cmpCoreFileNaming(cf, ccf)[:8]):  # ASS partner matches at [:8] (before suffix)
+                    if all(cmpCoreFileNaming(cf, ccf)[:9]):  # ASS partner matches at [:8] (before suffix)
                         if ccf.ext in VX_VID_EXTS:
                             vid_partners.append(ccf)
                         elif ccf.ext in VX_SUB_EXTS:

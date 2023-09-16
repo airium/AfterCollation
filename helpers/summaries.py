@@ -6,7 +6,7 @@ from pathlib import Path
 
 from utils import *
 from configs import *
-import helpers.season as hs
+import helpers.season as hsn
 import helpers.corefile as hcf
 import helpers.album as ha
 
@@ -120,7 +120,7 @@ def logMusicSummary(root: Path, ais: list[ha.AlbumInfo], logger: logging.Logger)
 
 
 def logNamingSummary(
-    base_dict: dict[str, str], naming_dicts: list[dict[str, str]], season: hs.Season, logger: logging.Logger
+    base_dict: dict[str, str], naming_dicts: list[dict[str, str]], season: hsn.Season, logger: logging.Logger
     ):
 
     logger.info(f'Naming Summary ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓')

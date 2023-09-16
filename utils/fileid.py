@@ -24,7 +24,8 @@ def getFileID(path: str|Path) -> int|str:
     try:
         if inode := path.stat().st_ino:
             return inode
-    finally:
+        return getCRC32(path)
+    except:
         return getCRC32(path)
 
 

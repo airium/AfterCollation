@@ -282,6 +282,7 @@ def applyNamingDicts(season: Season, default_dict: dict[str, str], naming_dicts:
         # if (not default_dict[SUFFIX_VAR]) or (default_dict[SUFFIX_VAR] not in AVAIL_SUB_LANG_TAGS):
         #     pass # dont touch any file suffix, as the files are free to use any suffix is this case (at least here)
         # 2. root has a language suffix like [CHS], files should have the same suffix
+        cf.x = naming_dict[SUFFIX_VAR] if naming_dict[SUFFIX_VAR] else ''
         if season.x and (season.x in AVAIL_SEASON_LANG_SUFFIXES):
             cf.x = season.x
             if naming_dict[SUFFIX_VAR]:
@@ -313,4 +314,11 @@ def fromSeasonDir(season_dir: Path, logger: Logger) -> Season|None:
     hnm.cleanNamingDicts(default_dict, naming_dicts, logger)
     applyNamingDicts(season, default_dict, naming_dicts, logger)
     hnm.decomposeFullDesp(season, logger)
+
+    for i, cf in enumerate(season.files):
+        if cf.ext == 'mkv':
+            for cf2 in (season.files[:i] + season.files[i+1:]):
+                if cf2.ext in ('ass', 'mka') and cf2.path.stem.startswith(cf.path.stem):
+                    cf2.depends = cf
+
     return season

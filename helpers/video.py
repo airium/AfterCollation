@@ -57,6 +57,111 @@ import helpers.series as hsr
 import yaml
 from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
+from pymediainfo import Track
+
+
+
+
+
+class VideoFile:
+
+    def __init__(
+        self,
+        path: Path|str,
+        ):
+
+        if not (path := Path(path).resolve()).is_file():
+            raise FileNotFoundError(CANT_FIND_SRC_FOR_IMAGEFILE_1.format(path))
+        self.__path: Path = path
+        self.__mediainfo: MediaInfo = getMediaInfo(path)
+        self.__ffprobe: dict|None = None
+        self.__crc32: str|None = None
+
+    #* built-in methods override ---------------------------------------------------------------------------------------
+
+    def __getattr__(self, __name: str):
+        return getattr(self.__mediainfo, __name)
+
+    def __getstate__(self) -> dict:
+        return self.__dict__
+
+    def __setstate__(self, state: dict):
+        self.__dict__.update(state)
+
+    #* input -----------------------------------------------------------------------------------------------------------
+
+    @property
+    def path(self) -> Path:
+        return self.__path
+
+    @property  # NOTE no setter for read-only path
+    def src(self) -> str:
+        return self.__path.resolve().as_posix()
+
+    @property
+    def srcname(self) -> str:
+        return self.__path.name
+
+    #* crc32 -----------------------------------------------------------------------------------------------------------
+
+    @property
+    def crc32(self) -> str:
+        if not self.__crc32: self.__crc32 = getCRC32(self.path, prefix='', pass_not_found=True)
+        return self.__crc32
+
+    @property
+    def crc(self) -> str:
+        return self.crc32
+
+    #* basic file info -------------------------------------------------------------------------------------------------
+
+    @property
+    def size(self) -> int:
+        return self.path.stat().st_size
+
+    @property
+    def suffix(self) -> str:
+        return self.path.suffix
+
+    @property
+    def ext(self) -> str:
+        return self.suffix.lower().lstrip('.')
+
+    @property
+    def format(self) -> str:
+        return fmt.lower() if (fmt := self.gtr.format) else self.ext
+
+    #* file type -------------------------------------------------------------------------------------------------------
+
+    @property
+    def gtr(self) -> Track:
+        return self.__mediainfo.general_tracks[0]
+
+    @property
+    def vtr(self) -> Track:
+        return self.__mediainfo.video_tracks[0]
+
+
+    @property
+    def has_video(self) -> bool:
+        return bool(self.__mediainfo.video_tracks)
+
+    @property
+    def is_video(self) -> bool:
+        return (self.ext in COMMON_VIDEO_EXTS) and self.has_video
+
+    @property
+    def is_valid(self) -> bool:
+        if not self.is_video: return False
+        if self.format != EXTS2FORMATS.get(self.ext): return False
+        if not tstFFmpegDecode(self.path): return False
+        return True
+
+    @property
+    def ffprobe(self) -> dict:
+        if self.__ffprobe == None: self.__ffprobe = FFprobe(self.path)
+        return self.__ffprobe
+
 
 
 
@@ -465,7 +570,8 @@ def guessNamingFields4ARC(cf: hcf.CF, logger: Optional[Logger] = None):
         case True, False:
             cf.l = STD_SPS_DIRNAME  # archives of pure images are placed in SPs
         case False, True:
-            cf.l = STD_FONT_NAME  # archives of pure fonts are placed in fonts
+            cf.l = '/'
+            cf.c = STD_FONT_NAME  # archives of pure fonts are placed in fonts
         case True, True:
             if logger: logger.warning(DIRTY_CONTENT_1.format(cf.path))
         case False, False:
