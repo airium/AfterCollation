@@ -66,7 +66,7 @@ VA_DEFAULT_CONFIG = {'csv': True, 'yaml': False, 'json': False }
 # you can optionally turn off the file checking in VD
 # this will make VD much faster to generate the naming proposal (VD.csv)
 # which would be helpful when you are adding new files frequently
-ENABLE_FILE_CHECKING_IN_VP : bool = True
+ENABLE_FILE_CHECKING_IN_VP : bool = False
 
 # file checking should be done in VD and re-done in VR
 # but if you want to be noticed earlier after VP, enable this option
@@ -184,7 +184,7 @@ FALLBACK_TITLE = '1145141919810'
 #* don't touch below --------------------------------------------------------------------------------------------------
 
 import psutil
-cpu, ram = psutil.cpu_count(logical=False), psutil.virtual_memory().total // (1024**3)
+cpu, ram = psutil.cpu_count(logical=False), psutil.virtual_memory().available // (1024**3)
 NUM_CPU_JOBS = MAX_NUM_CPU_WORKERS if MAX_NUM_CPU_WORKERS > 0 else cpu
 NUM_RAM_JOBS = min(cpu, max(ram // (MIN_RAM_PER_WORKER), 1))
 NUM_IO_JOBS = min(cpu, MAX_NUM_IO_WORKERS)

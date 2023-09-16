@@ -5,7 +5,7 @@ from imports import *
 
 def _cli(paths: list[Path]):
     if paths:
-        procScanSrcList(paths)
+        processScansSourceDirs(paths)
     else:
         printUsage(SD_USAGE_0, paths)
 

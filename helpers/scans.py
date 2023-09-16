@@ -14,7 +14,7 @@ from multiprocessing import Pool
 from langs import *
 from utils import *
 from configs import *
-from checkers.scans import *
+from checkers.scans import chkScansNaming, chkScansFiles
 from utils.fileutils import listFile, listDir
 from loggers import initLogger
 from .summaries import logScansSummary
@@ -27,16 +27,16 @@ import yaml
 
 
 __all__ = [
-    'getScansDirs',
     'filterScansFiles',
     'cleanScansFilenames',
     'ScansConfig',
     'getScansConfig',
-    'procScanSrc',
+    'processScansSource',
+    'processScansSourceDirs',
     'collectScansDirs',
     'placeScans',
+    'getScansDirs',
     'chkScans',
-    'processScansSourceDirs',
     ]
 
 
@@ -61,7 +61,7 @@ def filterScansFiles(src_path: Path, logger: Optional[Logger] = None) -> list[Pa
 
 def cleanScansFilenames(scans_dir: Path, logger: Logger):
     if not scans_dir.is_dir():
-        raise NotADirectoryError( f'The input "{scans_dir}" is not a dir.')
+        raise NotADirectoryError(f'The input "{scans_dir}" is not a dir.')
     for dir_path in listDir(scans_dir):
 
         files = listFile(dir_path, rglob=False, ext=ALL_EXTS_IN_SCANS)
@@ -127,6 +127,7 @@ def cleanScansFilenames(scans_dir: Path, logger: Logger):
 
 
 class ScansConfig:
+    # raise NotImplementedError
     pass
 
 
@@ -154,7 +155,7 @@ def getScansConfig(possible_paths: list[str|Path], logger: Logger|None = None) -
 
 
 
-def procScanSrc(src_path: Path, dst_dir: Path, logger: Logger):
+def processScansSource(src_path: Path, dst_dir: Path, logger: Logger):
 
     if DEBUG: logger.debug(PROCESSING_2.format(src_path, dst_dir))
     else: logger.info(PROCESSING_1.format(src_path))
@@ -277,7 +278,7 @@ def processScansSourceDirs(src_paths: list[Path]):
     w = len(str(len(src_paths)))
     for i, src_path in enumerate(src_paths, start=1):
         dst_dir = dst_parent / SD_DIRNAME_3.format(TIMESTAMP, f'{i:0>{w}}', src_path.name)
-        procScanSrc(src_path, dst_dir, logger)
+        processScansSource(src_path, dst_dir, logger)
         logger.info('')
 
 
@@ -311,7 +312,6 @@ def collectScansDirs(src_paths: Iterable[Path]):
             SP_DIRNAME_CN: '',
             SP_VOLNUM_CN: '',
             SP_COMPLEMENT_CN: '',
-            SP_CUSTOM_NAME_CN: '',
             SP_SRC_PATH_CN: src_path.resolve().as_posix(),
             })
 
@@ -321,15 +321,15 @@ def collectScansDirs(src_paths: Iterable[Path]):
 
 
 
-def placeScans(csv_path: Path):
+def placeScans(sp_csv_path: Path):
 
-    s, sp_dicts = readCSV(csv_path)
+    s, sp_dicts = readCSV(sp_csv_path)
     if not s:
-        print(CANT_CREATE_CSV_1.format(csv_path))
+        print(CANT_CREATE_CSV_1.format(sp_csv_path))
         return
     sp_dicts = unquotFields4CSV(sp_dicts)
 
-    dst_root = csv_path.with_name(STD_BKS_DIRNAME)
+    dst_root = sp_csv_path.with_name(STD_BKS_DIRNAME)
     if dst_root.exists():
         print(DIR_EXISTS_DEL_FIRST_1.format(dst_root))
         return
@@ -347,21 +347,17 @@ def placeScans(csv_path: Path):
         dirname = normClassification(sp_dict.get(SP_DIRNAME_CN, ''))
         volnum = normDecimal(sp_dict.get(SP_VOLNUM_CN, ''))
         complement = normDesp(sp_dict.get(SP_COMPLEMENT_CN, ''))
-        custom_name = rmInvalidChars(sp_dict.get(SP_CUSTOM_NAME_CN, ''))
 
-        if DEBUG: print(f'SP-CSV-INPUT: {dirname=}, {volnum=}, {complement=}, {custom_name=}')
+        if DEBUG: print(f'SP-CSV-INPUT: {dirname=}, {volnum=}, {complement=}')
 
-        if custom_name:
-            dst_dirname = custom_name
-        else:
-            dst_dirname = ''
-            dst_dirname += f'{dirname} ' if dirname else ''
-            dst_dirname += f'Vol.{volnum} ' if volnum else ''
-            dst_dirname += f'{complement}' if complement else ''
-            dst_dirname = dst_dirname.strip()
+        dst_dirname = ''
+        dst_dirname += f'{dirname} ' if dirname else ''
+        dst_dirname += f'Vol.{volnum} ' if volnum else ''
+        dst_dirname += f'{complement}' if complement else ''
+        dst_dirname = dst_dirname.strip()
         if not dst_dirname:
             print(SP_MISSING_DIRNAME_1.format(i))
-            dst_dirname = f'Unknown {i}'
+            dst_dirname = VP_UNNANED_DIR_1.format(i)
 
         #* sd_img_dir_path -------------------------------------------------------------------------
 
@@ -441,20 +437,20 @@ def getScansDirs(root: Path, logger: Logger) -> list[Path]:
 
 
 
-def chkScans(root):
+def chkScans(root_dir):
 
-    logger = initLogger(log_path := root.parent.joinpath(SR_LOG_FILENAME))
+    logger = initLogger(log_path := root_dir.parent.joinpath(SR_LOG_FILENAME))
     logger.info(USING_SR_1.format(AC_VERSION))
-    logger.info(THE_INPUT_IS_1.format(root))
+    logger.info(THE_INPUT_IS_1.format(root_dir))
 
     if platform.system() == 'Windows':
-        temp_dir = getTempDir4Hardlink(root)
+        temp_dir = getTempDir4Hardlink(root_dir)
         if temp_dir: logger.info(SR_ENABLED_HARDLINK_AND_TEMP_DIR_1.format(temp_dir))
         else: logger.info(SR_DISABLED_HARDLINK_0)
     else:
         temp_dir = None
 
-    for scans_dir in getScansDirs(root, logger=logger):
+    for scans_dir in getScansDirs(root_dir, logger=logger):
         logger.info('')
         logger.info(CHECKING_1.format(scans_dir))
         logger.info(LISTING_FILES_0)

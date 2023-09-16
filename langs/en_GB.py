@@ -182,7 +182,7 @@ SET_NAMING_LINKAGE_2 = 'Set file 0x{} to copy/link the naming of file 0x{}.'
 SET_NAMING_LINKAGE_FAILED_1 = 'Failed to find the appointed file 0x{} to copy/link the naming from.'
 USING_CUSTOMIZED_NAMING_0 = 'Using customised description. Will clear classification, main/sub index and supplement fields.'
 OVERRIDEN_SUFFIX_1 = 'Overridden suffix with the base/default lang suffix "{}".'
-
+VP_UNNANED_DIR_1 = 'Unknown {}'
 #* VR ------------------------------------------------------------------------------------------------------------------
 
 VR_USAGE_0 = '''
