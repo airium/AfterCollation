@@ -27,7 +27,7 @@ except ImportError:
 ####################################################################################################
 
 # current version
-VERSION = '5.0.1 230725'
+VERSION = '5.0.2 230828'
 TIME = strftime('DiffAudio-Report-%y%m%d-%H%M%S')
 
 ffmpeg_path = ""
@@ -277,9 +277,9 @@ if __name__ == "__main__":
         ref_path = Path(args.ref_path_list)
         if not ref_path.is_absolute:  ref_path = ref_path.absolute()
         with open(ref_path, 'r', encoding="utf-8") as f:
-            ref_path_list=f.read().split("\n")
-            for object in target_path_list_raw:
-                target_path_list.append(path_patern.search(object).group("path"))
+            ref_path_list_raw=f.read().split("\n")
+            for object in ref_path_list_raw:
+                ref_path_list.append(path_patern.search(object).group("path"))
         TaskCompareFiles(list(map(Path, ref_path_list)), list(map(Path, target_path_list)))
     
     if args.benchmark:
