@@ -3,7 +3,7 @@ import sys
 import re
 
 # 定义要寻找的特殊标签
-special_tags = ["1img", "2img", "3img", "4img", "1vc", "2vc", "3vc", "4vc", "1va", "2va", "3va", "4va", "distort", "frs", "fsc", "fsvp", "fshp", "jitter", "mover", "moves3", "moves4", "movevc", "rndx", "rndy", "rndz", "rnds", "rnd", "z"]
+special_tags = ["1img", "2img", "3img", "4img", "1vc", "2vc", "3vc", "4vc", "1va", "2va", "3va", "4va", "distort", "frs", "fsc", "fsvp", "fshp", "jitter", "mover", "moves3", "moves4", "movevc", "rndx", "rndy", "rndz", "rnds", "rnd", "z", "xblur", "yblur", "ortho", "blend", "lua"]
 
 def find_special_tags(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
